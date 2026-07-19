@@ -57,7 +57,7 @@
   "workbench.activityBar.location": "top",
   "workbench.iconTheme": "material-icon-theme",
   "workbench.productIconTheme": "fluent-icons",
-  "workbench.colorTheme": "Default Dark Modern",
+  "workbench.colorTheme": "Dark Modern",
   "workbench.editor.empty.hint": "hidden",
   "workbench.editor.enablePreview": false,
   "workbench.editor.enablePreviewFromQuickOpen": false,

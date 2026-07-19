@@ -8,7 +8,13 @@ const app = express();
 const port = 3000;
 const SECRET_KEY = 'your_super_secret_key_change_this_in_production'; // In a real app, use .env
 
-app.use(cors());
+// Configure CORS to allow requests from frontend
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 let db;
@@ -183,6 +189,53 @@ const upload = multer({ storage: storage });
 // Serve static files
 app.use('/uploads', express.static('uploads'));
 
+// --- Certification Routes ---
+app.get('/api/certifications', async (req, res) => {
+  try {
+    const certifications = await db.all('SELECT * FROM certifications');
+    res.json(certifications);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/certifications', authenticateToken, upload.single('certificateFile'), async (req, res) => {
+  const { name, issuer, date, description, image, certificateLink } = req.body;
+  const link = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : certificateLink;
+  try {
+    const result = await db.run(
+      'INSERT INTO certifications (name, issuer, date, description, image, certificateLink) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, issuer, date, description, image, link]
+    );
+    res.json({ id: result.lastID });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/certifications/:id', authenticateToken, upload.single('certificateFile'), async (req, res) => {
+  const { name, issuer, date, description, image, certificateLink } = req.body;
+  const link = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : certificateLink;
+  try {
+    await db.run(
+      'UPDATE certifications SET name = ?, issuer = ?, date = ?, description = ?, image = ?, certificateLink = ? WHERE id = ?',
+      [name, issuer, date, description, image, link, req.params.id]
+    );
+    res.json({ message: 'Certification updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/certifications/:id', authenticateToken, async (req, res) => {
+  try {
+    await db.run('DELETE FROM certifications WHERE id = ?', req.params.id);
+    res.json({ message: 'Certification deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- Testimonial Routes ---
 app.get('/api/testimonials', async (req, res) => {
   try {
@@ -212,6 +265,45 @@ app.delete('/api/testimonials/:id', authenticateToken, async (req, res) => {
   try {
     await db.run('DELETE FROM testimonials WHERE id = ?', req.params.id);
     res.json({ message: 'Testimonial deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- Profile Routes ---
+app.get('/api/profile', async (req, res) => {
+  try {
+    const profile = await db.get('SELECT * FROM profile LIMIT 1');
+    if (!profile) return res.status(404).json({ error: 'Profile not found' });
+    res.json(profile);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/profile', authenticateToken, upload.single('avatar'), async (req, res) => {
+  const { name, title, subtitle, bio, welcome_message } = req.body;
+  const avatar = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : req.body.avatar;
+
+  try {
+    // Check if profile exists
+    const existingProfile = await db.get('SELECT id FROM profile LIMIT 1');
+
+    if (existingProfile) {
+      // Update existing profile
+      await db.run(
+        'UPDATE profile SET name = ?, title = ?, subtitle = ?, bio = ?, avatar = ?, welcome_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [name, title, subtitle, bio, avatar, welcome_message, existingProfile.id]
+      );
+    } else {
+      // Create new profile
+      await db.run(
+        'INSERT INTO profile (name, title, subtitle, bio, avatar, welcome_message) VALUES (?, ?, ?, ?, ?, ?)',
+        [name, title, subtitle, bio, avatar, welcome_message]
+      );
+    }
+
+    res.json({ message: 'Profile updated successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

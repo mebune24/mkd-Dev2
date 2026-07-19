@@ -31,6 +31,15 @@ async function initializeDb() {
       github TEXT,
       demo TEXT
     );
+    CREATE TABLE IF NOT EXISTS certifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      issuer TEXT,
+      date TEXT,
+      description TEXT,
+      image TEXT,
+      certificateLink TEXT
+    );
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE,
@@ -46,6 +55,17 @@ async function initializeDb() {
       text TEXT,
       project TEXT,
       phone TEXT
+    );
+    CREATE TABLE IF NOT EXISTS profile (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      title TEXT,
+      subtitle TEXT,
+      bio TEXT,
+      avatar TEXT,
+      welcome_message TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
   return db;

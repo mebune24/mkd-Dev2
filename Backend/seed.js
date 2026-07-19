@@ -139,7 +139,10 @@ async function seed() {
   // Clear existing data
   await db.run('DELETE FROM posts');
   await db.run('DELETE FROM projects');
-    await db.run('DELETE FROM users');
+  await db.run('DELETE FROM certifications');
+  await db.run('DELETE FROM users');
+  await db.run('DELETE FROM testimonials');
+  await db.run('DELETE FROM profile');
 
 
   // Seed Posts
@@ -160,8 +163,8 @@ async function seed() {
   console.log('Projects seeded successfully');
 
   // Seed Admin User
-  const hashedPassword = await bcrypt.hash('password123', 10);
-  await db.run('INSERT INTO users (username, password) VALUES (?, ?)', ['admin', hashedPassword]);
+  const hashedPassword = await bcrypt.hash('mebune2005', 10);
+  await db.run('INSERT INTO users (username, password) VALUES (?, ?)', ['mebune', hashedPassword]);
   console.log('Admin user seeded successfully');
 
   // Seed Testimonials
@@ -204,6 +207,41 @@ async function seed() {
     }
   await testimonialStmt.finalize();
   console.log('Testimonials seeded successfully');
+
+  // Seed Certifications
+  const certificationStmt = await db.prepare('INSERT INTO certifications (name, issuer, date, description, image, certificateLink) VALUES (?, ?, ?, ?, ?, ?)');
+  await certificationStmt.run(
+    'Fiber Optics Network Installation',
+    'CAMTEL',
+    'Present',
+    'Certification for the installation, configuration, and testing of OLT, ONT, Wi-Fi boxes, and fibre optics network equipment.',
+    'https://fiberconnect.camtel.cm/static/media/fiberconnect-logo-no-bg.8c04ab7b302d3d15c623.png',
+    '#'
+  );
+  await certificationStmt.run(
+    'Software Engineering Fundamentals',
+    'University Program',
+    '2024',
+    'Ongoing university studies in software engineering with coursework in systems architecture and application development.',
+    'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&h=400&fit=crop',
+    '#'
+  );
+  await certificationStmt.finalize();
+  console.log('Certifications seeded successfully');
+
+  // Seed Profile
+  await db.run(
+    'INSERT INTO profile (name, title, subtitle, bio, avatar, welcome_message) VALUES (?, ?, ?, ?, ?, ?)',
+    [
+      'Mebune Donstand',
+      'Software Engineer',
+      'Frontend & Full-Stack Developer',
+      'A self-taught software engineer who builds production-grade applications with modern technologies. Passionate about creating exceptional user experiences and scalable solutions.',
+      'http://localhost:3000/uploads/test_avatar.png',
+      'Welcome mebune'
+    ]
+  );
+  console.log('Profile seeded successfully');
 }
 
 seed().catch(err => console.error(err));
