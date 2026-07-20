@@ -9,6 +9,7 @@ import Dashboard from "../pages/admin/Dashboard";
 import Blogging from "../pages/blogPage/Blogging";
 import CertificationPage from "../pages/certifications/Certificate";
 import Works from "../pages/works/Works";
+import GitHub from "../pages/github/GitHub";
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
       {
         path: "/project",
         element: <Works />,
+      },
+      {
+        path: "/github",
+        element: <GitHub />,
       },
       {
         path: "/certifications",

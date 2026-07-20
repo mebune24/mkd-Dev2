@@ -62,7 +62,7 @@ export default function Footer() {
 
         <div className="text-center">
           {/* Social Media Links */}
-          <div className="flex justify-center gap-4 mb-6 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6 mt-4 max-w-2xl mx-auto">
             {socialLinks.map((social) => {
               const Icon = social.icon;
               return (
@@ -71,7 +71,7 @@ export default function Footer() {
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`text-gray-400 ${social.color} transition-colors duration-300 p-3 rounded-full bg-gray-900 hover:bg-opacity-20`}
+                  className={`text-gray-400 ${social.color} transition-colors duration-300 p-3 rounded-full bg-gray-900 hover:bg-opacity-20 flex items-center justify-center`}
                   aria-label={social.name}
                 >
                   <Icon size={24} />

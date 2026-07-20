@@ -25,8 +25,8 @@ const cardVariants = {
     }
   },
   hover: {
-    scale: 1.05,
-    rotateY: 5,
+    scale: 1.02,
+    rotateY: 3,
     z: 20,
     transition: { duration: 0.3 }
   }
@@ -164,7 +164,7 @@ export default function Blogging() {
 
         {/* Blog Grid */}
         <motion.div
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -173,94 +173,77 @@ export default function Blogging() {
           {currentPosts.map((post, index) => (
             <motion.article
               key={post.id}
-              className="flex flex-col cursor-pointer group"
+              className="flex flex-col cursor-pointer group rounded-xl border border-white/10 bg-white/5 p-3 transition-all duration-200 hover:border-emerald-400/30 hover:bg-white/10"
               variants={cardVariants}
               whileHover="hover"
               style={{ perspective: "1000px" }}
               onClick={() => openBlog(post)}
             >
               {/* Blog Image */}
-              <div className="relative h-48 overflow-hidden rounded-xl mb-6">
+              <div className="relative overflow-hidden rounded-lg mb-2.5">
                 <motion.img
                   src={post.image}
                   alt={post.title}
-                  className="w-full h-full object-cover"
-                  whileHover={{ scale: 1.1 }}
+                  className="w-full aspect-[4/3] object-cover"
+                  whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.5 }}
                 />
-                <motion.div
-                  className="absolute top-4 left-4 flex items-center gap-2"
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
+                <div className="absolute top-2 left-2">
                   <span style={{
                     background: 'var(--accent)',
                     color: 'var(--bg)'
-                  }} className="text-xs font-semibold px-3 py-1 rounded-full">
+                  }} className="text-[9px] font-semibold px-2 py-0.5 rounded-full">
                     {post.category}
                   </span>
-                </motion.div>
+                </div>
               </div>
 
-              {/* Blog Content */}
+              {/* Blog Content - Concise */}
               <div className="flex flex-col grow">
-                {/* Date and Read Time */}
-                <motion.div
-                  className="flex items-center gap-4 text-sm mb-3"
-                  style={{ color: 'var(--muted)' }}
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                >
-                  <div className="flex items-center gap-1">
-                    <Calendar size={14} />
-                    <span>{post.date}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock size={14} />
-                    <span>{post.readTime}</span>
-                  </div>
-                </motion.div>
-
                 <motion.h4
                   style={{ color: 'var(--text)' }}
-                  className="text-xl font-semibold mb-3 transition-colors duration-300"
-                  initial={{ opacity: 0, y: 20 }}
+                  className="text-sm font-semibold mb-1.5 transition-colors duration-300 leading-tight line-clamp-2"
+                  initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
+                  transition={{ duration: 0.4 }}
                 >
                   {post.title}
                 </motion.h4>
 
-                <motion.p
+                <motion.div
+                  className="flex items-center gap-2 text-[10px] mb-2"
                   style={{ color: 'var(--muted)' }}
-                  className="text-base mb-4 grow"
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
+                  transition={{ duration: 0.4 }}
                 >
-                  {post.excerpt}
-                </motion.p>
+                  <div className="flex items-center gap-0.5">
+                    <Calendar size={10} />
+                    <span>{post.date}</span>
+                  </div>
+                  <span>·</span>
+                  <div className="flex items-center gap-0.5">
+                    <Clock size={10} />
+                    <span>{post.readTime}</span>
+                  </div>
+                </motion.div>
 
                 {/* Tags */}
                 <motion.div
-                  className="flex flex-wrap gap-2 mb-4"
+                  className="flex flex-wrap gap-1 mb-2"
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.6 }}
+                  transition={{ duration: 0.4 }}
                 >
-                  {post.tags.map((tag, tagIndex) => (
+                  {post.tags.slice(0, 3).map((tag, tagIndex) => (
                     <motion.span
                       key={tagIndex}
                       style={{ color: 'var(--muted)' }}
-                      className="text-xs px-2 py-1 rounded"
-                      whileHover={{ scale: 1.1 }}
+                      className="text-[9px] px-1 py-0.5 rounded"
+                      whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.2 }}
                     >
                       #{tag}
@@ -268,19 +251,19 @@ export default function Blogging() {
                   ))}
                 </motion.div>
 
-                {/* Read More Button */}
+                {/* Read More */}
                 <motion.button
                   style={{ color: 'var(--accent)' }}
-                  className="flex items-center gap-2 font-medium transition-colors duration-300"
-                  whileHover={{ x: 5 }}
+                  className="flex items-center gap-1 text-[11px] font-medium transition-colors duration-300 mt-auto"
+                  whileHover={{ x: 3 }}
                   transition={{ duration: 0.2 }}
                 >
-                  Read the analysis
+                  Read
                   <motion.div
-                    whileHover={{ x: 3 }}
+                    whileHover={{ x: 2 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ArrowRight size={16} />
+                    <ArrowRight size={12} />
                   </motion.div>
                 </motion.button>
               </div>

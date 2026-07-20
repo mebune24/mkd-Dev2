@@ -165,6 +165,158 @@ app.delete('/api/projects/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// --- GitHub Repos Proxy ---
+app.get('/api/github/repos', async (req, res) => {
+  try {
+    const response = await fetch('https://api.github.com/users/mebune24/repos?sort=updated&per_page=50');
+    if (!response.ok) throw new Error('Failed to fetch GitHub repos');
+    const repos = await response.json();
+    const formatted = repos.map(repo => {
+      const techStack = [];
+      if (repo.language) {
+        techStack.push({ name: repo.language, logo: `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${repo.language.toLowerCase()}/${repo.language.toLowerCase()}-original.svg` });
+      }
+      const topics = (repo.topics || []).slice(0, 4).map(topic => ({
+        name: topic,
+        logo: `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${topic.toLowerCase()}/${topic.toLowerCase()}-original.svg`
+      }));
+      return {
+        id: `github-${repo.id}`,
+        title: repo.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        description: repo.description || 'No description provided.',
+        image: `https://opengraph.githubassets.com/1/${repo.full_name}`,
+        stack: [...techStack, ...topics],
+        github: repo.html_url,
+        demo: repo.homepage || null,
+        isGithub: true,
+        fullName: repo.full_name,
+        languagesUrl: repo.languages_url
+      };
+    });
+    res.json(formatted);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- GitHub Repo Languages Proxy ---
+app.get('/api/github/repos/languages', async (req, res) => {
+  try {
+    const { owner, repo } = req.query;
+    if (!owner || !repo) {
+      return res.status(400).json({ error: 'Missing owner or repo parameter' });
+    }
+
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/languages`);
+    if (!response.ok) throw new Error('Failed to fetch repo languages');
+    const languages = await response.json();
+
+    const formatted = Object.entries(languages).map(([name, bytes]) => ({
+      name,
+      logo: `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${name.toLowerCase()}/${name.toLowerCase()}-original.svg`
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- GitHub Profile Proxy ---
+app.get('/api/github/profile', async (req, res) => {
+  try {
+    const response = await fetch('https://api.github.com/users/mebune24');
+    if (!response.ok) throw new Error('Failed to fetch GitHub profile');
+    const profile = await response.json();
+    res.json({
+      login: profile.login,
+      name: profile.name,
+      bio: profile.bio,
+      avatar_url: profile.avatar_url,
+      html_url: profile.html_url,
+      public_repos: profile.public_repos,
+      followers: profile.followers,
+      following: profile.following,
+      location: profile.location,
+      blog: profile.blog,
+      company: profile.company,
+      created_at: profile.created_at
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- GitHub Resolve Proxy ---
+app.get('/api/github/resolve', async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: 'Missing url parameter' });
+    }
+
+    const normalizedUrl = url.trim();
+
+    // Determine if it's a repos page or profile page
+    const isReposUrl = normalizedUrl.includes('tab=repositories') || normalizedUrl.includes('/repos');
+    const usernameMatch = normalizedUrl.match(/github\.com\/([^\/\?]+)/);
+
+    if (!usernameMatch) {
+      return res.status(400).json({ error: 'Invalid GitHub URL' });
+    }
+
+    const username = usernameMatch[1];
+
+    if (isReposUrl) {
+      const response = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=50`);
+      if (!response.ok) throw new Error('Failed to fetch GitHub repos');
+      const repos = await response.json();
+      const formatted = repos.map(repo => {
+        const techStack = [];
+        if (repo.language) {
+          techStack.push({ name: repo.language, logo: `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${repo.language.toLowerCase()}/${repo.language.toLowerCase()}-original.svg` });
+        }
+        const topics = (repo.topics || []).slice(0, 4).map(topic => ({
+          name: topic,
+          logo: `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${topic.toLowerCase()}/${topic.toLowerCase()}-original.svg`
+        }));
+        return {
+          id: `github-${repo.id}`,
+          title: repo.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          description: repo.description || 'No description provided.',
+          image: `https://opengraph.githubassets.com/1/${repo.full_name}`,
+          stack: [...techStack, ...topics],
+          github: repo.html_url,
+          demo: repo.homepage || null,
+          isGithub: true
+        };
+      });
+      return res.json({ type: 'repos', data: formatted });
+    } else {
+      const response = await fetch(`https://api.github.com/users/${username}`);
+      if (!response.ok) throw new Error('Failed to fetch GitHub profile');
+      const profile = await response.json();
+      const profileData = {
+        login: profile.login,
+        name: profile.name,
+        bio: profile.bio,
+        avatar_url: profile.avatar_url,
+        html_url: profile.html_url,
+        public_repos: profile.public_repos,
+        followers: profile.followers,
+        following: profile.following,
+        location: profile.location,
+        blog: profile.blog,
+        company: profile.company,
+        created_at: profile.created_at
+      };
+      return res.json({ type: 'profile', data: profileData });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');

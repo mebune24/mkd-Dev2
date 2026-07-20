@@ -5,8 +5,11 @@ import {
   ExternalLink,
   Github,
   Search,
+  Star,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { API_ENDPOINTS } from "../../utils/constants";
 
 export default function Works({ limit }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,21 +20,46 @@ export default function Works({ limit }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch projects from backend
   useEffect(() => {
-    fetch("http://localhost:3000/api/projects")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch projects");
-        return res.json();
-      })
-      .then((data) => {
-        setProjects(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+    Promise.all([
+      fetch(API_ENDPOINTS.PROJECTS).then(res => res.ok ? res.json() : []),
+      fetch(API_ENDPOINTS.GITHUB_REPOS).then(res => res.ok ? res.json() : [])
+    ])
+    .then(async ([dbProjects, githubRepos]) => {
+      const enrichedGithub = await Promise.all(
+        githubRepos.map(repo => {
+          if (!repo.fullName) return Promise.resolve(repo);
+          const parts = repo.fullName.split('/');
+          const owner = parts[0];
+          const name = parts[1];
+          return fetch(`${API_ENDPOINTS.GITHUB_REPO_LANGUAGES}?owner=${owner}&repo=${encodeURIComponent(name)}`)
+            .then(res => res.ok ? res.json() : {})
+            .then(languages => {
+              const langEntries = Object.entries(languages)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 4)
+                .map(([langName]) => ({
+                  name: langName,
+                  logo: `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${langName.toLowerCase()}/${langName.toLowerCase()}-original.svg`
+                }));
+              return {
+                ...repo,
+                stack: [
+                  ...repo.stack.filter(s => !langEntries.find(l => l.name === s.name)),
+                  ...langEntries
+                ].slice(0, 6)
+              };
+            })
+            .catch(() => repo);
+        })
+      );
+      setProjects([...dbProjects, ...enrichedGithub]);
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error(err);
+      setLoading(false);
+    });
   }, []);
 
   // Filter projects based on search query
@@ -64,7 +92,6 @@ export default function Works({ limit }) {
 
   const goToPage = (pageNumber) => {
     setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
 const cardVariants = {
@@ -133,6 +160,32 @@ const imageVariants = {
             A showcase of solutions that solve real problems with clean, scalable code.
           </p>
 
+          {/* GitHub Buttons */}
+          <motion.div
+            className="flex flex-wrap items-center justify-center gap-4 mt-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <Link
+              to="/github?url=https://github.com/mebune24"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 text-sm font-medium hover:bg-white/10 hover:border-emerald-400/40 transition-all duration-300"
+              style={{ color: 'var(--text)' }}
+            >
+              <Github size={16} />
+              Visit GitHub Profile
+            </Link>
+            <Link
+              to="/github?url=https://github.com/mebune24?tab=repositories"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 text-sm font-medium hover:bg-white/10 hover:border-emerald-400/40 transition-all duration-300"
+              style={{ color: 'var(--text)' }}
+            >
+              <ExternalLink size={16} />
+              View All GitHub Repos
+            </Link>
+          </motion.div>
+
           {/* Search Bar */}
           <motion.div
             className="max-w-xl mx-auto mt-8"
@@ -167,7 +220,7 @@ const imageVariants = {
         {projectsToShow.length > 0 ? (
           <>
             <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 xl:gap-8"
+              className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.1 }}
@@ -175,100 +228,93 @@ const imageVariants = {
               {projectsToShow.map((project, index) => (
                 <motion.article
                   key={project.id}
-                  className="group overflow-hidden rounded-[32px] border border-emerald-400/50 bg-slate-950/95 shadow-2xl shadow-emerald-500/20 hover:shadow-emerald-500/40 transition duration-300"
+                  className="group flex flex-col overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-md shadow-black/10 transition-all duration-300 hover:border-emerald-400/30 hover:shadow-emerald-500/10"
                   variants={cardVariants}
                   custom={index}
                   whileHover="hover"
                   style={{ perspective: "1000px" }}
                 >
-                  <div className="relative overflow-hidden h-54 sm:h-60">
-                    <motion.img
-                      src={project.image}
-                      alt={project.title}
-                      className="w-full h-full object-cover transition duration-500"
-                      variants={imageVariants}
-                      whileHover="hover"
-                    />
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/20 to-transparent" />
-
-                    <div className="absolute inset-x-5 top-5 flex items-center justify-between gap-3">
-                      <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-200 backdrop-blur-sm">
-                        <span className="block h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                        Portfolio
+                  {/* Image Section */}
+                  <div className="relative overflow-hidden bg-slate-900/50">
+                    <div className="aspect-[16/9] overflow-hidden">
+                      <img
+                        src={project.image}
+                        alt={project.title}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="absolute inset-x-0 top-0 flex items-center justify-between p-2.5">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-950/80 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.15em] text-emerald-200 backdrop-blur-md">
+                        <span className="block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        {project.isGithub ? 'GitHub' : 'Portfolio'}
                       </span>
-                      <span className="rounded-full bg-white/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200 border border-white/10">
-                        Featured
+                      <span className="rounded-full bg-white/10 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.15em] text-slate-200 border border-white/10 backdrop-blur-md">
+                        {project.isGithub ? 'Open Source' : 'Featured'}
                       </span>
                     </div>
+                  </div>
 
-                    <div className="absolute inset-x-5 bottom-5 rounded-[28px] border border-white/10 bg-slate-950/80 p-4 shadow-2xl backdrop-blur-sm">
-                      <h4 className="text-lg font-semibold text-white sm:text-xl">
+                  {/* Content Section */}
+                  <div className="flex flex-1 flex-col p-3">
+                    <div className="mb-2">
+                      <h4 className="text-sm font-semibold text-white leading-tight">
                         {project.title}
                       </h4>
                       <p
-                        className="mt-2 text-sm leading-6 text-slate-300"
+                        className="mt-1 text-xs leading-relaxed text-slate-400"
                         style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
                       >
                         {project.description}
                       </p>
                     </div>
-                  </div>
 
-                  <div className="p-5 flex flex-col gap-4">
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {/* Tech Stack */}
+                    <div className="mb-2 flex flex-wrap gap-1">
                       {project.stack.slice(0, 3).map((tech, techIndex) => (
-                        <motion.span
+                        <span
                           key={techIndex}
-                          className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-medium text-slate-100"
-                          whileHover={{
-                            scale: 1.05,
-                            backgroundColor: "rgba(34, 197, 94, 0.1)",
-                            borderColor: "rgba(34, 197, 94, 0.3)"
-                          }}
-                          transition={{ duration: 0.2 }}
+                          className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-medium text-slate-300 transition-colors duration-200 hover:border-emerald-400/30 hover:bg-white/10"
                         >
-                          <motion.img
-                            src={tech.logo}
-                            alt={`${tech.name} logo`}
-                            className="w-4 h-4 rounded-sm"
-                            whileHover={{ rotate: 360 }}
-                            transition={{ duration: 0.5 }}
-                          />
+                          {tech.logo && (
+                            <img src={tech.logo} alt={`${tech.name} logo`} className="h-2.5 w-2.5 rounded-sm object-contain" />
+                          )}
                           {tech.name}
-                        </motion.span>
+                        </span>
                       ))}
                     </div>
 
-                    <div className="mt-auto flex flex-wrap gap-3">
-                      <motion.a
+                    {/* Actions */}
+                    <div className="mt-auto flex items-center gap-1.5">
+                      <a
                         href={project.github}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex min-w-[110px] items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:border-emerald-400/40 hover:bg-emerald-500/10"
-                        whileHover={{
-                          scale: 1.05,
-                          boxShadow: "0 0 20px rgba(34, 197, 94, 0.3)"
-                        }}
-                        whileTap={{ scale: 0.95 }}
+                        className="inline-flex flex-1 items-center justify-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-semibold text-white transition-all duration-200 hover:border-emerald-400/40 hover:bg-emerald-500/10"
                       >
-                        <Github size={16} />
-                        Code
-                      </motion.a>
-                      <motion.a
-                        href={project.demo}
+                        <Github size={12} />
+                        Open Site
+                      </a>
+                      {project.demo && (
+                        <a
+                          href={project.demo}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex flex-1 items-center justify-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1.5 text-[11px] font-semibold text-slate-950 transition-all duration-200 hover:bg-emerald-400"
+                        >
+                          <ExternalLink size={12} />
+                          View Demo
+                        </a>
+                      )}
+                      <a
+                        href={project.github}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex min-w-[110px] items-center justify-center gap-2 rounded-full bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300"
-                        whileHover={{
-                          scale: 1.05,
-                          boxShadow: "0 0 20px rgba(34, 197, 94, 0.5)"
-                        }}
-                        whileTap={{ scale: 0.95 }}
+                        className="inline-flex items-center justify-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-[11px] font-semibold text-yellow-400 transition-all duration-200 hover:border-yellow-400/40 hover:bg-yellow-400/10"
+                        title="Star on GitHub"
                       >
-                        <ExternalLink size={16} />
-                        Demo
-                      </motion.a>
+                        <Star size={12} />
+                      </a>
                     </div>
                   </div>
                 </motion.article>

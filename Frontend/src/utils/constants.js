@@ -14,6 +14,10 @@ export const API_ENDPOINTS = {
   POSTS: `${API_BASE_URL}/posts`,
   TESTIMONIALS: `${API_BASE_URL}/testimonials`,
   CERTIFICATIONS: `${API_BASE_URL}/certifications`,
+  GITHUB_REPOS: `${API_BASE_URL}/github/repos`,
+  GITHUB_PROFILE: `${API_BASE_URL}/github/profile`,
+  GITHUB_RESOLVE: `${API_BASE_URL}/github/resolve`,
+  GITHUB_REPO_LANGUAGES: `${API_BASE_URL}/github/repos/languages`,
 };
 
 // Navigation Items

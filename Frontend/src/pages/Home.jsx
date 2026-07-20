@@ -8,125 +8,58 @@ import Tech from "./tech/Tech";
 import Testimonial from "./testimonial/testimonial";
 import Works from "./works/Works";
 
-const sectionVariants = {
-  hidden: { opacity: 0, y: 50 },
-  visible: {
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: (i = 0) => ({
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.8,
+      duration: 0.7,
+      delay: i * 0.1,
       ease: "easeOut"
     }
-  }
-};
-
-const slideInFromRight = {
-  hidden: { opacity: 0, x: 100 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.8,
-      ease: "easeOut"
-    }
-  }
-};
-
-const slideInFromLeft = {
-  hidden: { opacity: 0, x: -100 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.8,
-      ease: "easeOut"
-    }
-  }
+  })
 };
 
 export default function Home() {
-  // Remove global parallax transform that was causing shaking
-  // const { transform } = useParallax(0.3);
-
   return (
     <motion.div
       className="relative"
-      // Remove the transform style that was causing the shaking
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
+      transition={{ duration: 0.8 }}
     >
-      <motion.div
-        variants={sectionVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-      >
+      <motion.section variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
         <HeroSection />
-      </motion.div>
+      </motion.section>
 
-      <motion.div
-        variants={slideInFromLeft}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-      >
+      <motion.section variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} custom={1}>
         <About />
-      </motion.div>
+      </motion.section>
 
-      <motion.div
-        variants={slideInFromRight}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-      >
+      <motion.section variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} custom={2}>
         <Journey />
-      </motion.div>
+      </motion.section>
 
-      <motion.div
-        variants={slideInFromLeft}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-      >
+      <motion.section variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} custom={3}>
         <Tech />
-      </motion.div>
+      </motion.section>
 
-      <motion.div
-        variants={slideInFromRight}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-      >
+      <motion.section variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} custom={4}>
         <Works />
-      </motion.div>
+      </motion.section>
 
-      <motion.div
-        variants={slideInFromLeft}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-      >
+      <motion.section variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} custom={5}>
         <Testimonial />
-      </motion.div>
+      </motion.section>
 
-      <motion.div
-        variants={slideInFromRight}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-      >
+      <motion.section variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} custom={6}>
         <Blogging />
-      </motion.div>
+      </motion.section>
 
-      <motion.div
-        variants={sectionVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-      >
+      <motion.section variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }} custom={7}>
         <CtaSection />
-      </motion.div>
+      </motion.section>
     </motion.div>
   );
 }

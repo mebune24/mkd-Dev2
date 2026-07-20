@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { Facebook, Github, Instagram, Linkedin, Mail, MessageCircle } from "lucide-react";
+import { Facebook, Github, Instagram, Linkedin, Mail, MessageCircle, Target, Zap, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useProfile } from "../../Hooks/useProfile";
 
 const containerVariants = {
@@ -82,108 +83,7 @@ export default function HeroSection() {
     return () => clearTimeout(timeout);
   }, [currentText, currentIndex, isDeleting, texts]);
 
-  const techGroups = [
-    {
-      title: "Languages",
-      items: [
-        {
-          name: "HTML",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg",
-          color: "#E34F26",
-        },
-        {
-          name: "CSS",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg",
-          color: "#1572B6",
-        },
-        {
-          name: "JavaScript",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg",
-          color: "#F7DF1E",
-        },
-        {
-          name: "Python",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
-          color: "#3776AB",
-        },
-      ],
-    },
-    {
-      title: "Frameworks & Libraries",
-      items: [
-        {
-          name: "React",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg",
-          color: "#61DAFB",
-        },
-        {
-          name: "Next.js",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg",
-          color: "#000000",
-        },
-        {
-          name: "Express",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg",
-          color: "#000000",
-        },
-        {
-          name: "Flask",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flask/flask-original.svg",
-          color: "#000000",
-        },
-        {
-          name: "Bootstrap",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bootstrap/bootstrap-original.svg",
-          color: "#7952B3",
-        },
-        {
-          name: "Tailwind",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg",
-          color: "#06B6D4",
-        },
-      ],
-    },
-    {
-      title: "Platforms & Tools",
-      items: [
-        {
-          name: "Node.js",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg",
-          color: "#339933",
-        },
-        {
-          name: "MongoDB",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg",
-          color: "#47A248",
-        },
-        {
-          name: "PostgreSQL",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg",
-          color: "#4169E1",
-        },
-        {
-          name: "MySQL",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg",
-          color: "#4479A1",
-        },
-        {
-          name: "GitHub",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg",
-          color: "#181717",
-        },
-        {
-          name: "Docker",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg",
-          color: "#2496ED",
-        },
-        {
-          name: "Figma",
-          logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg",
-          color: "#F24E1E",
-        },
-      ],
-    },
-  ];
+
 
   return (
     <motion.div
@@ -226,7 +126,7 @@ export default function HeroSection() {
               </h2>
 
               <motion.h1
-                className="text-4xl md:text-5xl font-bold leading-tight mb-4 text-emerald-400 min-h-[3rem] flex items-center"
+                className="text-4xl md:text-5xl font-bold leading-tight mb-4 text-emerald-400 min-h-12 flex items-center"
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
@@ -258,6 +158,26 @@ export default function HeroSection() {
                 balancing UX clarity with scalable architecture. Expect clean
                 systems, reliable releases, and measurable outcomes.
               </motion.p>
+
+              <motion.div
+                className="flex flex-wrap gap-3"
+                variants={itemVariants}
+              >
+                {[
+                  { label: "Full-Stack", color: "emerald" },
+                  { label: "React / Next.js", color: "cyan" },
+                  { label: "Node.js", color: "emerald" },
+                  { label: "TypeScript", color: "blue" },
+                  { label: "PostgreSQL", color: "cyan" }
+                ].map((tag) => (
+                  <span
+                    key={tag.label}
+                    className={`px-3 py-1 rounded-full border border-${tag.color}-400/30 bg-${tag.color}-500/10 text-${tag.color}-300 text-xs font-medium`}
+                  >
+                    {tag.label}
+                  </span>
+                ))}
+              </motion.div>
             </motion.div>
 
             {/* CTA Buttons */}
@@ -265,113 +185,141 @@ export default function HeroSection() {
               className="flex flex-wrap gap-4"
               variants={itemVariants}
             >
-              <motion.a
-                href="https://github.com/mkd-Dev2"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  backgroundColor: 'var(--accent)',
-                  color: 'var(--bg)'
-                }}
-                className="flex items-center gap-2 font-semibold px-6 py-3 rounded-lg transition-colors duration-300"
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0 0 20px rgba(34, 197, 94, 0.5)"
-                }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Github size={20} />
-                GitHub
-              </motion.a>
+                <Link
+                  to="/github?url=https://github.com/mebune24"
+                  className="flex items-center gap-2 font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105"
+                  style={{
+                    backgroundColor: 'var(--accent)',
+                    color: 'var(--bg)'
+                  }}
+                >
+                  <Github size={20} />
+                  Visit GitHub Profile
+                </Link>
 
-              <motion.a
-                href="https://www.linkedin.com/feed/"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  backgroundColor: 'var(--text)',
-                  color: 'var(--bg)'
-                }}
-                className="flex items-center gap-2 font-semibold px-6 py-3 rounded-lg transition-colors duration-300"
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0 0 20px rgba(255, 255, 255, 0.2)"
-                }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Linkedin size={20} />
-                LinkedIn
-              </motion.a>
+                <Link
+                  to="/github?url=https://github.com/mebune24?tab=repositories"
+                  className="flex items-center gap-2 font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105"
+                  style={{
+                    backgroundColor: 'var(--accent)',
+                    color: 'var(--bg)'
+                  }}
+                >
+                  <Github size={20} />
+                  View All GitHub Repo
+                </Link>
 
-              <motion.a
-                href="mailto:mebunedonstand797@gmail.com"
-                style={{
-                  color: 'var(--text)',
-                  borderColor: 'var(--accent)'
-                }}
-                className="flex items-center gap-2 font-semibold px-6 py-3 rounded-lg border transition-all duration-300"
-                whileHover={{
-                  scale: 1.05,
-                  borderColor: 'var(--accent)',
-                  boxShadow: "0 0 20px rgba(34, 197, 94, 0.3)"
-                }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Mail size={20} />
-                Email
-              </motion.a>
-            </motion.div>
-
-            {/* Social Icons */}
-            <motion.div
-              className="flex items-center gap-4"
-              variants={itemVariants}
-            >
-              <span style={{ color: 'var(--muted)' }} className="text-xs uppercase tracking-wider">
-                Social
-              </span>
-              <div className="flex items-center gap-3">
                 <motion.a
-                  href="https://wa.me/652856939"
+                  href="https://www.linkedin.com/feed/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: 'var(--accent)' }}
-                  className="p-2 hover:transition-colors"
-                  aria-label="WhatsApp"
-                  title="WhatsApp"
-                  whileHover={{ scale: 1.2, rotate: 5 }}
-                  whileTap={{ scale: 0.9 }}
+                  style={{
+                    backgroundColor: 'var(--text)',
+                    color: 'var(--bg)'
+                  }}
+                  className="flex items-center gap-2 font-semibold px-6 py-3 rounded-full transition-colors duration-300"
+                  whileHover={{
+                    scale: 1.05,
+                    boxShadow: "0 0 20px rgba(255, 255, 255, 0.2)"
+                  }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <MessageCircle size={20} />
+                  <Linkedin size={20} />
+                  LinkedIn
                 </motion.a>
+
                 <motion.a
-                  href="https://facebook.com/YOUR_FACEBOOK_PROFILE"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: 'var(--muted)' }}
-                  className="p-2 hover:transition-colors"
-                  aria-label="Facebook"
-                  title="Facebook"
-                  whileHover={{ scale: 1.2, rotate: -5 }}
-                  whileTap={{ scale: 0.9 }}
+                  href="mailto:mebunedonstand797@gmail.com"
+                  style={{
+                    color: 'var(--text)',
+                    borderColor: 'var(--accent)'
+                  }}
+                  className="flex items-center gap-2 font-semibold px-6 py-3 rounded-full border transition-all duration-300"
+                  whileHover={{
+                    scale: 1.05,
+                    borderColor: 'var(--accent)',
+                    boxShadow: "0 0 20px rgba(34, 197, 94, 0.3)"
+                  }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <Facebook size={20} />
+                  <Mail size={20} />
+                  Email
                 </motion.a>
-                <motion.a
-                  href="https://instagram.com/YOUR_INSTAGRAM_PROFILE"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: 'var(--muted)' }}
-                  className="p-2 hover:transition-colors"
-                  aria-label="Instagram"
-                  title="Instagram"
-                  whileHover={{ scale: 1.2, rotate: 5 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Instagram size={20} />
-                </motion.a>
-              </div>
-            </motion.div>
+              </motion.div>
+
+             {/* Social & Stats Row */}
+             <motion.div
+               className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+               variants={itemVariants}
+             >
+               {/* Social Icons */}
+               <div className="flex items-center gap-4">
+                 <span style={{ color: 'var(--muted)' }} className="text-xs uppercase tracking-wider">
+                   Social
+                 </span>
+                 <div className="flex items-center gap-3">
+                   <motion.a
+                     href="https://wa.me/652856939"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     style={{ color: 'var(--accent)' }}
+                     className="p-2 hover:transition-colors"
+                     aria-label="WhatsApp"
+                     title="WhatsApp"
+                     whileHover={{ scale: 1.2, rotate: 5 }}
+                     whileTap={{ scale: 0.9 }}
+                   >
+                     <MessageCircle size={20} />
+                   </motion.a>
+                   <motion.a
+                     href="https://facebook.com/YOUR_FACEBOOK_PROFILE"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     style={{ color: 'var(--muted)' }}
+                     className="p-2 hover:transition-colors"
+                     aria-label="Facebook"
+                     title="Facebook"
+                     whileHover={{ scale: 1.2, rotate: -5 }}
+                     whileTap={{ scale: 0.9 }}
+                   >
+                     <Facebook size={20} />
+                   </motion.a>
+                   <motion.a
+                     href="https://instagram.com/YOUR_INSTAGRAM_PROFILE"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     style={{ color: 'var(--muted)' }}
+                     className="p-2 hover:transition-colors"
+                     aria-label="Instagram"
+                     title="Instagram"
+                     whileHover={{ scale: 1.2, rotate: 5 }}
+                     whileTap={{ scale: 0.9 }}
+                   >
+                     <Instagram size={20} />
+                   </motion.a>
+                 </div>
+               </div>
+
+               {/* Developer Stats */}
+               <div className="grid grid-cols-3 gap-3">
+                 {[
+                   { value: "8+", label: "GitHub Repos" },
+                   { value: "5+", label: "Tech Stacks" },
+                   { value: "100%", label: "Clean Code" }
+                 ].map((stat, idx) => (
+                   <motion.div
+                     key={stat.label}
+                     className="text-center p-2.5 rounded-xl border border-white/10 bg-white/5"
+                     whileHover={{ scale: 1.05, rotateY: 10 }}
+                     transition={{ duration: 0.3 }}
+                     style={{ perspective: "1000px" }}
+                   >
+                     <div style={{ color: 'var(--accent)' }} className="text-lg font-bold">{stat.value}</div>
+                     <div style={{ color: 'var(--muted)' }} className="text-[10px]">{stat.label}</div>
+                   </motion.div>
+                 ))}
+               </div>
+             </motion.div>
           </motion.div>
 
           <motion.div
@@ -383,102 +331,43 @@ export default function HeroSection() {
               <h4 style={{ color: 'var(--text)' }} className="text-lg font-semibold mb-6">
                 Delivery Snapshot
               </h4>
-              <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 {[
-                  "Structured scoping and requirements alignment",
-                  "Performance-first engineering and accessibility",
-                  "Reliable releases with clean, maintainable code",
-                  "Cross-functional collaboration with product & design"
+                  {
+                    icon: Target,
+                    title: "Structured Scoping",
+                    desc: "Clear requirements alignment and scope definition"
+                  },
+                  {
+                    icon: Zap,
+                    title: "Performance First",
+                    desc: "Engineering focused on accessibility and speed"
+                  },
+                  {
+                    icon: ShieldCheck,
+                    title: "Reliable Releases",
+                    desc: "Clean, maintainable code with reliable delivery"
+                  },
+                  {
+                    icon: Users,
+                    title: "Cross-functional",
+                    desc: "Collaboration across product and design teams"
+                  },
                 ].map((item, index) => (
                   <motion.div
                     key={index}
-                    className="flex items-start gap-3"
-                    initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    className="p-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 cursor-default group"
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <motion.div
-                      className="w-2 h-2 rounded-full mt-2"
-                      style={{ backgroundColor: index % 2 === 0 ? 'var(--accent)' : '#38bdf8' }}
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
-                    />
-                    <p style={{ color: 'var(--muted)' }}>{item}</p>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-3 group-hover:shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-shadow duration-300">
+                      <item.icon size={20} className="text-emerald-400" />
+                    </div>
+                    <h5 style={{ color: 'var(--text)' }} className="font-semibold text-sm mb-1">{item.title}</h5>
+                    <p style={{ color: 'var(--muted)' }} className="text-xs leading-relaxed">{item.desc}</p>
                   </motion.div>
                 ))}
               </div>
-            </motion.div>
-
-            {/* Technologies */}
-            <motion.div
-              className="space-y-8"
-              variants={containerVariants}
-            >
-              {techGroups.map((group, groupIndex) => (
-                <motion.div
-                  key={group.title}
-                  variants={itemVariants}
-                >
-                  <motion.div
-                    className="flex items-center gap-4 mb-4"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    <h4 style={{ color: 'var(--text)' }} className="font-semibold">
-                      {group.title}
-                    </h4>
-                    <motion.div
-                      className="flex-1 h-px bg-gradient-to-r from-emerald-400/50 to-transparent"
-                      initial={{ scaleX: 0 }}
-                      whileInView={{ scaleX: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.8, delay: 0.2 }}
-                    />
-                  </motion.div>
-                  <motion.div
-                    className="flex flex-wrap gap-4"
-                    variants={containerVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, amount: 0.3 }}
-                  >
-                    {group.items.map((tech, techIndex) => (
-                      <motion.div
-                        key={tech.name}
-                        className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-default group"
-                        title={tech.name}
-                        variants={techItemVariants}
-                        custom={techIndex}
-                        whileHover="hover"
-                        style={{ perspective: "1000px" }}
-                      >
-                        <motion.img
-                          src={tech.logo}
-                          alt={tech.name}
-                          className="w-8 h-8 transition-all duration-300"
-                          style={{ filter: `drop-shadow(0 0 8px ${tech.color}20)` }}
-                          whileHover={{
-                            filter: `drop-shadow(0 0 15px ${tech.color}50) brightness(1.2)`,
-                            rotate: [0, -10, 10, 0],
-                            scale: 1.1
-                          }}
-                          transition={{ duration: 0.4 }}
-                        />
-                        <motion.span
-                          style={{ color: 'var(--muted)' }}
-                          className="text-xs font-medium text-center"
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          {tech.name}
-                        </motion.span>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </motion.div>
-              ))}
             </motion.div>
           </motion.div>
         </div>

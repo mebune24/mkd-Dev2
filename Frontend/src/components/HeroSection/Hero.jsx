@@ -136,7 +136,7 @@ export default function HeroSection() {
         {/* CTA Buttons */}
         <div className="flex flex-wrap gap-4">
           <a
-            href="https://github.com/mkd-Dev2"
+            href="https://github.com/mebune24"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-black font-semibold px-6 py-3 rounded-full transition-all duration-300 shadow-lg shadow-green-500/25 hover:shadow-green-500/40"
