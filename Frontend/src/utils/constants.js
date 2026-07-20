@@ -3,7 +3,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}/api`
   : typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3000/api'                     // Local environment fallback
-    : 'https://onrender.com';         // Direct production URL target for Vercel
+    : 'https://mkd-dev2-1.onrender.com/api';         // Direct production URL target for Vercel
 
 // API Endpoints
 export const API_ENDPOINTS = {
