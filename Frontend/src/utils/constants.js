@@ -1,7 +1,9 @@
-// API Base URL (Dynamically checks Vercel environment variables, defaults to localhost for dev)
+// API Base URL (Smart runtime checking logic to bypass dashboard variable bugs)
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}/api`
-  : 'http://localhost:3000/api';
+  : typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3000/api'                     // Local environment fallback
+    : 'https://onrender.com';         // Direct production URL target for Vercel
 
 // API Endpoints
 export const API_ENDPOINTS = {
