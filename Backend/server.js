@@ -10,7 +10,7 @@ const SECRET_KEY = 'your_super_secret_key_change_this_in_production'; // In a re
 
 // Configure CORS to allow requests from frontend
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: 'https://portfolio24-mu.vercel.app',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
