@@ -1,5 +1,7 @@
-// API Base URL
-export const API_BASE_URL = 'http://localhost:3000/api';
+// API Base URL (Dynamically checks Vercel environment variables, defaults to localhost for dev)
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api`
+  : 'http://localhost:3000/api';
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -24,7 +26,7 @@ export const NAV_ITEMS = [
 ];
 
 // WhatsApp URL (Update with actual number)
-export const WHATSAPP_URL = 'https://wa.me/652856939';
+export const WHATSAPP_URL = 'https://wa.me';
 
 // Dashboard Tabs
 export const DASHBOARD_TABS = [
