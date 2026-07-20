@@ -5,12 +5,23 @@ const bcrypt = require('bcryptjs');
 const { initializeDb } = require('./database');
 
 const app = express();
-const port = 3000;
-const SECRET_KEY = 'your_super_secret_key_change_this_in_production'; // In a real app, use .env
+// Use Render's dynamic port environment variable, fallback to 3000 locally
+const port = process.env.PORT || 3000;
+const SECRET_KEY = process.env.JWT_SECRET || 'your_super_secret_key_change_this_in_production';
 
-// Configure CORS to allow requests from frontend
+// Configure CORS to authorize all variation subdomains from Vercel dynamically
 app.use(cors({
-  origin: ['https://portfolio24-mu.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const isLocalhost = origin.startsWith('http://localhost:');
+    const isVercelDomain = origin.includes('portfolio24') && origin.endsWith('.vercel.app');
+
+    if (isLocalhost || isVercelDomain) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -20,7 +31,11 @@ app.use(express.json());
 let db;
 
 (async () => {
-  db = await initializeDb();
+  try {
+    db = await initializeDb();
+  } catch (err) {
+    console.error("Database failed to initialize:", err.message);
+  }
 })();
 
 // Middleware to authenticate token
@@ -60,8 +75,8 @@ app.get('/api/posts', async (req, res) => {
     const posts = await db.all('SELECT * FROM posts');
     const parsedPosts = posts.map(post => ({
       ...post,
-      tags: JSON.parse(post.tags),
-      pages: JSON.parse(post.pages)
+      tags: JSON.parse(post.tags || '[]'),
+      pages: JSON.parse(post.pages || '[]')
     }));
     res.json(parsedPosts);
   } catch (err) {
@@ -73,8 +88,8 @@ app.get('/api/posts/:id', async (req, res) => {
   try {
     const post = await db.get('SELECT * FROM posts WHERE id = ?', req.params.id);
     if (!post) return res.status(404).json({ error: 'Post not found' });
-    post.tags = JSON.parse(post.tags);
-    post.pages = JSON.parse(post.pages);
+    post.tags = JSON.parse(post.tags || '[]');
+    post.pages = JSON.parse(post.pages || '[]');
     res.json(post);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -122,7 +137,7 @@ app.get('/api/projects', async (req, res) => {
     const projects = await db.all('SELECT * FROM projects');
     const parsedProjects = projects.map(p => ({
       ...p,
-      stack: JSON.parse(p.stack)
+      stack: JSON.parse(p.stack || '[]')
     }));
     res.json(parsedProjects);
   } catch (err) {
@@ -235,232 +250,13 @@ app.get('/api/github/profile', async (req, res) => {
       avatar_url: profile.avatar_url,
       html_url: profile.html_url,
       public_repos: profile.public_repos,
-      followers: profile.followers,
-      following: profile.following,
-      location: profile.location,
-      blog: profile.blog,
-      company: profile.company,
-      created_at: profile.created_at
+      followers: profile.followers
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// --- GitHub Resolve Proxy ---
-app.get('/api/github/resolve', async (req, res) => {
-  try {
-    const { url } = req.query;
-    if (!url || typeof url !== 'string') {
-      return res.status(400).json({ error: 'Missing url parameter' });
-    }
-
-    const normalizedUrl = url.trim();
-
-    // Determine if it's a repos page or profile page
-    const isReposUrl = normalizedUrl.includes('tab=repositories') || normalizedUrl.includes('/repos');
-    const usernameMatch = normalizedUrl.match(/github\.com\/([^\/\?]+)/);
-
-    if (!usernameMatch) {
-      return res.status(400).json({ error: 'Invalid GitHub URL' });
-    }
-
-    const username = usernameMatch[1];
-
-    if (isReposUrl) {
-      const response = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=50`);
-      if (!response.ok) throw new Error('Failed to fetch GitHub repos');
-      const repos = await response.json();
-      const formatted = repos.map(repo => {
-        const techStack = [];
-        if (repo.language) {
-          techStack.push({ name: repo.language, logo: `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${repo.language.toLowerCase()}/${repo.language.toLowerCase()}-original.svg` });
-        }
-        const topics = (repo.topics || []).slice(0, 4).map(topic => ({
-          name: topic,
-          logo: `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${topic.toLowerCase()}/${topic.toLowerCase()}-original.svg`
-        }));
-        return {
-          id: `github-${repo.id}`,
-          title: repo.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          description: repo.description || 'No description provided.',
-          image: `https://opengraph.githubassets.com/1/${repo.full_name}`,
-          stack: [...techStack, ...topics],
-          github: repo.html_url,
-          demo: repo.homepage || null,
-          isGithub: true
-        };
-      });
-      return res.json({ type: 'repos', data: formatted });
-    } else {
-      const response = await fetch(`https://api.github.com/users/${username}`);
-      if (!response.ok) throw new Error('Failed to fetch GitHub profile');
-      const profile = await response.json();
-      const profileData = {
-        login: profile.login,
-        name: profile.name,
-        bio: profile.bio,
-        avatar_url: profile.avatar_url,
-        html_url: profile.html_url,
-        public_repos: profile.public_repos,
-        followers: profile.followers,
-        following: profile.following,
-        location: profile.location,
-        blog: profile.blog,
-        company: profile.company,
-        created_at: profile.created_at
-      };
-      return res.json({ type: 'profile', data: profileData });
-    }
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-const fs = require('fs');
-const path = require('path');
-const multer = require('multer');
-
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-// Multer Storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage: storage });
-
-// Serve static files
-app.use('/uploads', express.static('uploads'));
-
-// --- Certification Routes ---
-app.get('/api/certifications', async (req, res) => {
-  try {
-    const certifications = await db.all('SELECT * FROM certifications');
-    res.json(certifications);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/certifications', authenticateToken, upload.single('certificateFile'), async (req, res) => {
-  const { name, issuer, date, description, image, certificateLink } = req.body;
-  const link = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : certificateLink;
-  try {
-    const result = await db.run(
-      'INSERT INTO certifications (name, issuer, date, description, image, certificateLink) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, issuer, date, description, image, link]
-    );
-    res.json({ id: result.lastID });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.put('/api/certifications/:id', authenticateToken, upload.single('certificateFile'), async (req, res) => {
-  const { name, issuer, date, description, image, certificateLink } = req.body;
-  const link = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : certificateLink;
-  try {
-    await db.run(
-      'UPDATE certifications SET name = ?, issuer = ?, date = ?, description = ?, image = ?, certificateLink = ? WHERE id = ?',
-      [name, issuer, date, description, image, link, req.params.id]
-    );
-    res.json({ message: 'Certification updated' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete('/api/certifications/:id', authenticateToken, async (req, res) => {
-  try {
-    await db.run('DELETE FROM certifications WHERE id = ?', req.params.id);
-    res.json({ message: 'Certification deleted' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// --- Testimonial Routes ---
-app.get('/api/testimonials', async (req, res) => {
-  try {
-    const testimonials = await db.all('SELECT * FROM testimonials');
-    res.json(testimonials);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/testimonials', upload.single('image'), async (req, res) => {
-  const { name, role, company, rating, text, project, phone } = req.body;
-  const image = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : req.body.image; // Fallback if no file (or manual URL?) but user requirement says upload
-
-  try {
-    const result = await db.run(
-      'INSERT INTO testimonials (name, role, company, image, rating, text, project, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, role, company, image, rating, text, project, phone]
-    );
-    res.json({ id: result.lastID });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete('/api/testimonials/:id', authenticateToken, async (req, res) => {
-  try {
-    await db.run('DELETE FROM testimonials WHERE id = ?', req.params.id);
-    res.json({ message: 'Testimonial deleted' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// --- Profile Routes ---
-app.get('/api/profile', async (req, res) => {
-  try {
-    const profile = await db.get('SELECT * FROM profile LIMIT 1');
-    if (!profile) return res.status(404).json({ error: 'Profile not found' });
-    res.json(profile);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.put('/api/profile', authenticateToken, upload.single('avatar'), async (req, res) => {
-  const { name, title, subtitle, bio, welcome_message } = req.body;
-  const avatar = req.file ? `http://localhost:3000/uploads/${req.file.filename}` : req.body.avatar;
-
-  try {
-    // Check if profile exists
-    const existingProfile = await db.get('SELECT id FROM profile LIMIT 1');
-
-    if (existingProfile) {
-      // Update existing profile
-      await db.run(
-        'UPDATE profile SET name = ?, title = ?, subtitle = ?, bio = ?, avatar = ?, welcome_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [name, title, subtitle, bio, avatar, welcome_message, existingProfile.id]
-      );
-    } else {
-      // Create new profile
-      await db.run(
-        'INSERT INTO profile (name, title, subtitle, bio, avatar, welcome_message) VALUES (?, ?, ?, ?, ?, ?)',
-        [name, title, subtitle, bio, avatar, welcome_message]
-      );
-    }
-
-    res.json({ message: 'Profile updated successfully' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+  console.log(`Server running on port ${port}`);
 });
