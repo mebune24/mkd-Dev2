@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: mkd-dev2-backend
+    env: node
+    plan: free
+    rootDir: Backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mkd-dev2-db
+          property: connectionString
+
+databases:
+  - name: mkd-dev2-db
+    plan: free
+    databaseName: mkd_dev2
+    user: mkd_dev2_user
