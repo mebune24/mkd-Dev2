@@ -54,8 +54,12 @@ export default function GitHub() {
 
         if (response.type === 'repos' && Array.isArray(response.data)) {
           Promise.all(
-            response.data.map(repo =>
-              fetch(`${API_ENDPOINTS.GITHUB_REPO_LANGUAGES}?owner=${repo.fullName.split('/')[0]}&repo=${encodeURIComponent(repo.fullName.split('/')[1])}`)
+            response.data.map(repo => {
+              if (!repo.fullName) return Promise.resolve(repo);
+              const parts = repo.fullName.split('/');
+              const owner = parts[0];
+              const name = parts[1];
+              return fetch(`${API_ENDPOINTS.GITHUB_REPO_LANGUAGES}?owner=${owner}&repo=${encodeURIComponent(name)}`)
                 .then(res => res.ok ? res.json() : [])
                 .then(languages => {
                   const langEntries = Object.entries(languages)
@@ -66,16 +70,16 @@ export default function GitHub() {
                       logo: `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${name.toLowerCase()}/${name.toLowerCase()}-original.svg`
                     }));
 
-                  return {
-                    ...repo,
-                    stack: [
-                      ...repo.stack.filter(s => !langEntries.find(l => l.name === s.name)),
-                      ...langEntries
-                    ].slice(0, 6)
-                  };
-                })
-            )
-          ).then(setEnrichedRepos);
+                   return {
+                     ...repo,
+                     stack: [
+                       ...repo.stack.filter(s => !langEntries.find(l => l.name === s.name)),
+                       ...langEntries
+                     ].slice(0, 6)
+                   };
+                 })
+              })
+            ).then(setEnrichedRepos);
         }
 
         setLoading(false);

@@ -315,7 +315,8 @@ app.get('/api/github/resolve', async (req, res) => {
           stack: [...techStack, ...topics],
           github: repo.html_url,
           demo: repo.homepage || null,
-          isGithub: true
+          isGithub: true,
+          fullName: repo.full_name
         };
       });
       return res.json({ type: 'repos', data: formatted });
