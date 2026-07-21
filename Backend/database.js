@@ -1,38 +1,46 @@
-const sqlite3 = require('sqlite3').verbose();
-const { open } = require('sqlite');
+const { Pool } = require('pg');
 
-async function openDb() {
-  return open({
-    filename: './database.sqlite',
-    driver: sqlite3.Database
-  });
+const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+if (!connectionString) {
+  console.warn('WARNING: DATABASE_URL not set. PostgreSQL connection requires DATABASE_URL in production.');
 }
 
+const pool = new Pool({
+  connectionString,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
+
 async function initializeDb() {
-  const db = await openDb();
-  await db.exec(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS posts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       title TEXT,
       excerpt TEXT,
       date TEXT,
       readTime TEXT,
       category TEXT,
       image TEXT,
-      tags TEXT,
-      pages TEXT
+      tags JSONB,
+      pages JSONB
     );
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS projects (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       title TEXT,
       description TEXT,
       image TEXT,
-      stack TEXT,
+      stack JSONB,
       github TEXT,
       demo TEXT
     );
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS certifications (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT,
       issuer TEXT,
       date TEXT,
@@ -40,13 +48,19 @@ async function initializeDb() {
       image TEXT,
       certificateLink TEXT
     );
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       username TEXT UNIQUE,
       password TEXT
     );
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS testimonials (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT,
       role TEXT,
       company TEXT,
@@ -56,19 +70,24 @@ async function initializeDb() {
       project TEXT,
       phone TEXT
     );
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS profile (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT,
       title TEXT,
       subtitle TEXT,
       bio TEXT,
       avatar TEXT,
       welcome_message TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
-  return db;
+
+  console.log('PostgreSQL tables initialized');
+  return pool;
 }
 
-module.exports = { openDb, initializeDb };
+module.exports = { pool, initializeDb };
