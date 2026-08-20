@@ -16,18 +16,20 @@ model User {
   status        String          @default("active") // "active", "suspended"
   createdAt     DateTime        @default(now())
   
-  properties    Property[]      @relation("LandlordProperties")
-  applications  Application[]   @relation("TenantApplications")
-  kycSubmission KYCSubmission?
+  properties          Property[]            @relation("LandlordProperties")
+  applications        Application[]         @relation("TenantApplications")
+  agentVerification   AgentVerification?
+  agentTransactions   AgentTransaction[]    @relation("AgentLedger")
+  platformFees        PlatformFee[]         @relation("LandlordFees")
 }
 
-model KYCSubmission {
+model AgentVerification {
   id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
-  tier        String   // "basic", "premium"
-  status      String   @default("pending") // "pending", "verified", "rejected"
-  documents   String   // JSON string of document URLs/paths
+  agentId     String   @unique
+  agent       User     @relation(fields: [agentId], references: [id])
+  status      String   @default("pending") // "pending", "approved", "rejected"
+  documents   String   // JSON string of documents
+  adminNotes  String?
   submittedAt DateTime @default(now())
 }
 
@@ -41,12 +43,23 @@ model Property {
   monthlyRent  Int
   deposit      Int
   status       String        @default("available") // "draft", "available", "rented"
-  isVerified   Boolean       @default(false)
   amenities    String        // JSON string
   images       String        // JSON string
   createdAt    DateTime      @default(now())
   
-  applications Application[]
+  applications          Application[]
+  propertyVerification  PropertyVerification?
+  leases                Lease[]
+}
+
+model PropertyVerification {
+  id           String   @id @default(uuid())
+  propertyId   String   @unique
+  property     Property @relation(fields: [propertyId], references: [id])
+  status       String   @default("pending") // "pending", "verified", "rejected"
+  verifiedBy   String?  // Agent ID who verified it
+  notes        String?
+  verifiedAt   DateTime?
 }
 
 model Application {
@@ -55,7 +68,58 @@ model Application {
   property     Property @relation(fields: [propertyId], references: [id])
   tenantId     String
   tenant       User     @relation("TenantApplications", fields: [tenantId], references: [id])
-  status       String   @default("submitted") // "submitted", "underReview", "approved", "rejected"
+  status       String   @default("submitted") // "draft", "submitted", "under_review", "approved", "rejected", "withdrawn"
   coverLetter  String?
   submittedAt  DateTime @default(now())
+  
+  lease        Lease?
+}
+
+model Lease {
+  id             String      @id @default(uuid())
+  applicationId  String      @unique
+  application    Application @relation(fields: [applicationId], references: [id])
+  propertyId     String
+  property       Property    @relation(fields: [propertyId], references: [id])
+  status         String      @default("generated") // "generated", "pending_tenant", "pending_landlord", "signed", "active"
+  documentUrl    String?
+  createdAt      DateTime    @default(now())
+  
+  payments       Payment[]
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  leaseId        String
+  lease          Lease    @relation(fields: [leaseId], references: [id])
+  type           String   // "rent", "deposit", "application_fee"
+  amount         Int
+  status         String   @default("pending") // "created", "pending", "processing", "successful", "failed"
+  idempotencyKey String   @unique
+  providerTxId   String?  @unique
+  createdAt      DateTime @default(now())
+}
+
+model PlatformFee {
+  id             String   @id @default(uuid())
+  landlordId     String
+  landlord       User     @relation("LandlordFees", fields: [landlordId], references: [id])
+  type           String   // "subscription", "success_fee"
+  amount         Int
+  status         String   @default("due") // "not_due", "due", "processing", "paid"
+  referenceId    String?  // e.g. Lease ID for success fee
+  createdAt      DateTime @default(now())
+}
+
+model AgentTransaction {
+  id             String   @id @default(uuid())
+  agentId        String
+  agent          User     @relation("AgentLedger", fields: [agentId], references: [id])
+  type           String   // "commission", "withdrawal"
+  amount         Int      // positive for commission, negative for withdrawal
+  status         String   @default("pending") // "pending", "eligible", "available", "processing", "paid", "failed"
+  sourceEvent    String   // e.g. "property_acquisition", "tenant_referral"
+  referenceId    String?  // e.g. Lease ID
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
 }

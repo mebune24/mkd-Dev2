@@ -1,11 +1,24 @@
 import { Router } from 'express';
-import { getProperties, getPropertyById, createProperty } from '../controllers/propertyController';
-import { authenticate } from '../middleware/authMiddleware';
+import {
+  getProperties,
+  getPropertyById,
+  getMyProperties,
+  createProperty,
+  updateProperty,
+  deleteProperty,
+} from '../controllers/propertyController';
+import {
+  authenticate,
+  requireLandlord,
+} from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/', getProperties);
-router.get('/:id', getPropertyById);
-router.post('/', authenticate, createProperty);
+router.get('/', getProperties);                            // public
+router.get('/mine', authenticate, requireLandlord, getMyProperties); // landlord only
+router.get('/:id', getPropertyById);                      // public
+router.post('/', authenticate, requireLandlord, createProperty);
+router.patch('/:id', authenticate, requireLandlord, updateProperty);
+router.delete('/:id', authenticate, requireLandlord, deleteProperty);
 
 export default router;

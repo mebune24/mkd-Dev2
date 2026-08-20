@@ -1,10 +1,17 @@
 import { Router } from 'express';
-import { getApplications, createApplication } from '../controllers/applicationController';
-import { authenticate } from '../middleware/authMiddleware';
+import {
+  getApplications,
+  getApplicationById,
+  createApplication,
+  updateApplicationStatus,
+} from '../controllers/applicationController';
+import { authenticate, requireTenant } from '../middleware/authMiddleware';
 
 const router = Router();
 
 router.get('/', authenticate, getApplications);
-router.post('/', authenticate, createApplication);
+router.get('/:id', authenticate, getApplicationById);
+router.post('/', authenticate, requireTenant, createApplication);
+router.patch('/:id/status', authenticate, updateApplicationStatus);
 
 export default router;

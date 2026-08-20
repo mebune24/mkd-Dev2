@@ -1,11 +1,24 @@
 import { Router } from 'express';
-import { getUsers, submitKyc, getKycSubmissions } from '../controllers/userController';
-import { authenticate } from '../middleware/authMiddleware';
+import {
+  getUsers,
+  updateUserStatus,
+  submitAgentKyc,
+  getAgentKycSubmissions,
+  reviewAgentKyc,
+  getAgentWallet,
+} from '../controllers/userController';
+import { authenticate, requireAdmin, requireAgent } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/', authenticate, getUsers);
-router.post('/kyc', authenticate, submitKyc);
-router.get('/kyc', authenticate, getKycSubmissions);
+// Admin only
+router.get('/', authenticate, requireAdmin, getUsers);
+router.patch('/:id/status', authenticate, requireAdmin, updateUserStatus);
+router.get('/kyc/agents', authenticate, requireAdmin, getAgentKycSubmissions);
+router.patch('/kyc/agents/:id', authenticate, requireAdmin, reviewAgentKyc);
+
+// Agent only
+router.post('/kyc/agent', authenticate, requireAgent, submitAgentKyc);
+router.get('/wallet', authenticate, requireAgent, getAgentWallet);
 
 export default router;

@@ -1,34 +1,40 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
 
 dotenv.config();
 
 const app = express();
-const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json());
 
-import authRoutes from './routes/auth';
-import userRoutes from './routes/users';
-import propertyRoutes from './routes/properties';
+// ── Routes ────────────────────────────────────
+import authRoutes        from './routes/auth';
+import userRoutes        from './routes/users';
+import propertyRoutes    from './routes/properties';
 import applicationRoutes from './routes/applications';
+import platformFeeRoutes from './routes/platformFees';
+import commissionRoutes  from './routes/commissions';
 
-const PORT = process.env.PORT || 3000;
+const BASE = '/api';
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/properties', propertyRoutes);
-app.use('/api/applications', applicationRoutes);
+app.use(`${BASE}/auth`,          authRoutes);
+app.use(`${BASE}/users`,         userRoutes);
+app.use(`${BASE}/properties`,    propertyRoutes);
+app.use(`${BASE}/applications`,  applicationRoutes);
+app.use(`${BASE}/platform-fees`, platformFeeRoutes);
+app.use(`${BASE}/commissions`,   commissionRoutes);
 
-app.get('/api/health', (req, res) => {
+// ── Health ────────────────────────────────────
+app.get(`${BASE}/health`, (_req, res) => {
   res.json({ status: 'ok', message: 'Space Rentals API is running' });
 });
 
+// ── Start ─────────────────────────────────────
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Space Rentals API running on port ${PORT}`);
 });
 
-export { app, prisma };
+export { app };
