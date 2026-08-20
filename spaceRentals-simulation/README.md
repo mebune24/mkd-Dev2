@@ -1,6 +1,6 @@
 # Space Rentals 🏠
 
-Space Rentals is a comprehensive property rental platform connecting **Tenants**, **Landlords**, **Field Agents**, and **Administrators** in Cameroon (and beyond). It features a Flutter-based cross-platform mobile application and a Node.js/Express backend API.
+Space Rentals is a comprehensive **property rental platform** connecting **Tenants**, **Landlords**, **Field Agents**, and **Administrators** in Cameroon (and beyond). It features a Flutter-based cross-platform mobile application and a Node.js/Express backend API.
 
 ---
 
@@ -9,35 +9,41 @@ Space Rentals is a comprehensive property rental platform connecting **Tenants**
 The platform is split into two primary components:
 
 1. **`space_rentals/` (Frontend):** A rich, cross-platform Flutter application leveraging Riverpod for state management, providing distinct dashboards for the 4 user roles.
-2. **`Backend/` (API):** A Node.js and Express RESTful API utilizing Prisma ORM and SQLite (easily migratable to PostgreSQL) to handle real data persistence, JWT authentication, and business logic.
+2. **`Backend/` (API):** A Node.js and Express RESTful API utilizing Prisma ORM and PostgreSQL to handle real data persistence, JWT authentication, object-level authorization, and strict domain state machines.
+
+> **Note on Architecture Principle:**
+> The Flutter app requests actions; the backend decides whether those actions are valid; the database records the resulting state; and payment providers confirm financial events.
 
 ---
 
-## 🚀 Features by Role
+## 🚀 Features by Role (MVP)
 
 ### 👥 Tenants
-- Browse and search available verified properties.
-- Submit rental applications directly through the app.
-- Monetize via the **Refer & Earn** program (invite landlords/tenants).
-- Participate in **Micro-Gigs** (e.g., helping landlords clean or inspect properties).
+- **Register & Verify:** Basic identity verification.
+- **Browse & Search:** Find available, verified properties.
+- **Apply & Track:** Submit rental applications and track their progress through the state machine.
+- **Lease & Rent:** Sign leases and enter active rentals.
 
 ### 🏢 Landlords
-- List and manage rental properties.
-- Review and approve/reject tenant applications.
-- Hire verified Field Agents to represent them, show properties, and handle acquisitions.
-- Post Micro-Gigs for tenants to complete.
+- **Register & Verify:** Identity and ownership authority verification.
+- **Subscribe:** Pay the monthly platform subscription.
+- **List Properties:** Create property listings and get them verified by Field Agents.
+- **Manage Applications:** Receive, review, and approve tenant applications.
+- **Lease & Rent:** Sign leases and collect rent directly from tenants.
+- **Platform Fees:** Pay the Space success fee once a rental becomes active.
 
 ### 🕵️ Field Agents
-- Perform KYC (Know Your Customer) and property verifications.
-- Handle property acquisitions and earn commissions (e.g., 2,000 FCFA per property).
-- Earn referral commissions (e.g., 1,000 FCFA per tenant referral).
-- Track mobile money withdrawals directly from the Agent Dashboard.
+- **Register & Verify:** Full KYC verification and Admin approval.
+- **Property Acquisition:** Submit properties on behalf of landlords.
+- **Property Verification:** Perform on-the-ground physical verifications.
+- **Earn Commissions:** Track attributed properties and earn commissions (e.g., 2,000 FCFA) per **successfully rented** property acquired by the agent.
+- **Withdrawals:** Withdraw eligible commissions via Mobile Money.
 
 ### 🛡️ Administrators
-- Approve or reject Agent/Landlord/Tenant KYC submissions.
-- Resolve disputes between users.
-- Verify properties for "Level 3 Verified" status.
-- Monitor global transactions and user statistics.
+- **KYC & Verification:** Review and approve different tiers of user verification.
+- **Dispute Resolution:** Handle disputes between landlords and tenants.
+- **Financial Oversight:** Monitor payments, subscriptions, commissions, and agent wallets via the immutable ledger.
+- **Audit Logs:** Review systemic actions.
 
 ---
 
@@ -47,13 +53,15 @@ The platform is split into two primary components:
 *   **Framework:** Flutter (Dart)
 *   **State Management:** Riverpod
 *   **Routing:** GoRouter
-*   **UI/UX Architecture:** Unified `FormSafeModal` (prevents data loss) and central Toast Notifications system.
+*   **Architecture:** Repository Pattern, Use Case Pattern, Dependency Injection.
+*   **UI/UX:** Unified `FormSafeModal` (prevents data loss) and central Toast Notifications system.
 
 ### Backend (Node.js)
 *   **Framework:** Express.js (TypeScript)
 *   **ORM:** Prisma
-*   **Database:** SQLite (development) -> PostgreSQL (production ready)
-*   **Security:** JWT (JSON Web Tokens), bcrypt (Password Hashing)
+*   **Database:** PostgreSQL (Docker for dev, Managed for prod)
+*   **Security:** JWT (JSON Web Tokens), bcrypt (Password Hashing), Object-Level Authorization (RBAC).
+*   **Financials:** Idempotent payment webhooks and a strict AgentTransaction ledger.
 
 ---
 
@@ -65,16 +73,20 @@ The platform is split into two primary components:
    ```bash
    cd Backend
    ```
-2. Install dependencies:
+2. Start the PostgreSQL Docker container (Ensure Docker is running):
+   ```bash
+   docker-compose up -d
+   ```
+3. Install dependencies:
    ```bash
    npm install
    ```
-3. Set up your environment variables by checking the `.env` file (already preconfigured for local dev).
-4. Run Prisma database migrations to create the SQLite database:
+4. Set up your environment variables by checking the `.env` file.
+5. Run Prisma database migrations to create the PostgreSQL schema:
    ```bash
-   npx prisma db push
+   npx prisma migrate dev
    ```
-5. Start the development server (runs on port 3000):
+6. Start the development server:
    ```bash
    npm run dev
    # OR using tsx directly:
@@ -98,21 +110,29 @@ The platform is split into two primary components:
 
 ---
 
-## 💰 Unit Economics & Business Model (Example)
+## 💰 Unit Economics & Business Model
 
-Space Rentals generates revenue through platform fees rather than taking a percentage of the actual rent. For example, on a **45,000 FCFA** monthly rent:
+Space Rentals generates revenue through platform fees rather than taking a percentage of the actual rent. 
 
-*   **100% of the Rent (45k)** goes directly to the Landlord.
+> **Important:** Space does **NOT** escrow the monthly rent. 100% of the rent goes directly from the Tenant to the Landlord.
+
+For example, on a **45,000 FCFA** monthly rent:
+
+*   **Tenant Application Fee:** 3,000 FCFA (paid by Tenant via Mobile Money).
 *   **Platform Subscription:** 5,000 FCFA / month (paid by Landlord).
-*   **Tenant Application Fee:** 3,000 FCFA (paid by Tenant via Mobile Money integration).
-*   **Success Fee:** 10,000 FCFA upon successful lease signing.
-*   **Agent Commissions:** Paid out from the platform's Success/Application fees (e.g., 1k for tenant referral, 2k for property acquisition).
+*   **Success/Platform Fee:** 10,000 FCFA (paid by Landlord) due **only when the rental becomes active** after the initial rent/deposit payment is confirmed.
 
-*(Note: These figures are variables and subject to final business rules, but represent the operational logic of the platform).*
+**Agent Commissions:** 
+Commissions (e.g., 2,000 FCFA for property acquisition) become eligible for payout **only after** the property gets rented and the initial payment is confirmed.
 
 ---
 
-## 🤝 Contribution Guidelines
+## 🤝 Core Domain State Machines
 
-- When modifying forms in the Flutter app, ensure they are wrapped in `FormSafeModal` to prevent accidental loss of user data.
-- Ensure all passive notifications use `context.showToast()`, `context.showSuccessToast()`, or `context.showErrorToast()` from `lib/core/utils/ui_helpers.dart` rather than raw `ScaffoldMessenger` calls.
+The backend enforces strict state transitions. Examples include:
+
+- **Application:** `DRAFT` → `SUBMITTED` → `UNDER_REVIEW` → (`APPROVED` | `REJECTED` | `WITHDRAWN`)
+- **Lease:** `GENERATED` → `PENDING_TENANT_SIGNATURE` → `PENDING_LANDLORD_SIGNATURE` → `SIGNED`
+- **Payment:** `CREATED` → `PENDING` → `PROCESSING` → (`SUCCESSFUL` | `FAILED` | `EXPIRED`)
+- **Platform Fee:** `NOT_DUE` → `DUE` → `PAYMENT_PROCESSING` → `PAID`
+- **Agent Commission:** `PENDING` → `ELIGIBLE` → `AVAILABLE` → `WITHDRAWAL_REQUESTED` → `PROCESSING` → (`PAID` | `FAILED`)
