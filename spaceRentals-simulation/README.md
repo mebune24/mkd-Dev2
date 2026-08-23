@@ -136,3 +136,27 @@ The backend enforces strict state transitions. Examples include:
 - **Payment:** `CREATED` → `PENDING` → `PROCESSING` → (`SUCCESSFUL` | `FAILED` | `EXPIRED`)
 - **Platform Fee:** `NOT_DUE` → `DUE` → `PAYMENT_PROCESSING` → `PAID`
 - **Agent Commission:** `PENDING` → `ELIGIBLE` → `AVAILABLE` → `WITHDRAWAL_REQUESTED` → `PROCESSING` → (`PAID` | `FAILED`)
+
+---
+
+## 🔗 Frontend-Backend Integration & Data Fetching
+
+To connect the Flutter application to the real Node.js/PostgreSQL backend, Space Rentals uses a robust **API-driven architecture**. Here is how data (like Properties) is fetched from the backend, providing clarity for technical and business decisions:
+
+### 1. Network Layer (API Client)
+Instead of using mock in-memory data, the app uses an `ApiClient` configured to communicate with `http://localhost:3000/api` (in development) or the production server URL. This client automatically attaches the user's **JWT Authentication Token** to every request ensuring all actions are securely authorized.
+
+### 2. Fetching Real Properties
+When a Tenant opens the app to browse properties, or a Landlord views their dashboard:
+
+1. **The Request:** The Flutter Riverpod provider (`propertiesProvider`) triggers a request via the `ApiPropertyRepository`.
+2. **The Endpoint:** The app sends an HTTP GET request to `/api/properties`.
+3. **Backend Authorization:** The Node.js server receives the request. The `authMiddleware` verifies the JWT token. The controller checks the user's role.
+   - If a **Tenant** calls the endpoint, the backend returns all *Verified* and *Available* properties.
+   - If a **Landlord** calls the endpoint, the backend returns *only* the properties owned by that specific landlord (Object-Level Authorization).
+4. **Database Query:** Prisma ORM executes a secure SQL query against the PostgreSQL database.
+5. **The Response:** The backend returns a JSON array of properties.
+6. **State Update:** The Flutter app parses the JSON into `PropertyModel` objects, updates the Riverpod state, and the UI automatically rebuilds to display the real properties.
+
+### 3. Dependency Injection
+To ensure the app is easily testable and modular, we use Dependency Injection (`di_providers.dart`). We can seamlessly swap between `ApiPropertyRepository` (for production/integration) and `MockPropertyRepository` (for offline testing) without changing the core UI or domain logic.
