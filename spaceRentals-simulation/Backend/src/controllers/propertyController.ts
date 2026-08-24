@@ -10,7 +10,11 @@ const handle = (res: Response, err: any) => {
 
 // GET /api/properties
 export const getProperties = async (req: AuthRequest, res: Response) => {
-  try { return res.json(await propertyService.getAll()); }
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    return res.json(await propertyService.getAll(page, limit));
+  }
   catch (err) { return handle(res, err); }
 };
 
@@ -86,7 +90,15 @@ export const confirmAvailability = async (req: AuthRequest, res: Response) => {
 // GET /api/properties/search
 export const searchProperties = async (req: AuthRequest, res: Response) => {
   try {
-    const { q, category, minRent, maxRent, bedrooms } = req.query;
-    return res.json(await propertyService.search({ q: q as string, category: category as string, minRent: Number(minRent), maxRent: Number(maxRent), bedrooms: Number(bedrooms) }));
+    const { q, category, minRent, maxRent, bedrooms, page, limit } = req.query;
+    return res.json(await propertyService.search({
+      q: q as string,
+      category: category as string,
+      minRent: Number(minRent),
+      maxRent: Number(maxRent),
+      bedrooms: Number(bedrooms),
+      page: Number(page) || 1,
+      limit: Number(limit) || 20,
+    }));
   } catch (err) { return handle(res, err); }
 };

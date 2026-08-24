@@ -82,6 +82,11 @@ model Property {
   propertyVerification PropertyVerification?
   leases               Lease[]
   rentals              Rental[]
+
+  @@index([status])
+  @@index([category])
+  @@index([location])
+  @@index([monthlyRent])
 }
 
 model PropertyVerification {

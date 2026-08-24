@@ -1,10 +1,23 @@
 import { propertyRepository } from '../repositories/PropertyRepository';
 import { prisma } from '../lib/prisma';
 import { Property } from '@prisma/client';
+import { cacheGet, cacheSet, clearCacheByPattern } from '../config/redis';
 
 export class PropertyService {
-  async getAll() {
-    return propertyRepository.findAll();
+  async getAll(page: number = 1, limit: number = 20) {
+    const skip = (page - 1) * limit;
+    const cacheKey = `properties:all:page${page}:limit${limit}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const data = await prisma.property.findMany({
+      skip, take: limit,
+      include: { landlord: { select: { id: true, name: true } }, propertyVerification: { select: { status: true, level: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    
+    await cacheSet(cacheKey, JSON.stringify(data), 300); // 5 minutes cache
+    return data;
   }
 
   // Haversine distance filter (no PostGIS required)
@@ -24,8 +37,14 @@ export class PropertyService {
   }
 
   async getById(id: string) {
+    const cacheKey = `properties:id:${id}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) return JSON.parse(cached);
+
     const property = await propertyRepository.findById(id);
     if (!property) throw { status: 404, message: 'Property not found.' };
+
+    await cacheSet(cacheKey, JSON.stringify(property), 600); // 10 minutes cache
     return property;
   }
 
@@ -70,6 +89,8 @@ export class PropertyService {
       acquisitionSource: acquisitionSource ? String(acquisitionSource) : 'LANDLORD',
       acquisitionAgentId: acquisitionAgentId ? String(acquisitionAgentId) : undefined,
     });
+    await clearCacheByPattern('properties:*');
+    return result;
   }
 
   async update(
@@ -93,7 +114,10 @@ export class PropertyService {
     if (amenities) updateData.amenities = JSON.stringify(amenities);
     if (images) updateData.images = JSON.stringify(images);
     if (status) updateData.status = String(status);
-    return propertyRepository.update(id, updateData);
+    
+    const result = await propertyRepository.update(id, updateData);
+    await clearCacheByPattern('properties:*');
+    return result;
   }
 
   async delete(id: string, requestingUserId: string, requestingUserRole: string) {
@@ -103,6 +127,7 @@ export class PropertyService {
       throw { status: 403, message: 'Forbidden.' };
     }
     await propertyRepository.delete(id);
+    await clearCacheByPattern('properties:*');
     return { message: 'Property deleted.' };
   }
 
@@ -110,14 +135,18 @@ export class PropertyService {
     const property = await propertyRepository.findById(id);
     if (!property) throw { status: 404, message: 'Property not found.' };
     if (property.landlordId !== userId && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
-    return propertyRepository.update(id, { status: 'available', lastConfirmedAvailableAt: new Date() });
+    const result = await propertyRepository.update(id, { status: 'available', lastConfirmedAvailableAt: new Date() });
+    await clearCacheByPattern('properties:*');
+    return result;
   }
 
   async unpublish(id: string, userId: string, role: string) {
     const property = await propertyRepository.findById(id);
     if (!property) throw { status: 404, message: 'Property not found.' };
     if (property.landlordId !== userId && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
-    return propertyRepository.update(id, { status: 'draft' });
+    const result = await propertyRepository.update(id, { status: 'draft' });
+    await clearCacheByPattern('properties:*');
+    return result;
   }
 
   async confirmAvailability(id: string, userId: string, role: string) {
@@ -127,10 +156,16 @@ export class PropertyService {
     return propertyRepository.update(id, { lastConfirmedAvailableAt: new Date() });
   }
 
-  async search(params: { q?: string; category?: string; minRent?: number; maxRent?: number; bedrooms?: number }) {
-    const { q, category, minRent, maxRent, bedrooms } = params;
+  async search(params: { q?: string; category?: string; minRent?: number; maxRent?: number; bedrooms?: number; page?: number; limit?: number }) {
+    const { q, category, minRent, maxRent, bedrooms, page = 1, limit = 20 } = params;
+    
+    const cacheKey = `properties:search:${JSON.stringify(params)}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const skip = (page - 1) * limit;
     const where: any = { status: 'available' };
-    if (category) where.category = category;
+    if (category && category !== 'All') where.category = category;
     if (bedrooms) where.bedrooms = { gte: Number(bedrooms) };
     if (minRent || maxRent) where.monthlyRent = {};
     if (minRent) where.monthlyRent.gte = Number(minRent);
@@ -142,11 +177,16 @@ export class PropertyService {
         { description: { contains: q, mode: 'insensitive' } },
       ];
     }
-    return prisma.property.findMany({
+    
+    const data = await prisma.property.findMany({
       where,
+      skip, take: limit,
       include: { landlord: { select: { id: true, name: true } }, propertyVerification: { select: { status: true, level: true } } },
       orderBy: { createdAt: 'desc' },
     });
+    
+    await cacheSet(cacheKey, JSON.stringify(data), 300); // 5 mins cache
+    return data;
   }
 }
 
