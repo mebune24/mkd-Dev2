@@ -1,162 +1,142 @@
-# Space Rentals 🏠
+# Space Rentals — Property Management & Rental Platform
 
-Space Rentals is a comprehensive **property rental platform** connecting **Tenants**, **Landlords**, **Field Agents**, and **Administrators** in Cameroon (and beyond). It features a Flutter-based cross-platform mobile application and a Node.js/Express backend API.
-
----
-
-## 🎯 Architecture
-
-The platform is split into two primary components:
-
-1. **`space_rentals/` (Frontend):** A rich, cross-platform Flutter application leveraging Riverpod for state management, providing distinct dashboards for the 4 user roles.
-2. **`Backend/` (API):** A Node.js and Express RESTful API utilizing Prisma ORM and PostgreSQL to handle real data persistence, JWT authentication, object-level authorization, and strict domain state machines.
-
-> **Note on Architecture Principle:**
-> The Flutter app requests actions; the backend decides whether those actions are valid; the database records the resulting state; and payment providers confirm financial events.
+Space Rentals is a modern peer-to-peer marketplace designed for Cameroon, bridging the gap between tenants, landlords, and field agents using **Mobile Money (MTN/Orange)**, **Fapshi**, and a strict state-machine-driven workflow.
 
 ---
 
-## 🚀 Features by Role (MVP)
+## Codebase Architecture
 
-### 👥 Tenants
-- **Register & Verify:** Basic identity verification.
-- **Browse & Search:** Find available, verified properties.
-- **Apply & Track:** Submit rental applications and track their progress through the state machine.
-- **Lease & Rent:** Sign leases and enter active rentals.
-
-### 🏢 Landlords
-- **Register & Verify:** Identity and ownership authority verification.
-- **Subscribe:** Pay the monthly platform subscription.
-- **List Properties:** Create property listings and get them verified by Field Agents.
-- **Manage Applications:** Receive, review, and approve tenant applications.
-- **Lease & Rent:** Sign leases and collect rent directly from tenants.
-- **Platform Fees:** Pay the Space success fee once a rental becomes active.
-
-### 🕵️ Field Agents
-- **Register & Verify:** Full KYC verification and Admin approval.
-- **Property Acquisition:** Submit properties on behalf of landlords.
-- **Property Verification:** Perform on-the-ground physical verifications.
-- **Earn Commissions:** Track attributed properties and earn commissions (e.g., 2,000 FCFA) per **successfully rented** property acquired by the agent.
-- **Withdrawals:** Withdraw eligible commissions via Mobile Money.
-
-### 🛡️ Administrators
-- **KYC & Verification:** Review and approve different tiers of user verification.
-- **Dispute Resolution:** Handle disputes between landlords and tenants.
-- **Financial Oversight:** Monitor payments, subscriptions, commissions, and agent wallets via the immutable ledger.
-- **Audit Logs:** Review systemic actions.
+The project is split into two primary environments: a **Flutter Mobile Frontend** and a **Node.js/Express/Prisma Backend**.
 
 ---
 
-## 💻 Tech Stack
+### 1. Backend Architecture (Node.js + Express + Prisma)
+
+The backend is built around a production-grade **MVC** architecture. It uses **PostgreSQL** with **PostGIS** for spatial queries, **Fapshi** for Mobile Money (Momo) payments, and **Redis** for intelligent multi-layer caching.
+
+#### Key System Design Patterns:
+- **Finite State Machine (FSM):** Strict state transitions for Leases and Payments (`PENDING → SUCCESSFUL`), preventing double-processing.
+- **Distributed Ledger:** Agent commissions are stored in an immutable ledger (`AgentTransaction` table) using double-entry accounting and Prisma `$transaction`.
+- **Multi-Layer Redis Caching:** A Cache-Aside pattern for property search feeds and a `SCAN`-safe key invalidation strategy. See caching strategy below.
+- **Idempotency Webhooks:** Fapshi webhook payloads are protected against duplicate processing via unique `gatewayTxId` tracking and Redis payment locks (`SET NX EX`).
+- **Global Error Handling & Validation:** All incoming payloads are validated via `zod` schemas. Prisma errors (e.g. `P2025` Record Not Found) are automatically mapped to HTTP 404/400 codes.
+- **Object-Level Access Control (OLAC):** Custom Express middlewares (`verifyPropertyOwnership`) ensure users can only modify their own assets.
+
+#### Backend Directory Structure:
+```text
+Backend/
+├── prisma/
+│   └── schema.prisma              # PostgreSQL Schema with PostGIS extensions
+├── src/
+│   ├── config/
+│   │   └── redis.ts               # Redis client + clearCacheByPattern() helper
+│   ├── controllers/               # Thin HTTP handlers (Auth, Properties, Payments)
+│   ├── services/                  # Core Business Logic & State Machines
+│   ├── repositories/              # Database Access Layer (Prisma queries)
+│   ├── routes/                    # Express Route Definitions
+│   ├── middleware/                # Auth, Zod Validation, OLAC, Global Errors
+│   ├── utils/                     # Zod Schemas
+│   ├── lib/
+│   │   └── prisma.ts              # Prisma Client with cache-invalidation Extension
+│   ├── workers.ts                 # node-cron background workers (auto-unpublish)
+│   └── index.ts                   # Express App Entrypoint
+├── docker-compose.yml             # PostgreSQL + PostGIS Infrastructure
+└── .env                           # Environment Variables
+```
+
+#### Redis Caching Strategy
+
+| Layer / Resource           | Cache Type           | TTL           | Critical Note |
+|---------------------------|----------------------|---------------|---------------|
+| Property Search Feed      | Cache-Aside (Redis)  | 10 minutes    | Key includes city, price, type filters. Auto-invalidated on any Property mutation via Prisma extension. |
+| Geographic Metadata       | Redis String         | 24–48 hours   | Cities, neighborhoods, regions. Manually invalidated on Admin update. |
+| System Parameters         | Redis String         | 24–48 hours   | Subscription cost (5,000 FCFA), application fee (3,000 FCFA). |
+| User Sessions / JWTs      | Redis String         | JWT expiry    | Destroyed immediately on password change or Admin ban. |
+| Agent Ledger Balances     | **Do Not Cache**     | Live query    | Always hits PostgreSQL — prevents commission fraud. |
+| Lease States & Signatures | **Do Not Cache**     | Live query    | PARTIALLY_SIGNED / SIGNED state must always be live. |
+| Active Booking Overlaps   | **Do Not Cache**     | Live query    | Checked inside Prisma interactive transactions at checkout. |
+| Mobile Money Webhook Lock | Redis NX Lock        | 30 seconds    | `SET payment_lock:tx_ref PROCESSING EX 30 NX` — prevents duplicate webhook processing. |
+
+The Prisma Client Extension in `src/lib/prisma.ts` hooks into `create`, `update`, `delete`, `updateMany`, `deleteMany`, and `upsert` on the `Property` model and automatically calls `clearCacheByPattern('search:properties:*')`, so **no controller or service needs to manually invalidate cache**.
+
+---
+
+### 2. Frontend Architecture (Flutter)
+
+The frontend is a cross-platform mobile application built with Flutter following **Feature-First Clean Architecture** with **Riverpod** for state management.
+
+#### Frontend Directory Structure:
+```text
+space_rentals/lib/
+├── features/
+│   ├── admin/                # Admin dashboards and KYC management
+│   ├── auth/                 # Login, Registration, OTP
+│   ├── landlord/             # Landlord dashboard, Property creation
+│   └── tenant/               # Tenant dashboard, Property search, Applications
+├── core/                     # Core app configuration (Themes, Routing)
+├── config/                   # Environment/API config
+├── data/                     # Local data, dummy initializers
+├── models/                   # Dart Data Classes (Property, User, Transaction)
+├── providers/                # Global Riverpod State Providers
+├── repositories/             # API/Network data fetching layer
+├── services/                 # External service integrations
+├── shared/                   # Shared utilities
+├── widgets/                  # Reusable UI components (PropertyCards, Buttons)
+└── main.dart                 # App Entrypoint
+```
+
+---
+
+## Running the Application
+
+### Prerequisites
+- Docker & Docker Compose
+- Node.js ≥ 18
+- Redis (local or remote — set `REDIS_URL` in `.env`)
+- Flutter SDK ≥ 3.x
+- A connected Android/iOS device or emulator
+
+### Backend (PostgreSQL + Redis + Node.js)
+```bash
+cd Backend
+
+# 1. Start PostgreSQL (PostGIS) via Docker
+docker-compose up -d
+
+# 2. Install dependencies
+npm install
+
+# 3. Apply DB migrations & generate Prisma client
+npx prisma migrate dev
+npx prisma generate
+
+# 4. Start the dev server
+npm run dev
+```
+
+> **Redis**: Make sure Redis is running locally (`redis-server`) or update `REDIS_URL` in `.env` to point to your hosted Redis instance.
 
 ### Frontend (Flutter)
-*   **Framework:** Flutter (Dart)
-*   **State Management:** Riverpod
-*   **Routing:** GoRouter
-*   **Architecture:** Repository Pattern, Use Case Pattern, Dependency Injection.
-*   **UI/UX:** Unified `FormSafeModal` (prevents data loss) and central Toast Notifications system.
+```bash
+cd space_rentals
 
-### Backend (Node.js)
-*   **Framework:** Express.js (TypeScript)
-*   **ORM:** Prisma
-*   **Database:** PostgreSQL (Docker for dev, Managed for prod)
-*   **Security:** JWT (JSON Web Tokens), bcrypt (Password Hashing), Object-Level Authorization (RBAC).
-*   **Financials:** Idempotent payment webhooks and a strict AgentTransaction ledger.
+# 1. Fetch packages
+flutter pub get
+
+# 2. Run on a connected device
+flutter run
+```
 
 ---
 
-## 🛠️ Getting Started
+## Environment Variables (Backend/.env)
 
-### 1. Running the Node.js Backend
-
-1. Navigate to the backend directory:
-   ```bash
-   cd Backend
-   ```
-2. Start the PostgreSQL Docker container (Ensure Docker is running):
-   ```bash
-   docker-compose up -d
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Set up your environment variables by checking the `.env` file.
-5. Run Prisma database migrations to create the PostgreSQL schema:
-   ```bash
-   npx prisma migrate dev
-   ```
-6. Start the development server:
-   ```bash
-   npm run dev
-   # OR using tsx directly:
-   npx tsx src/index.ts
-   ```
-
-### 2. Running the Flutter App
-
-1. Navigate to the flutter app directory:
-   ```bash
-   cd space_rentals
-   ```
-2. Fetch dependencies:
-   ```bash
-   flutter pub get
-   ```
-3. Run the application:
-   ```bash
-   flutter run
-   ```
-
----
-
-## 💰 Unit Economics & Business Model
-
-Space Rentals generates revenue through platform fees rather than taking a percentage of the actual rent. 
-
-> **Important:** Space does **NOT** escrow the monthly rent. 100% of the rent goes directly from the Tenant to the Landlord.
-
-For example, on a **45,000 FCFA** monthly rent:
-
-*   **Tenant Application Fee:** 3,000 FCFA (paid by Tenant via Mobile Money).
-*   **Platform Subscription:** 5,000 FCFA / month (paid by Landlord).
-*   **Success/Platform Fee:** 10,000 FCFA (paid by Landlord) due **only when the rental becomes active** after the initial rent/deposit payment is confirmed.
-
-**Agent Commissions:** 
-Commissions (e.g., 2,000 FCFA for property acquisition) become eligible for payout **only after** the property gets rented and the initial payment is confirmed.
-
----
-
-## 🤝 Core Domain State Machines
-
-The backend enforces strict state transitions. Examples include:
-
-- **Application:** `DRAFT` → `SUBMITTED` → `UNDER_REVIEW` → (`APPROVED` | `REJECTED` | `WITHDRAWN`)
-- **Lease:** `GENERATED` → `PENDING_TENANT_SIGNATURE` → `PENDING_LANDLORD_SIGNATURE` → `SIGNED`
-- **Payment:** `CREATED` → `PENDING` → `PROCESSING` → (`SUCCESSFUL` | `FAILED` | `EXPIRED`)
-- **Platform Fee:** `NOT_DUE` → `DUE` → `PAYMENT_PROCESSING` → `PAID`
-- **Agent Commission:** `PENDING` → `ELIGIBLE` → `AVAILABLE` → `WITHDRAWAL_REQUESTED` → `PROCESSING` → (`PAID` | `FAILED`)
-
----
-
-## 🔗 Frontend-Backend Integration & Data Fetching
-
-To connect the Flutter application to the real Node.js/PostgreSQL backend, Space Rentals uses a robust **API-driven architecture**. Here is how data (like Properties) is fetched from the backend, providing clarity for technical and business decisions:
-
-### 1. Network Layer (API Client)
-Instead of using mock in-memory data, the app uses an `ApiClient` configured to communicate with `http://localhost:3000/api` (in development) or the production server URL. This client automatically attaches the user's **JWT Authentication Token** to every request ensuring all actions are securely authorized.
-
-### 2. Fetching Real Properties
-When a Tenant opens the app to browse properties, or a Landlord views their dashboard:
-
-1. **The Request:** The Flutter Riverpod provider (`propertiesProvider`) triggers a request via the `ApiPropertyRepository`.
-2. **The Endpoint:** The app sends an HTTP GET request to `/api/properties`.
-3. **Backend Authorization:** The Node.js server receives the request. The `authMiddleware` verifies the JWT token. The controller checks the user's role.
-   - If a **Tenant** calls the endpoint, the backend returns all *Verified* and *Available* properties.
-   - If a **Landlord** calls the endpoint, the backend returns *only* the properties owned by that specific landlord (Object-Level Authorization).
-4. **Database Query:** Prisma ORM executes a secure SQL query against the PostgreSQL database.
-5. **The Response:** The backend returns a JSON array of properties.
-6. **State Update:** The Flutter app parses the JSON into `PropertyModel` objects, updates the Riverpod state, and the UI automatically rebuilds to display the real properties.
-
-### 3. Dependency Injection
-To ensure the app is easily testable and modular, we use Dependency Injection (`di_providers.dart`). We can seamlessly swap between `ApiPropertyRepository` (for production/integration) and `MockPropertyRepository` (for offline testing) without changing the core UI or domain logic.
+| Variable         | Description                                 |
+|-----------------|---------------------------------------------|
+| `PORT`           | Express server port (default: 3000)         |
+| `DATABASE_URL`   | PostgreSQL connection string                |
+| `JWT_SECRET`     | Secret key for signing JWTs                 |
+| `REDIS_URL`      | Redis connection URL (default: `redis://localhost:6379`) |
+| `FAPSHI_API_URL` | Fapshi gateway URL                         |
+| `FAPSHI_API_USER`| Fapshi API username                        |
+| `FAPSHI_API_KEY` | Fapshi API key                             |

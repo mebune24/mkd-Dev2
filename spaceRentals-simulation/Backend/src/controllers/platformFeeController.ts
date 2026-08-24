@@ -29,7 +29,7 @@ export const getPlatformFees = async (req: AuthRequest, res: Response) => {
 // ──────────────────────────────────────────────
 export const initiateFeePay = async (req: AuthRequest, res: Response) => {
   try {
-    const fee = await prisma.platformFee.findUnique({ where: { id: req.params.id } });
+    const fee = await prisma.platformFee.findUnique({ where: { id: String(req.params.id) } });
     if (!fee) return res.status(404).json({ message: 'Platform fee not found.' });
     if (!assertOwnerOrAdmin(req, res, fee.landlordId)) return;
 
@@ -42,7 +42,7 @@ export const initiateFeePay = async (req: AuthRequest, res: Response) => {
 
     // Mark as processing; payment provider callback will mark as "paid"
     const updated = await prisma.platformFee.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: { status: 'processing' },
     });
 

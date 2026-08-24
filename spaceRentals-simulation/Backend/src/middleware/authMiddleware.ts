@@ -35,12 +35,13 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 // ──────────────────────────────────────────────
 // RBAC — role-based access control
 // ──────────────────────────────────────────────
-export const requireRole = (...roles: UserRole[]) =>
+export const requireRole = (...roles: (UserRole | UserRole[])[]) =>
   (req: AuthRequest, res: Response, next: NextFunction) => {
+    const flatRoles = roles.flat() as UserRole[];
     if (!req.user) return res.status(401).json({ message: 'Authentication required' });
-    if (!roles.includes(req.user.role)) {
+    if (!flatRoles.includes(req.user.role)) {
       return res.status(403).json({
-        message: `Access denied. Required role: ${roles.join(' or ')}.`,
+        message: `Access denied. Required role: ${flatRoles.join(' or ')}.`,
       });
     }
     next();

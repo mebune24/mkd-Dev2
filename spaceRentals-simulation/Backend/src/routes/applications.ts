@@ -1,33 +1,23 @@
 import { Router } from 'express';
+import { authenticate } from '../middleware/authMiddleware';
 import {
-  getApplications,
-  getApplicationById,
-  createApplication,
-  updateApplicationStatus,
+  getTenantApplications,
+  getLandlordApplications,
+  submitApplication,
+  approveApplication,
+  rejectApplication,
+  withdrawApplication,
 } from '../controllers/applicationController';
-import { authenticate, requireTenant } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/',    authenticate, getApplications);
-router.get('/:id', authenticate, getApplicationById);
-router.post('/',  authenticate, requireTenant, createApplication);
+router.use(authenticate);
 
-// Generic status update (used by admin and advanced clients)
-router.patch('/:id/status', authenticate, updateApplicationStatus);
-
-// Convenience action routes (Flutter calls these with no body needed)
-router.post('/:id/approve',  authenticate, (req, res, next) => {
-  (req as any).body = { ...(req as any).body, status: 'approved' };
-  return updateApplicationStatus(req as any, res);
-});
-router.post('/:id/reject',   authenticate, (req, res, next) => {
-  (req as any).body = { ...(req as any).body, status: 'rejected' };
-  return updateApplicationStatus(req as any, res);
-});
-router.post('/:id/withdraw', authenticate, (req, res, next) => {
-  (req as any).body = { ...(req as any).body, status: 'withdrawn' };
-  return updateApplicationStatus(req as any, res);
-});
+router.get('/tenant', getTenantApplications);
+router.get('/landlord', getLandlordApplications);
+router.post('/', submitApplication);
+router.patch('/:id/approve', approveApplication);
+router.patch('/:id/reject', rejectApplication);
+router.patch('/:id/withdraw', withdrawApplication);
 
 export default router;

@@ -1,26 +1,29 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
 }
 
 model User {
-  id            String          @id @default(uuid())
-  email         String          @unique
-  passwordHash  String
-  name          String
-  role          String          // "admin", "landlord", "tenant", "agent"
-  status        String          @default("active") // "active", "suspended"
-  createdAt     DateTime        @default(now())
-  
-  properties          Property[]            @relation("LandlordProperties")
-  applications        Application[]         @relation("TenantApplications")
-  agentVerification   AgentVerification?
-  agentTransactions   AgentTransaction[]    @relation("AgentLedger")
-  platformFees        PlatformFee[]         @relation("LandlordFees")
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String // "admin", "landlord", "tenant", "agent"
+  status       String   @default("active") // "active", "suspended"
+  createdAt    DateTime @default(now())
+
+  properties        Property[]         @relation("LandlordProperties")
+  applications      Application[]      @relation("TenantApplications")
+  agentVerification AgentVerification?
+  agentTransactions AgentTransaction[] @relation("AgentLedger")
+  platformFees      PlatformFee[]      @relation("LandlordFees")
+  transactions      Transaction[]      @relation("UserTransactions")
 }
 
 model AgentVerification {
@@ -28,71 +31,74 @@ model AgentVerification {
   agentId     String   @unique
   agent       User     @relation(fields: [agentId], references: [id])
   status      String   @default("pending") // "pending", "approved", "rejected"
-  documents   String   // JSON string of documents
+  documents   String // JSON string of documents
   adminNotes  String?
   submittedAt DateTime @default(now())
 }
 
 model Property {
-  id           String        @id @default(uuid())
-  landlordId   String
-  landlord     User          @relation("LandlordProperties", fields: [landlordId], references: [id])
-  title        String
-  description  String
-  location     String
-  monthlyRent  Int
-  deposit      Int
-  status       String        @default("available") // "draft", "available", "rented"
-  amenities    String        // JSON string
-  images       String        // JSON string
-  createdAt    DateTime      @default(now())
-  
-  applications          Application[]
-  propertyVerification  PropertyVerification?
-  leases                Lease[]
+  id          String   @id @default(uuid())
+  landlordId  String
+  landlord    User     @relation("LandlordProperties", fields: [landlordId], references: [id])
+  title       String
+  description String
+  location    String
+  monthlyRent Int
+  deposit     Int
+  status               String   @default("available") // "draft", "available", "rented", "auto_unpublished"
+  amenities            String   // JSON string
+  images               String   // JSON string
+  latitude             Float?
+  longitude            Float?
+  lastConfirmedAvailableAt DateTime @default(now())
+  createdAt            DateTime @default(now())
+
+  applications         Application[]
+  propertyVerification PropertyVerification?
+  leases               Lease[]
 }
 
 model PropertyVerification {
-  id           String   @id @default(uuid())
-  propertyId   String   @unique
-  property     Property @relation(fields: [propertyId], references: [id])
-  status       String   @default("pending") // "pending", "verified", "rejected"
-  verifiedBy   String?  // Agent ID who verified it
-  notes        String?
-  verifiedAt   DateTime?
+  id         String    @id @default(uuid())
+  propertyId String    @unique
+  property   Property  @relation(fields: [propertyId], references: [id])
+  status     String    @default("pending") // "pending", "verified", "rejected"
+  verifiedBy String? // Agent ID who verified it
+  notes      String?
+  verifiedAt DateTime?
 }
 
 model Application {
-  id           String   @id @default(uuid())
-  propertyId   String
-  property     Property @relation(fields: [propertyId], references: [id])
-  tenantId     String
-  tenant       User     @relation("TenantApplications", fields: [tenantId], references: [id])
-  status       String   @default("submitted") // "draft", "submitted", "under_review", "approved", "rejected", "withdrawn"
-  coverLetter  String?
-  submittedAt  DateTime @default(now())
-  
-  lease        Lease?
+  id          String   @id @default(uuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+  tenantId    String
+  tenant      User     @relation("TenantApplications", fields: [tenantId], references: [id])
+  status      String   @default("submitted") // "draft", "submitted", "under_review", "approved", "rejected", "withdrawn"
+  coverLetter String?
+  submittedAt DateTime @default(now())
+
+  lease Lease?
 }
 
 model Lease {
-  id             String      @id @default(uuid())
-  applicationId  String      @unique
-  application    Application @relation(fields: [applicationId], references: [id])
-  propertyId     String
-  property       Property    @relation(fields: [propertyId], references: [id])
-  status         String      @default("generated") // "generated", "pending_tenant", "pending_landlord", "signed", "active"
-  documentUrl    String?
-  createdAt      DateTime    @default(now())
-  
-  payments       Payment[]
+  id            String      @id @default(uuid())
+  applicationId String      @unique
+  application   Application @relation(fields: [applicationId], references: [id])
+  propertyId    String
+  property      Property    @relation(fields: [propertyId], references: [id])
+  status        String      @default("generated") // "generated", "pending_tenant", "pending_landlord", "signed", "active"
+  documentUrl   String?
+  createdAt     DateTime    @default(now())
+
+  payments Payment[]
 }
 
 model Payment {
   id             String   @id @default(uuid())
   leaseId        String
   lease          Lease    @relation(fields: [leaseId], references: [id])
-  type           String   // "rent", "deposit", "application_fee"
+  type           String // "rent", "deposit", "application_fee"
   amount         Int
   status         String   @default("pending") // "created", "pending", "processing", "successful", "failed"
   idempotencyKey String   @unique
@@ -101,25 +107,42 @@ model Payment {
 }
 
 model PlatformFee {
-  id             String   @id @default(uuid())
-  landlordId     String
-  landlord       User     @relation("LandlordFees", fields: [landlordId], references: [id])
-  type           String   // "subscription", "success_fee"
-  amount         Int
-  status         String   @default("due") // "not_due", "due", "processing", "paid"
-  referenceId    String?  // e.g. Lease ID for success fee
-  createdAt      DateTime @default(now())
+  id          String   @id @default(uuid())
+  landlordId  String
+  landlord    User     @relation("LandlordFees", fields: [landlordId], references: [id])
+  type        String // "subscription", "success_fee"
+  amount      Int
+  status      String   @default("due") // "not_due", "due", "processing", "paid"
+  referenceId String? // e.g. Lease ID for success fee
+  createdAt   DateTime @default(now())
 }
 
 model AgentTransaction {
   id             String   @id @default(uuid())
   agentId        String
   agent          User     @relation("AgentLedger", fields: [agentId], references: [id])
-  type           String   // "commission", "withdrawal"
-  amount         Int      // positive for commission, negative for withdrawal
+  type           String // "commission", "withdrawal"
+  amount         Int // positive for commission, negative for withdrawal
   status         String   @default("pending") // "pending", "eligible", "available", "processing", "paid", "failed"
-  sourceEvent    String   // e.g. "property_acquisition", "tenant_referral"
-  referenceId    String?  // e.g. Lease ID
+  sourceEvent    String // e.g. "property_acquisition", "tenant_referral"
+  referenceId    String? // e.g. Lease ID
   idempotencyKey String   @unique
   createdAt      DateTime @default(now())
+}
+
+model Transaction {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation("UserTransactions", fields: [userId], references: [id])
+  amount          Int
+  currency        String   @default("XAF")
+  paymentMethod   String // "MTN", "ORANGE", etc.
+  transactionType String // "PAYMENT", "PAYOUT"
+  referenceType   String // "LEASE", "PLATFORM_FEE", "AGENT_WITHDRAWAL"
+  referenceId     String // The ID of the related record
+  gatewayTxId     String?  @unique // Fapshi transaction ID
+  status          String   @default("PENDING") // "PENDING", "SUCCESSFUL", "FAILED"
+  metadata        String? // JSON string for Fapshi webhook payload
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

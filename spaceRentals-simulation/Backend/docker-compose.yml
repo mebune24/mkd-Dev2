@@ -1,13 +1,11 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15-alpine
-    container_name: spacerentals-postgres
-    restart: always
+  postgres:
+    image: postgis/postgis:15-3.3
     environment:
-      POSTGRES_USER: spacerentals_user
-      POSTGRES_PASSWORD: spacerentals_password
+      POSTGRES_USER: spacerentals
+      POSTGRES_PASSWORD: password123
       POSTGRES_DB: spacerentals_db
     ports:
       - "5432:5432"

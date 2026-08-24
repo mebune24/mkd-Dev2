@@ -1,23 +1,27 @@
 import { Router } from 'express';
+import { authenticate, requireLandlord } from '../middleware/authMiddleware';
 import {
   getProperties,
-  getPropertyById,
   getMyProperties,
+  getPropertyById,
   createProperty,
   updateProperty,
   deleteProperty,
+  getNearbyProperties,
 } from '../controllers/propertyController';
-import {
-  authenticate,
-  requireLandlord,
-} from '../middleware/authMiddleware';
+import { validateRequest } from '../middleware/validateMiddleware';
+import { createPropertySchema } from '../utils/schemas';
 
 const router = Router();
 
-router.get('/', getProperties);                            // public
-router.get('/mine', authenticate, requireLandlord, getMyProperties); // landlord only
-router.get('/:id', getPropertyById);                      // public
-router.post('/', authenticate, requireLandlord, createProperty);
+// Public
+router.get('/', getProperties);
+router.get('/nearby', getNearbyProperties);
+router.get('/:id', getPropertyById);
+
+// Protected
+router.get('/my/listings', authenticate, getMyProperties);
+router.post('/', authenticate, requireLandlord, validateRequest(createPropertySchema), createProperty);
 router.patch('/:id', authenticate, requireLandlord, updateProperty);
 router.delete('/:id', authenticate, requireLandlord, deleteProperty);
 
