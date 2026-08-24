@@ -64,3 +64,29 @@ export const deleteProperty = async (req: AuthRequest, res: Response) => {
     return res.json(result);
   } catch (err) { return handle(res, err); }
 };
+
+// PATCH /api/properties/:id/publish
+export const publishProperty = async (req: AuthRequest, res: Response) => {
+  try { return res.json(await propertyService.publish(String(req.params.id), req.user!.userId, req.user!.role)); }
+  catch (err) { return handle(res, err); }
+};
+
+// PATCH /api/properties/:id/unpublish
+export const unpublishProperty = async (req: AuthRequest, res: Response) => {
+  try { return res.json(await propertyService.unpublish(String(req.params.id), req.user!.userId, req.user!.role)); }
+  catch (err) { return handle(res, err); }
+};
+
+// PATCH /api/properties/:id/confirm-availability
+export const confirmAvailability = async (req: AuthRequest, res: Response) => {
+  try { return res.json(await propertyService.confirmAvailability(String(req.params.id), req.user!.userId, req.user!.role)); }
+  catch (err) { return handle(res, err); }
+};
+
+// GET /api/properties/search
+export const searchProperties = async (req: AuthRequest, res: Response) => {
+  try {
+    const { q, category, minRent, maxRent, bedrooms } = req.query;
+    return res.json(await propertyService.search({ q: q as string, category: category as string, minRent: Number(minRent), maxRent: Number(maxRent), bedrooms: Number(bedrooms) }));
+  } catch (err) { return handle(res, err); }
+};

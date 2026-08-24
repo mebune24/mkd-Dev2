@@ -1,6 +1,7 @@
 import { applicationRepository } from '../repositories/ApplicationRepository';
 import { propertyRepository } from '../repositories/PropertyRepository';
 import { leaseRepository } from '../repositories/LeaseRepository';
+import { leaseService } from './LeaseService';
 
 export class ApplicationService {
   async getTenantApplications(tenantId: string) {
@@ -46,13 +47,13 @@ export class ApplicationService {
     // Auto-generate a Lease upon approval
     const existingLease = await leaseRepository.findByApplicationId(id);
     if (!existingLease) {
-      await leaseRepository.create({
+      const lease = await leaseRepository.create({
         application: { connect: { id } },
         property: { connect: { id: app.propertyId } },
+        tenant: { connect: { id: app.tenantId } },
+        landlord: { connect: { id: app.property.landlordId } },
         status: 'generated',
       });
-      // Mark property as rented
-      await propertyRepository.update(app.propertyId, { status: 'rented' });
     }
     return updated;
   }

@@ -32,7 +32,7 @@ export const submitApplication = async (req: AuthRequest, res: Response) => {
 // PATCH /api/applications/:id/approve
 export const approveApplication = async (req: AuthRequest, res: Response) => {
   try {
-    const result = await applicationService.approve(String(req.params.id), req.user!.userId, req.body.note);
+    const result = await applicationService.approve(String(req.params.id), req.user!.userId, req.body?.note);
     return res.json(result);
   } catch (err) { return handle(res, err); }
 };
@@ -40,7 +40,7 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
 // PATCH /api/applications/:id/reject
 export const rejectApplication = async (req: AuthRequest, res: Response) => {
   try {
-    const result = await applicationService.reject(String(req.params.id), req.user!.userId, req.body.note);
+    const result = await applicationService.reject(String(req.params.id), req.user!.userId, req.body?.note);
     return res.json(result);
   } catch (err) { return handle(res, err); }
 };

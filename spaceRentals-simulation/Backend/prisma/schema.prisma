@@ -1,12 +1,10 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [postgis]
 }
 
 model User {
@@ -14,9 +12,13 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
+  firstName    String?
+  lastName     String?
+  phone        String?
   role         String // "admin", "landlord", "tenant", "agent"
   status       String   @default("active") // "active", "suspended"
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
   properties        Property[]         @relation("LandlordProperties")
   applications      Application[]      @relation("TenantApplications")
@@ -24,38 +26,62 @@ model User {
   agentTransactions AgentTransaction[] @relation("AgentLedger")
   platformFees      PlatformFee[]      @relation("LandlordFees")
   transactions      Transaction[]      @relation("UserTransactions")
+  tenantLeases      Lease[]            @relation("TenantLeases")
+  landlordLeases    Lease[]            @relation("LandlordLeases")
+  tenantRentals     Rental[]           @relation("TenantRentals")
+  landlordRentals   Rental[]           @relation("LandlordRentals")
+  subscriptions     Subscription[]
 }
 
 model AgentVerification {
-  id          String   @id @default(uuid())
-  agentId     String   @unique
-  agent       User     @relation(fields: [agentId], references: [id])
-  status      String   @default("pending") // "pending", "approved", "rejected"
-  documents   String // JSON string of documents
-  adminNotes  String?
-  submittedAt DateTime @default(now())
+  id             String   @id @default(uuid())
+  agentId        String   @unique
+  agent          User     @relation(fields: [agentId], references: [id])
+  status         String   @default("pending") // "pending", "approved", "rejected"
+  documents      String // JSON string of documents
+  nationalIdUrl  String?
+  selfieUrl      String?
+  businessDocUrl String?
+  adminNotes     String?
+  submittedAt    DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
 }
 
 model Property {
-  id          String   @id @default(uuid())
-  landlordId  String
-  landlord    User     @relation("LandlordProperties", fields: [landlordId], references: [id])
-  title       String
-  description String
-  location    String
-  monthlyRent Int
-  deposit     Int
-  status               String   @default("available") // "draft", "available", "rented", "auto_unpublished"
-  amenities            String   // JSON string
-  images               String   // JSON string
-  latitude             Float?
-  longitude            Float?
+  id                       String   @id @default(uuid())
+  landlordId               String
+  landlord                 User     @relation("LandlordProperties", fields: [landlordId], references: [id])
+  title                    String
+  description              String
+  location                 String
+  monthlyRent              Int
+  deposit                  Int
+  status                   String   @default("available") // "draft", "available", "rented", "auto_unpublished"
+  amenities                String // JSON string
+  images                   String // JSON string
+  latitude                 Float?
+  longitude                Float?
+  bedrooms                 Int      @default(0)
+  bathrooms                Int      @default(0)
+  areaSqM                  Float    @default(0)
+  furnished                Boolean  @default(false)
+  parkingSpaces            Int      @default(0)
+  hasWater                 Boolean  @default(false)
+  hasElectricity           Boolean  @default(false)
+  isFenced                 Boolean  @default(false)
+  closeToRoad              Boolean  @default(false)
+  securityMeans            String   @default("None")
+  category                 String   @default("Apartment")
+  acquisitionSource        String   @default("LANDLORD") // DIRECT, AGENT, LANDLORD, ADMIN, IMPORT
+  acquisitionAgentId       String?
   lastConfirmedAvailableAt DateTime @default(now())
-  createdAt            DateTime @default(now())
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @default(now()) @updatedAt
 
   applications         Application[]
   propertyVerification PropertyVerification?
   leases               Lease[]
+  rentals              Rental[]
 }
 
 model PropertyVerification {
@@ -63,35 +89,80 @@ model PropertyVerification {
   propertyId String    @unique
   property   Property  @relation(fields: [propertyId], references: [id])
   status     String    @default("pending") // "pending", "verified", "rejected"
+  level      Int       @default(0) // 0: unverified, 1: docs, 2: owner, 3: property, 4: inspected
   verifiedBy String? // Agent ID who verified it
   notes      String?
   verifiedAt DateTime?
 }
 
 model Application {
-  id          String   @id @default(uuid())
-  propertyId  String
-  property    Property @relation(fields: [propertyId], references: [id])
-  tenantId    String
-  tenant      User     @relation("TenantApplications", fields: [tenantId], references: [id])
-  status      String   @default("submitted") // "draft", "submitted", "under_review", "approved", "rejected", "withdrawn"
-  coverLetter String?
-  submittedAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id])
+  tenantId     String
+  tenant       User     @relation("TenantApplications", fields: [tenantId], references: [id])
+  status       String   @default("submitted") // "draft", "submitted", "under_review", "approved", "rejected", "withdrawn"
+  coverLetter  String?
+  landlordNote String?
+  submittedAt  DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
   lease Lease?
 }
 
 model Lease {
-  id            String      @id @default(uuid())
-  applicationId String      @unique
-  application   Application @relation(fields: [applicationId], references: [id])
-  propertyId    String
-  property      Property    @relation(fields: [propertyId], references: [id])
-  status        String      @default("generated") // "generated", "pending_tenant", "pending_landlord", "signed", "active"
-  documentUrl   String?
-  createdAt     DateTime    @default(now())
+  id               String      @id @default(uuid())
+  applicationId    String      @unique
+  application      Application @relation(fields: [applicationId], references: [id])
+  propertyId       String
+  property         Property    @relation(fields: [propertyId], references: [id])
+  tenantId         String?
+  tenant           User?       @relation("TenantLeases", fields: [tenantId], references: [id])
+  landlordId       String?
+  landlord         User?       @relation("LandlordLeases", fields: [landlordId], references: [id])
+  status           String      @default("generated") // "generated", "pending_tenant", "pending_landlord", "partially_signed", "signed", "active"
+  documentUrl      String?
+  tenantSignedAt   DateTime?
+  landlordSignedAt DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @default(now()) @updatedAt
 
   payments Payment[]
+  rental   Rental?
+}
+
+model Rental {
+  id          String    @id @default(uuid())
+  leaseId     String    @unique
+  lease       Lease     @relation(fields: [leaseId], references: [id])
+  propertyId  String
+  property    Property  @relation(fields: [propertyId], references: [id])
+  tenantId    String
+  tenant      User      @relation("TenantRentals", fields: [tenantId], references: [id])
+  landlordId  String
+  landlord    User      @relation("LandlordRentals", fields: [landlordId], references: [id])
+  status      String    @default("active") // "active", "ended", "disputed"
+  monthlyRent Int
+  activatedAt DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  platformFees PlatformFee[]
+}
+
+model Subscription {
+  id                 String    @id @default(uuid())
+  landlordId         String
+  landlord           User      @relation(fields: [landlordId], references: [id])
+  planId             String
+  status             String    @default("active") // "active", "grace_period", "expired", "cancelled"
+  activeListingCount Int       @default(0)
+  startedAt          DateTime  @default(now())
+  expiresAt          DateTime
+  cancelledAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now()) @updatedAt
 }
 
 model Payment {
@@ -110,24 +181,31 @@ model PlatformFee {
   id          String   @id @default(uuid())
   landlordId  String
   landlord    User     @relation("LandlordFees", fields: [landlordId], references: [id])
+  rentalId    String?
+  rental      Rental?  @relation(fields: [rentalId], references: [id])
   type        String // "subscription", "success_fee"
   amount      Int
   status      String   @default("due") // "not_due", "due", "processing", "paid"
   referenceId String? // e.g. Lease ID for success fee
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model AgentTransaction {
-  id             String   @id @default(uuid())
+  id             String    @id @default(uuid())
   agentId        String
-  agent          User     @relation("AgentLedger", fields: [agentId], references: [id])
+  agent          User      @relation("AgentLedger", fields: [agentId], references: [id])
   type           String // "commission", "withdrawal"
   amount         Int // positive for commission, negative for withdrawal
-  status         String   @default("pending") // "pending", "eligible", "available", "processing", "paid", "failed"
+  status         String    @default("pending") // "pending", "eligible", "available", "processing", "paid", "failed"
   sourceEvent    String // e.g. "property_acquisition", "tenant_referral"
+  referenceType  String    @default("LEASE")
   referenceId    String? // e.g. Lease ID
-  idempotencyKey String   @unique
-  createdAt      DateTime @default(now())
+  idempotencyKey String    @unique
+  eligibleAt     DateTime?
+  availableAt    DateTime?
+  paidAt         DateTime?
+  createdAt      DateTime  @default(now())
 }
 
 model Transaction {

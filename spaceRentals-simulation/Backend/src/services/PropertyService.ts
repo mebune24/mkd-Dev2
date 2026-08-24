@@ -7,23 +7,20 @@ export class PropertyService {
     return propertyRepository.findAll();
   }
 
-  // PostGIS spatial bounding-box query
+  // Haversine distance filter (no PostGIS required)
   async searchNearby(latitude: number, longitude: number, radiusKm: number) {
-    // ST_DWithin performs incredibly fast spatial bounding-box searches
-    // 4326 is the WGS 84 spatial reference system (standard GPS coordinates)
-    const radiusMeters = radiusKm * 1000;
-    const properties = await prisma.$queryRaw<Property[]>`
-      SELECT * FROM "Property"
-      WHERE status = 'available'
-      AND "latitude" IS NOT NULL 
-      AND "longitude" IS NOT NULL
-      AND ST_DWithin(
-        ST_SetSRID(ST_MakePoint("longitude", "latitude"), 4326)::geography,
-        ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography,
-        ${radiusMeters}
-      );
-    `;
-    return properties;
+    const properties = await prisma.property.findMany({
+      where: { status: 'available', latitude: { not: null }, longitude: { not: null } },
+      include: { landlord: { select: { id: true, name: true } }, propertyVerification: { select: { status: true, level: true } } },
+    });
+    const toRad = (d: number) => d * Math.PI / 180;
+    return properties.filter(p => {
+      const dLat = toRad(p.latitude! - latitude);
+      const dLon = toRad(p.longitude! - longitude);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(latitude)) * Math.cos(toRad(p.latitude!)) * Math.sin(dLon / 2) ** 2;
+      const dist = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return dist <= radiusKm;
+    });
   }
 
   async getById(id: string) {
@@ -38,30 +35,40 @@ export class PropertyService {
 
   async create(
     landlordId: string,
-    data: {
-      title: string;
-      description: string;
-      location: string;
-      monthlyRent: number;
-      deposit: number;
-      amenities?: unknown;
-      images?: unknown;
-    },
+    data: Record<string, unknown>,
   ) {
-    const { title, description, location, monthlyRent, deposit, amenities, images } = data;
+    const { title, description, location, monthlyRent, deposit, amenities, images,
+      bedrooms, bathrooms, areaSqM, furnished, parkingSpaces, hasWater, hasElectricity,
+      isFenced, closeToRoad, securityMeans, category, latitude, longitude,
+      acquisitionSource, acquisitionAgentId } = data as any;
     if (!title || !description || !location || !monthlyRent || !deposit) {
       throw { status: 400, message: 'title, description, location, monthlyRent, and deposit are required.' };
     }
     return propertyRepository.create({
       landlord: { connect: { id: landlordId } },
-      title,
-      description,
-      location,
+      title: String(title),
+      description: String(description),
+      location: String(location),
       monthlyRent: Number(monthlyRent),
       deposit: Number(deposit),
-      amenities: JSON.stringify(amenities ?? {}),
+      amenities: JSON.stringify(amenities ?? []),
       images: JSON.stringify(images ?? []),
       status: 'draft',
+      bedrooms: bedrooms ? Number(bedrooms) : 0,
+      bathrooms: bathrooms ? Number(bathrooms) : 0,
+      areaSqM: areaSqM ? Number(areaSqM) : 0,
+      furnished: !!furnished,
+      parkingSpaces: parkingSpaces ? Number(parkingSpaces) : 0,
+      hasWater: !!hasWater,
+      hasElectricity: !!hasElectricity,
+      isFenced: !!isFenced,
+      closeToRoad: !!closeToRoad,
+      securityMeans: securityMeans ? String(securityMeans) : 'None',
+      category: category ? String(category) : 'Apartment',
+      latitude: latitude ? Number(latitude) : undefined,
+      longitude: longitude ? Number(longitude) : undefined,
+      acquisitionSource: acquisitionSource ? String(acquisitionSource) : 'LANDLORD',
+      acquisitionAgentId: acquisitionAgentId ? String(acquisitionAgentId) : undefined,
     });
   }
 
@@ -97,6 +104,49 @@ export class PropertyService {
     }
     await propertyRepository.delete(id);
     return { message: 'Property deleted.' };
+  }
+
+  async publish(id: string, userId: string, role: string) {
+    const property = await propertyRepository.findById(id);
+    if (!property) throw { status: 404, message: 'Property not found.' };
+    if (property.landlordId !== userId && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
+    return propertyRepository.update(id, { status: 'available', lastConfirmedAvailableAt: new Date() });
+  }
+
+  async unpublish(id: string, userId: string, role: string) {
+    const property = await propertyRepository.findById(id);
+    if (!property) throw { status: 404, message: 'Property not found.' };
+    if (property.landlordId !== userId && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
+    return propertyRepository.update(id, { status: 'draft' });
+  }
+
+  async confirmAvailability(id: string, userId: string, role: string) {
+    const property = await propertyRepository.findById(id);
+    if (!property) throw { status: 404, message: 'Property not found.' };
+    if (property.landlordId !== userId && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
+    return propertyRepository.update(id, { lastConfirmedAvailableAt: new Date() });
+  }
+
+  async search(params: { q?: string; category?: string; minRent?: number; maxRent?: number; bedrooms?: number }) {
+    const { q, category, minRent, maxRent, bedrooms } = params;
+    const where: any = { status: 'available' };
+    if (category) where.category = category;
+    if (bedrooms) where.bedrooms = { gte: Number(bedrooms) };
+    if (minRent || maxRent) where.monthlyRent = {};
+    if (minRent) where.monthlyRent.gte = Number(minRent);
+    if (maxRent) where.monthlyRent.lte = Number(maxRent);
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { location: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+    return prisma.property.findMany({
+      where,
+      include: { landlord: { select: { id: true, name: true } }, propertyVerification: { select: { status: true, level: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 }
 

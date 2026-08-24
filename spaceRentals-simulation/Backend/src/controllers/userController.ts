@@ -31,3 +31,15 @@ export const activateUser = async (req: AuthRequest, res: Response) => {
   try { return res.json(await userService.activate(String(req.params.id), req.user!.role)); }
   catch (err) { return handle(res, err); }
 };
+
+// GET /api/users/profile
+export const getProfile = async (req: AuthRequest, res: Response) => {
+  try { return res.json(await userService.getProfile(req.user!.userId)); }
+  catch (err) { return handle(res, err); }
+};
+
+// PATCH /api/users/profile
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+  try { return res.json(await userService.updateProfile(req.user!.userId, req.body)); }
+  catch (err) { return handle(res, err); }
+};
