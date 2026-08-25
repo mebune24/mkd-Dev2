@@ -1,8 +1,8 @@
 /// Centralized API endpoint definitions.
 /// All backend URLs live here — never scattered in repositories.
 class ApiEndpoints {
-  // Use local IP for physical device testing instead of localhost
-  static const String baseUrl = 'http://192.168.1.194:3000';
+  // Use 127.0.0.1 because adb reverse tcp:3000 tcp:3000 is running
+  static const String baseUrl = 'http://127.0.0.1:3000';
   // Backend registers routes under /api (no version prefix)
   static const String _base = '$baseUrl/api';
 

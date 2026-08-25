@@ -166,4 +166,23 @@ class MockAuthRepository implements AuthRepository {
       createdAt: DateTime.now().subtract(const Duration(days: 30)),
     );
   }
+
+  @override
+  Future<void> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? phone,
+    String? avatarUrl,
+    bool? twoFactorEnabled,
+    bool? pushNotificationsEnabled,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // No-op in mock
+  }
+
+  @override
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // No-op in mock
+  }
 }

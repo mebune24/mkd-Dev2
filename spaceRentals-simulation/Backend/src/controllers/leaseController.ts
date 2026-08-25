@@ -34,6 +34,9 @@ export const getLeaseById = async (req: AuthRequest, res: Response) => {
 
 // PATCH /api/leases/:id/sign
 export const signLease = async (req: AuthRequest, res: Response) => {
-  try { return res.json(await leaseService.sign(String(req.params.id), req.user!.userId, req.user!.role)); }
+  try { 
+    const { signatureHash, signedIp } = req.body;
+    return res.json(await leaseService.sign(String(req.params.id), req.user!.userId, req.user!.role, signatureHash, signedIp)); 
+  }
   catch (err) { return handle(res, err); }
 };

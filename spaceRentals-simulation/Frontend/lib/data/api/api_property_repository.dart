@@ -237,4 +237,13 @@ class ApiPropertyRepository implements PropertyRepository {
     }
   }
 
+  @override
+  Future<void> deleteProperty(String propertyId) async {
+    final uri = Uri.parse('${ApiEndpoints.properties}/$propertyId');
+    final response = await _client.delete(uri, headers: _headers);
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception('Failed to delete property');
+    }
+  }
+
 }

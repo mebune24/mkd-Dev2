@@ -48,7 +48,7 @@ export class LeaseService {
    *   pending_tenant → (tenant signs) → signed
    *   signed → auto-creates Rental + sets property status to "rented"
    */
-  async sign(leaseId: string, userId: string, role: string) {
+  async sign(leaseId: string, userId: string, role: string, signatureHash?: string, signedIp?: string) {
     const lease = await leaseRepository.findById(leaseId);
     if (!lease) throw { status: 404, message: 'Lease not found.' };
 
@@ -73,8 +73,12 @@ export class LeaseService {
 
     if (isTenant) {
       updateData.tenantSignedAt = now;
+      if (signatureHash) updateData.tenantSignatureHash = signatureHash;
+      if (signedIp) updateData.tenantSignedIp = signedIp;
     } else {
       updateData.landlordSignedAt = now;
+      if (signatureHash) updateData.landlordSignatureHash = signatureHash;
+      if (signedIp) updateData.landlordSignedIp = signedIp;
     }
 
     // Determine new status

@@ -27,7 +27,7 @@ class SessionStorageService {
   static final SessionStorageService instance = SessionStorageService._();
 
   static const _secureStorage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    aOptions: AndroidOptions(encryptedSharedPreferences: false),
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
 

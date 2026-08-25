@@ -25,5 +25,6 @@ abstract class PropertyRepository {
   Future<PropertyVerificationInfo> updateVerificationLevel(
       String propertyId, PropertyVerificationLevel level);
   Future<PropertyListing> unpublishListing(String propertyId);
+  Future<void> deleteProperty(String propertyId);
   Future<PropertyListing> republishListing(String propertyId);
 }

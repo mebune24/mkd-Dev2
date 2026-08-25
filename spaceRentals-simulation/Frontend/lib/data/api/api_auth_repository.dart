@@ -171,6 +171,59 @@ class ApiAuthRepository implements AuthRepository {
     );
   }
 
+  @override
+  Future<void> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? phone,
+    String? avatarUrl,
+    bool? twoFactorEnabled,
+    bool? pushNotificationsEnabled,
+  }) async {
+    final token = await SessionStorageService.instance.getAccessToken();
+    final response = await http.patch(
+      Uri.parse(ApiEndpoints.userProfile),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: json.encode({
+        if (firstName != null) 'firstName': firstName,
+        if (lastName != null) 'lastName': lastName,
+        if (phone != null) 'phone': phone,
+        if (avatarUrl != null) 'avatarUrl': avatarUrl,
+        if (twoFactorEnabled != null) 'twoFactorEnabled': twoFactorEnabled,
+        if (pushNotificationsEnabled != null) 'pushNotificationsEnabled': pushNotificationsEnabled,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      final body = json.decode(response.body);
+      throw Exception(body['message'] ?? 'Failed to update profile');
+    }
+  }
+
+  @override
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    final token = await SessionStorageService.instance.getAccessToken();
+    final response = await http.patch(
+      Uri.parse(ApiEndpoints.changePassword),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: json.encode({
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      final body = json.decode(response.body);
+      throw Exception(body['message'] ?? 'Failed to change password');
+    }
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   UserSession _sessionFromResponse(

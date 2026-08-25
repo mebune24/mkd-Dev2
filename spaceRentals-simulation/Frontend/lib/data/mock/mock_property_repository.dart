@@ -116,6 +116,12 @@ class MockPropertyRepository implements PropertyRepository {
   }
 
   @override
+  Future<void> deleteProperty(String propertyId) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    _properties.removeWhere((p) => p.property.id == propertyId);
+  }
+
+  @override
   Future<PropertyListing> republishListing(String propertyId) async {
     await Future.delayed(const Duration(milliseconds: 400));
     final index = _properties.indexWhere((p) => p.property.id == propertyId);

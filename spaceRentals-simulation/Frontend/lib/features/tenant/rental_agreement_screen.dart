@@ -6,6 +6,8 @@ import '../../services/mock_rental_service.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/audit_log_provider.dart';
 import '../../providers/auth_provider.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 import 'checkout/ancillary_services_widget.dart';
 
 final _rentalServiceProvider = Provider((ref) => MockRentalService());
@@ -23,8 +25,8 @@ class RentalAgreementScreen extends ConsumerStatefulWidget {
 }
 
 class _RentalAgreementScreenState extends ConsumerState<RentalAgreementScreen> {
-  final bool _isConfirming = false;
-  final bool _tenantConfirmed = true;
+  bool _isConfirming = false;
+  bool _tenantConfirmed = false;
   bool _signatureLogged = false;
   double? _totalRent;
 
@@ -163,6 +165,46 @@ class _RentalAgreementScreenState extends ConsumerState<RentalAgreementScreen> {
                   );
                 }),
               ],
+              
+              if (!_tenantConfirmed) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _isConfirming ? null : () async {
+                      setState(() => _isConfirming = true);
+                      
+                      // Generate SHA-256 e-signature hash
+                      final user = ref.read(authProvider);
+                      final rawData = '${rental.id}|${user.session?.userId}|${DateTime.now().toIso8601String()}';
+                      final bytes = utf8.encode(rawData);
+                      final signatureHash = sha256.convert(bytes).toString();
+                      
+                      // Simulate network delay and API call with hash & IP
+                      await Future.delayed(const Duration(seconds: 1));
+                      
+                      setState(() {
+                        _tenantConfirmed = true;
+                        _isConfirming = false;
+                      });
+                      
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Agreement signed electronically.'),
+                            backgroundColor: Colors.green,
+                          )
+                        );
+                      }
+                    },
+                    icon: _isConfirming 
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Icon(Icons.draw),
+                    label: Text(_isConfirming ? 'Signing...' : 'Sign Agreement Electronically'),
+                  ),
+                ),
+              ],
+              
               const SizedBox(height: 32),
               
               if (_tenantConfirmed) ...[

@@ -34,6 +34,7 @@ model User {
   tenantRentals     Rental[]           @relation("TenantRentals")
   landlordRentals   Rental[]           @relation("LandlordRentals")
   subscriptions     Subscription[]
+  openedDisputes    Dispute[]          @relation("OpenedDisputes")
 }
 
 model AgentVerification {
@@ -112,6 +113,8 @@ model Application {
   status       String   @default("submitted") // "draft", "submitted", "under_review", "approved", "rejected", "withdrawn"
   coverLetter  String?
   landlordNote String?
+  nationalIdUrl    String?
+  proofOfIncomeUrl String?
   submittedAt  DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt
 
@@ -130,6 +133,10 @@ model Lease {
   landlord         User?       @relation("LandlordLeases", fields: [landlordId], references: [id])
   status           String      @default("generated") // "generated", "pending_tenant", "pending_landlord", "partially_signed", "signed", "active"
   documentUrl      String?
+  tenantSignatureHash   String?
+  landlordSignatureHash String?
+  tenantSignedIp        String?
+  landlordSignedIp      String?
   tenantSignedAt   DateTime?
   landlordSignedAt DateTime?
   createdAt        DateTime    @default(now())
@@ -157,6 +164,7 @@ model Rental {
   updatedAt   DateTime  @default(now()) @updatedAt
 
   platformFees PlatformFee[]
+  disputes     Dispute[]
 }
 
 model Subscription {
@@ -232,3 +240,18 @@ model Transaction {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model Dispute {
+  id          String   @id @default(uuid())
+  rentalId    String
+  rental      Rental   @relation(fields: [rentalId], references: [id])
+  openedById  String
+  openedBy    User     @relation("OpenedDisputes", fields: [openedById], references: [id])
+  title       String
+  description String
+  status      String   @default("open") // open, under_review, resolved
+  resolution  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+

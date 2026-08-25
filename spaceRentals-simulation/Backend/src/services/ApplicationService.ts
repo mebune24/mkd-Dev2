@@ -20,7 +20,7 @@ export class ApplicationService {
     return app;
   }
 
-  async submit(propertyId: string, tenantId: string, coverLetter?: string) {
+  async submit(propertyId: string, tenantId: string, coverLetter?: string, nationalIdUrl?: string, proofOfIncomeUrl?: string) {
     const property = await propertyRepository.findById(propertyId);
     if (!property) throw { status: 404, message: 'Property not found.' };
     if (property.status !== 'available') throw { status: 409, message: 'Property is no longer available.' };
@@ -32,6 +32,8 @@ export class ApplicationService {
       property: { connect: { id: propertyId } },
       tenant: { connect: { id: tenantId } },
       coverLetter,
+      nationalIdUrl,
+      proofOfIncomeUrl,
       status: 'submitted',
     });
   }

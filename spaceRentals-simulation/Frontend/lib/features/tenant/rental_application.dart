@@ -29,6 +29,9 @@ class _RentalApplicationState extends ConsumerState<RentalApplication> {
     'Employment Letter / Reference': false,
     'Recent Utility Bill': false,
   };
+  
+  String? _nationalIdUrl;
+  String? _proofOfIncomeUrl;
 
   @override
   void dispose() {
@@ -177,7 +180,16 @@ class _RentalApplicationState extends ConsumerState<RentalApplication> {
                     ElevatedButton(
                       onPressed: entry.value
                           ? null
-                          : () => setState(() => _uploadedDocs[entry.key] = true),
+                          : () {
+                              setState(() {
+                                _uploadedDocs[entry.key] = true;
+                                if (entry.key == 'National ID / Passport') {
+                                  _nationalIdUrl = 'https://storage.spacerentals.cm/docs/${DateTime.now().millisecondsSinceEpoch}_national_id.jpg';
+                                } else if (entry.key == 'Proof of Income (Pay Slip)') {
+                                  _proofOfIncomeUrl = 'https://storage.spacerentals.cm/docs/${DateTime.now().millisecondsSinceEpoch}_proof_of_income.jpg';
+                                }
+                              });
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: entry.value ? Colors.green : theme.colorScheme.primary,
                         foregroundColor: Colors.white,
@@ -217,6 +229,8 @@ class _RentalApplicationState extends ConsumerState<RentalApplication> {
                   coverLetter: _coverLetterCtrl.text.trim().isEmpty
                       ? null
                       : _coverLetterCtrl.text.trim(),
+                  nationalIdUrl: _nationalIdUrl,
+                  proofOfIncomeUrl: _proofOfIncomeUrl,
                 );
 
                 final ok = await ref

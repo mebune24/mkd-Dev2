@@ -500,7 +500,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              isFr ? 'Vérifiez votre réseau et tirez pour réessayer.' : 'Check your network and pull down to retry.',
+              isFr ? 'Aucune propriété trouvée, réessayez plus tard.' : 'No properties found try later.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade500, fontSize: 13, height: 1.5),
             ),

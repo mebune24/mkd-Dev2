@@ -59,7 +59,7 @@ class MyProperties extends ConsumerWidget {
                                 TextButton(
                                   onPressed: () async {
                                     Navigator.pop(ctx);
-                                    await ref.read(propertyRepositoryProvider).unpublishListing(property.property.id);
+                                    await ref.read(propertyRepositoryProvider).deleteProperty(property.property.id);
                                     ref.invalidate(landlordPropertiesProvider);
                                     if (context.mounted) {
                                       context.showToast('"${property.property.title}" deleted.');

@@ -107,11 +107,11 @@ class AppRouter {
 }
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
-
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/splash',
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
+      
       if (authState.isLoading) return null; // wait
 
       final hasAccess = authState.hasAccess;   // true for guests AND signed-in users
@@ -359,4 +359,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  ref.listen(authProvider, (previous, next) {
+    router.refresh();
+  });
+
+  return router;
 });

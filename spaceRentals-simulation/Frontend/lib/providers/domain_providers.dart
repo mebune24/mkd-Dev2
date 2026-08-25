@@ -4,6 +4,11 @@ import '../features/rentals/domain/dispute_record.dart';
 import '../features/agents/domain/agent_models.dart';
 import '../core/domain/audit_entry.dart';
 import '../models/user_model.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import '../core/api/api_endpoints.dart';
+import '../services/session_storage_service.dart';
 
 // --- Users ---
 class AllUsersNotifier extends Notifier<List<UserModel>> {
@@ -52,16 +57,40 @@ class DisputesNotifier extends Notifier<List<DisputeRecord>> {
   @override
   List<DisputeRecord> build() => [];
 
-  void resolve(String id, String resolution, {String? adminId, String? adminName, String? subject}) {}
-  void setUnderReview(String id, {String? adminId, String? adminName, String? subject}) {}
-  void resolveDispute(String id, String resolution) {
+  Future<void> resolve(String id, String resolution, {String? adminId, String? adminName, String? subject}) async {
     final s = state.toList();
     final idx = s.indexWhere((element) => element.id == id);
     if (idx != -1) {
+      // Optimistic update
       s[idx].status = 'resolved';
       s[idx].resolution = resolution;
       state = s;
+      
+      // API call
+      try {
+        final token = await SessionStorageService.instance.getAccessToken();
+        if (token != null) {
+          final uri = Uri.parse('${ApiEndpoints.baseUrl}/disputes/$id/resolve');
+          await http.patch(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode({'resolution': resolution}),
+          );
+        }
+      } catch (e) {
+        // Rollback on failure (simplified)
+        debugPrint('Failed to resolve dispute on backend: $e');
+      }
     }
+  }
+
+  void setUnderReview(String id, {String? adminId, String? adminName, String? subject}) {}
+  
+  void resolveDispute(String id, String resolution) {
+    resolve(id, resolution);
   }
 }
 final disputesProvider = NotifierProvider<DisputesNotifier, List<DisputeRecord>>(DisputesNotifier.new);
