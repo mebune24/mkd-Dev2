@@ -150,14 +150,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
     final locale = ref.watch(localeProvider);
     final isFr = locale.languageCode == 'fr';
-    
+
     final recentlyViewed = ref.watch(recentlyViewedProvider);
     final recommendedLocationAsync = ref.watch(recommendedLocationProvider);
+    // Single source of truth for all property sections
+    final marketplaceAsync = ref.watch(marketplaceListingsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
-      body: CustomScrollView(
-        slivers: [
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(marketplaceListingsProvider);
+          await Future.delayed(const Duration(milliseconds: 800));
+        },
+        color: theme.colorScheme.primary,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
           // ── Gradient Header ──────────────────────────────────────
           SliverAppBar(
             expandedHeight: 200,
@@ -281,87 +290,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               properties: recentlyViewed,
             ),
 
-          // ── Recommended Location (Rotating) ─────────────────────
+          // ── Recommended Location + Latest + Last Month ───────────
+          // All share the single marketplaceAsync above
           SliverToBoxAdapter(
-            child: recommendedLocationAsync.when(
-              data: (location) {
-                return Consumer(
-                  builder: (context, ref, child) {
-                    final recommendedPropsAsync = ref.watch(marketplaceListingsProvider);
-                    return recommendedPropsAsync.when(
-                      data: (props) {
-                        if (props.isEmpty) return const SizedBox.shrink();
-                        return _buildHorizontalSectionWidget(
-                          title: isFr ? 'Recommandé à $location' : 'Recommended in $location',
-                          properties: props,
-                        );
-                      },
-                      loading: () => const Center(child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: CircularProgressIndicator(),
-                      )),
-                      error: (_, __) => Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text('Could not load data. Pull to refresh.', style: TextStyle(color: Colors.red.shade400)),
-                      ),
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: Padding(
-                padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
-              )),
-              error: (_, __) => Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('Could not load data. Pull to refresh.', style: TextStyle(color: Colors.red.shade400)),
-              ),
-            ),
-          ),
-
-          // ── Latest Properties ──────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Consumer(
-              builder: (context, ref, child) {
-                final latestAsync = ref.watch(marketplaceListingsProvider);
-                return latestAsync.when(
-                  data: (props) {
-                    if (props.isEmpty) return const SizedBox.shrink();
-                    return _buildHorizontalSectionWidget(
+            child: marketplaceAsync.when(
+              data: (props) {
+                if (props.isEmpty) {
+                  return _buildGlobalEmptyState(theme, isFr);
+                }
+                final location = recommendedLocationAsync.value ?? 'Yaoundé';
+                return Column(
+                  children: [
+                    _buildHorizontalSectionWidget(
+                      title: isFr ? 'Recommandé à $location' : 'Recommended in $location',
+                      properties: props,
+                    ),
+                    _buildHorizontalSectionWidget(
                       title: isFr ? 'Dernières Propriétés' : 'Latest Properties',
                       properties: props,
-                    );
-                  },
-                  loading: () => _buildShimmerSection(),
-                  error: (_, __) => Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('Could not load data. Pull to refresh.', style: TextStyle(color: Colors.red.shade400)),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // ── Last Month ─────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Consumer(
-              builder: (context, ref, child) {
-                final lastMonthAsync = ref.watch(marketplaceListingsProvider);
-                return lastMonthAsync.when(
-                  data: (props) {
-                    if (props.isEmpty) return const SizedBox.shrink();
-                    return _buildHorizontalSectionWidget(
+                    ),
+                    _buildHorizontalSectionWidget(
                       title: isFr ? 'Le Mois Dernier' : 'Last Month',
                       properties: props,
-                    );
-                  },
-                  loading: () => _buildShimmerSection(),
-                  error: (_, __) => Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('Could not load data. Pull to refresh.', style: TextStyle(color: Colors.red.shade400)),
-                  ),
+                    ),
+                  ],
                 );
               },
+              loading: () => Column(children: [
+                _buildShimmerSection(),
+                _buildShimmerSection(),
+              ]),
+              error: (e, _) => _buildErrorState(theme, isFr),
             ),
           ),
 
@@ -430,30 +389,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-          // ── Popular Properties ─────────────────────────────────────
+          // ── Most Rated Properties ──────────────────────────────
           SliverToBoxAdapter(
-            child: Consumer(
-              builder: (context, ref, child) {
-                final popularAsync = ref.watch(marketplaceListingsProvider);
-                return popularAsync.when(
-                  data: (props) {
-                    if (props.isEmpty) return const SizedBox.shrink();
-                    return _buildHorizontalSectionWidget(
+            child: marketplaceAsync.maybeWhen(
+              data: (props) => props.isEmpty
+                  ? const SizedBox.shrink()
+                  : _buildHorizontalSectionWidget(
                       title: isFr ? 'Propriétés les Mieux Notées' : 'Most Rated Properties',
                       properties: props,
-                    );
-                  },
-                  loading: () => _buildShimmerSection(),
-                  error: (_, __) => Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('Could not load data. Pull to refresh.', style: TextStyle(color: Colors.red.shade400)),
-                  ),
-                );
-              },
+                    ),
+              orElse: () => const SizedBox.shrink(),
             ),
           ),
 
-          // ── Categories ───────────────────────────────────────────
+          // ── Categories always visible ─────────────────────────
           SliverToBoxAdapter(
             child: _buildCategoriesSection(isFr, theme),
           ),
@@ -470,45 +419,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
 
           SliverToBoxAdapter(
-            child: Consumer(
-              builder: (context, ref, child) {
-                final allAsync = ref.watch(marketplaceListingsProvider);
-                return allAsync.when(
-                  data: (props) {
-                    final grouped = <String, List<PropertyWithListing>>{};
-                    for (final p in props) {
-                      grouped.putIfAbsent(p.property.category, () => []).add(p);
-                    }
-                    final categories = grouped.keys.toList()..sort();
+            child: marketplaceAsync.when(
+              data: (props) {
+                // Always show category sections even if empty
+                final allCategories = ['Apartments', 'Studios', 'Villas', 'Commercial', 'Land'];
+                final grouped = <String, List<PropertyWithListing>>{};
+                for (final p in props) {
+                  grouped.putIfAbsent(p.property.category, () => []).add(p);
+                }
+                // Merge real categories with known ones
+                final cats = {...allCategories, ...grouped.keys}.toList()..sort();
 
-                    return Column(
-                      children: categories.map((cat) {
-                        final widget = _buildHorizontalSectionWidget(
-                          title: cat,
-                          properties: grouped[cat]!,
-                        );
-                        if (cat == 'Villas') {
-                          return Column(
-                            children: [
-                              widget,
-                              const SizedBox(height: 16),
-                              _buildUserReviewsSection(),
-                              const SizedBox(height: 16),
-                              _buildPartnershipsSection(),
-                            ],
-                          );
-                        }
-                        return widget;
-                      }).toList(),
+                return Column(
+                  children: cats.map((cat) {
+                    final catProps = grouped[cat] ?? [];
+                    final section = _buildCategorySection(
+                      title: cat,
+                      properties: catProps,
+                      isFr: isFr,
+                      theme: theme,
                     );
-                  },
-                  loading: () => const SizedBox(
-                    height: 270,
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (e, _) => const SizedBox.shrink(),
+                    if (cat == 'Villas') {
+                      return Column(
+                        children: [
+                          section,
+                          const SizedBox(height: 16),
+                          _buildUserReviewsSection(),
+                          const SizedBox(height: 16),
+                          _buildPartnershipsSection(),
+                        ],
+                      );
+                    }
+                    return section;
+                  }).toList(),
                 );
               },
+              loading: () => Column(children: [
+                _buildShimmerSection(),
+                _buildShimmerSection(),
+              ]),
+              error: (e, _) => _buildErrorState(theme, isFr),
             ),
           ),
 
@@ -539,7 +489,336 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildGlobalEmptyState(ThemeData theme, bool isFr) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12)],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.home_work_outlined, size: 48, color: theme.colorScheme.primary.withValues(alpha: 0.6)),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isFr ? 'Aucune propriété disponible' : 'No properties available',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isFr ? 'Les propriétés apparaîtront ici une fois publiées.' : 'Properties will appear here once published.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 14, height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(ThemeData theme, bool isFr) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.red.shade100),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10)],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.wifi_off_rounded, size: 40, color: Colors.red.shade300),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              isFr ? 'Connexion impossible' : 'Cannot connect',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              isFr ? 'Vérifiez votre réseau et tirez pour réessayer.' : 'Check your network and pull down to retry.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 13, height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () => ref.invalidate(marketplaceListingsProvider),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(isFr ? 'Réessayer' : 'Retry'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: theme.colorScheme.primary,
+                side: BorderSide(color: theme.colorScheme.primary),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Category section that always shows title + pill, with nice empty state below
+  Widget _buildCategorySection({
+    required String title,
+    required List<PropertyWithListing> properties,
+    required bool isFr,
+    required ThemeData theme,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  if (properties.isNotEmpty) ...
+                    [
+                      const SizedBox(width: 8),
+                      Text(
+                        '${properties.length} ${isFr ? "biens" : "properties"}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      ),
+                    ],
+                ],
+              ),
+              if (properties.isNotEmpty)
+                GestureDetector(
+                  onTap: () => context.push('/tenant/search'),
+                  child: Row(
+                    children: [
+                      Text(
+                        isFr ? 'Voir tout' : 'See all',
+                        style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_forward, size: 16, color: theme.colorScheme.primary),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (properties.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.07),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.search_off_rounded, size: 22, color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isFr ? 'Aucun bien dans cette catégorie' : 'No $title available yet',
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          isFr ? 'Revenez bientôt !' : 'Check back soon!',
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 270,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
+              itemCount: properties.take(5).length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                if (index == properties.take(5).length) {
+                  final bgImage = properties.first.property.images.isNotEmpty
+                      ? properties.first.property.images.first
+                      : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800';
+                  return GestureDetector(
+                    onTap: () => context.push('/tenant/search'),
+                    child: Container(
+                      width: MediaQuery.sizeOf(context).width * 0.6,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        image: DecorationImage(
+                          image: NetworkImage(bgImage),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.5), BlendMode.darken),
+                        ),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+                              child: const Icon(Icons.arrow_forward, color: Colors.white, size: 28),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text('See more', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Text('in $title', style: const TextStyle(color: Colors.white70, fontSize: 12), textAlign: TextAlign.center),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                final property = properties[index];
+                return GestureDetector(
+                  onTap: () => _onPropertyTapped(property),
+                  child: Container(
+                    width: MediaQuery.sizeOf(context).width * 0.7,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 10)],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                          child: Image.network(
+                            property.property.images.isNotEmpty
+                                ? property.property.images.first
+                                : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800',
+                            height: 140,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return Container(height: 140, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator(strokeWidth: 2)));
+                            },
+                            errorBuilder: (_, __, ___) => Container(height: 140, width: double.infinity, color: Colors.grey[200], child: Icon(Icons.image_not_supported, color: Colors.grey[400])),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (property.verification.level.index >= 3)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  margin: const EdgeInsets.only(bottom: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.verified, size: 10, color: Colors.green),
+                                      SizedBox(width: 3),
+                                      Text('Verified', style: TextStyle(fontSize: 9, color: Colors.green, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                ),
+                              Text(
+                                property.property.title,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+                              Row(
+                                children: [
+                                  const Icon(Icons.location_on, size: 11, color: Colors.grey),
+                                  Expanded(
+                                    child: Text(
+                                      property.property.location,
+                                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${CurrencyFormatter.formatCFA(property.property.monthlyRentUnits.toDouble())}/mo',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 

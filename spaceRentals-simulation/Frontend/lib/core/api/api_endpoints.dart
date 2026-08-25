@@ -2,7 +2,7 @@
 /// All backend URLs live here — never scattered in repositories.
 class ApiEndpoints {
   // Use local IP for physical device testing instead of localhost
-  static const String baseUrl = 'http://192.168.1.70:3000';
+  static const String baseUrl = 'http://192.168.1.194:3000';
   static const String apiVersion = '/api/v1';
   static const String _base = '$baseUrl$apiVersion';
 
