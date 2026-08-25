@@ -283,6 +283,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
 
+          // ── Categories always visible at the top ─────────────────────────
+          SliverToBoxAdapter(
+            child: _buildCategoriesSection(isFr, theme),
+          ),
+
           // ── Recently Viewed ──────────────────────────────────────
           if (recentlyViewed.isNotEmpty)
             _buildHorizontalSection(
@@ -291,7 +296,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
 
           // ── Recommended Location + Latest + Last Month ───────────
-          // All share the single marketplaceAsync above
           SliverToBoxAdapter(
             child: marketplaceAsync.when(
               data: (props) {
@@ -309,10 +313,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       title: isFr ? 'Dernières Propriétés' : 'Latest Properties',
                       properties: props,
                     ),
-                    _buildHorizontalSectionWidget(
-                      title: isFr ? 'Le Mois Dernier' : 'Last Month',
-                      properties: props,
-                    ),
                   ],
                 );
               },
@@ -323,71 +323,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               error: (e, _) => _buildErrorState(theme, isFr),
             ),
           ),
-
-          // ── Agent Promo Banner ─────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
-              child: Container(
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.zero,
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 6)),
-                  ],
-                ),
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        flex: 6,
-                        child: Image.asset(
-                          'assets/images/agent_promo.jpg',
-                          fit: BoxFit.cover,
-                          alignment: Alignment.centerLeft,
-                        ),
-                      ),
-                      Expanded(
-                        flex: 4,
-                        child: Container(
-                          color: const Color(0xFF6A1B9A),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                isFr ? 'Rejoignez-nous' : 'Join Network',
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: () => context.push('/agent/onboarding'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: const Color(0xFF6A1B9A),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  elevation: 0,
-                                ),
-                                child: Text(
-                                  isFr ? 'Devenir Agent' : 'Become Agent',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
           // ── Most Rated Properties ──────────────────────────────
           SliverToBoxAdapter(
@@ -402,9 +337,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // ── Categories always visible ─────────────────────────
+          // ── Agent Promo Banner ─────────────────────────────────────
           SliverToBoxAdapter(
-            child: _buildCategoriesSection(isFr, theme),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 8)),
+                  ],
+                ),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        flex: 5,
+                        child: Image.asset(
+                          'assets/images/agent_promo.jpg',
+                          fit: BoxFit.cover,
+                          alignment: Alignment.centerLeft,
+                          errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[300], child: const Icon(Icons.real_estate_agent, size: 50, color: Colors.grey)),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 5,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(colors: [Color(0xFF6A1B9A), Color(0xFF4A148C)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                isFr ? 'Rejoignez le Réseau' : 'Join Our Network',
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                isFr ? 'Devenez agent et gagnez des commissions.' : 'Become an agent and earn commissions.',
+                                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () => context.push('/agent/onboarding'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: const Color(0xFF6A1B9A),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  elevation: 4,
+                                ),
+                                child: Text(
+                                  isFr ? 'Je suis un agent' : 'I am an agent',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
 
           // ── All Properties (Explore) ────────────────────────────
@@ -413,7 +416,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
               child: Text(
                 isFr ? 'Explorer Tout' : 'Explore All',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -421,13 +424,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverToBoxAdapter(
             child: marketplaceAsync.when(
               data: (props) {
-                // Always show category sections even if empty
                 final allCategories = ['Apartments', 'Studios', 'Villas', 'Commercial', 'Land'];
                 final grouped = <String, List<PropertyWithListing>>{};
                 for (final p in props) {
                   grouped.putIfAbsent(p.property.category, () => []).add(p);
                 }
-                // Merge real categories with known ones
                 final cats = {...allCategories, ...grouped.keys}.toList()..sort();
 
                 return Column(
@@ -443,9 +444,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       return Column(
                         children: [
                           section,
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 32),
                           _buildUserReviewsSection(),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 24),
                           _buildPartnershipsSection(),
                         ],
                       );
@@ -464,7 +465,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           // ── Platform Statistics ────────────────────────────────────
           SliverToBoxAdapter(
-            child: _buildPlatformStatistics(),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: _buildPlatformStatistics(),
+            ),
           ),
 
           // ── What Are You Waiting For Banner ──────────────────────

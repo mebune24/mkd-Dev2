@@ -12,10 +12,13 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
-  firstName    String?
-  lastName     String?
-  phone        String?
-  role         String // "admin", "landlord", "tenant", "agent"
+  firstName                String?
+  lastName                 String?
+  phone                    String?
+  avatarUrl                String?  // Base64 or external URL
+  twoFactorEnabled         Boolean  @default(false)
+  pushNotificationsEnabled Boolean  @default(true)
+  role                     String // "admin", "landlord", "tenant", "agent"
   status       String   @default("active") // "active", "suspended"
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt

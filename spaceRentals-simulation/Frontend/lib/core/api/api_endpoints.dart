@@ -3,8 +3,8 @@
 class ApiEndpoints {
   // Use local IP for physical device testing instead of localhost
   static const String baseUrl = 'http://192.168.1.194:3000';
-  static const String apiVersion = '/api/v1';
-  static const String _base = '$baseUrl$apiVersion';
+  // Backend registers routes under /api (no version prefix)
+  static const String _base = '$baseUrl/api';
 
   // Auth
   static const String signIn = '$_base/auth/signin';
@@ -13,6 +13,10 @@ class ApiEndpoints {
   static const String refreshToken = '$_base/auth/refresh';
   static const String me = '$_base/auth/me';
   static const String passwordReset = '$_base/auth/password-reset';
+  static const String changePassword = '$_base/auth/change-password';
+
+  // User Profile
+  static const String userProfile = '$_base/users/profile';
 
   // Properties
   static const String properties = '$_base/properties';

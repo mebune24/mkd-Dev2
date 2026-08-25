@@ -72,9 +72,9 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
               FloatingActionButton(
                 heroTag: 'whatsapp_fab_tenant',
                 onPressed: () async {
-                  final Uri url = Uri.parse('https://wa.me/652856939');
+                  final Uri url = Uri.parse('https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
                   if (await canLaunchUrl(url)) {
-                    await launchUrl(url);
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
                   }
                 },
                 backgroundColor: const Color(0xFF25D366),
