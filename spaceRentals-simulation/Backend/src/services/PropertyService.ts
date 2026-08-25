@@ -63,7 +63,7 @@ export class PropertyService {
     if (!title || !description || !location || !monthlyRent || !deposit) {
       throw { status: 400, message: 'title, description, location, monthlyRent, and deposit are required.' };
     }
-    return propertyRepository.create({
+    const result = await propertyRepository.create({
       landlord: { connect: { id: landlordId } },
       title: String(title),
       description: String(description),

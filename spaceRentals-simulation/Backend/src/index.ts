@@ -47,6 +47,7 @@ import subscriptionRoutes  from './routes/subscriptions';
 import commissionRoutes    from './routes/commissions';
 import platformFeeRoutes   from './routes/platformFees';
 import adminRoutes         from './routes/admin';
+import dashboardRoutes     from './routes/dashboard';
 import { globalErrorHandler } from './middleware/errorMiddleware';
 import { startBackgroundWorkers } from './workers';
 
@@ -64,6 +65,7 @@ app.use(`${BASE}/subscriptions`, subscriptionRoutes);
 app.use(`${BASE}/commissions`,   commissionRoutes);
 app.use(`${BASE}/platform-fees`, platformFeeRoutes);
 app.use(`${BASE}/admin`,         adminRoutes);
+app.use(`${BASE}/dashboard`,     dashboardRoutes);
 
 // ── Health ────────────────────────────────────────────────────
 app.get(`${BASE}/health`, (_req, res) => {
@@ -89,7 +91,7 @@ app.use((_req, res) => {
 app.use(globalErrorHandler);
 
 // ── Start ─────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT || 3000);
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[Server] Space Rentals API running on port ${PORT}`);
   startBackgroundWorkers();

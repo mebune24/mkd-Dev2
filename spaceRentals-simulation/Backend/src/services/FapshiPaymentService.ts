@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { transactionRepository } from '../repositories/TransactionRepository';
+import { redisClient } from '../config/redis';
 
 const FAPSHI_API_URL = process.env.FAPSHI_API_URL || 'https://live.fapshi.com';
 const FAPSHI_API_USER = process.env.FAPSHI_API_USER || '';
@@ -128,6 +129,19 @@ export class FapshiPaymentService {
    */
   async handleWebhook(payload: { transId: string; status: string; [key: string]: unknown }) {
     const { transId, status } = payload;
+
+    // Redis Idempotency Lock (Momo Protection)
+    // EX 30: Lock expires in 30 seconds. NX: Only set if it does not exist.
+    const lockKey = `webhook:lock:${transId}`;
+    try {
+      const lockAcquired = await redisClient.set(lockKey, 'locked', { NX: true, EX: 30 });
+      if (!lockAcquired) {
+        console.warn(`[FapshiWebhook] Duplicate webhook received for ${transId}. Dropping to prevent race condition.`);
+        return null;
+      }
+    } catch (err) {
+      console.warn(`[FapshiWebhook] Redis lock error for ${transId}. Proceeding without lock.`, err);
+    }
 
     const existing = await transactionRepository.findByGatewayTxId(transId);
     if (!existing) {

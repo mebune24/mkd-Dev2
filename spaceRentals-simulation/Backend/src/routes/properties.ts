@@ -15,13 +15,14 @@ import {
 } from '../controllers/propertyController';
 import { validateRequest } from '../middleware/validateMiddleware';
 import { createPropertySchema } from '../utils/schemas';
+import { cacheResponse } from '../middleware/cacheMiddleware';
 
 const router = Router();
 
 // Public
-router.get('/search',  searchProperties);
-router.get('/nearby',  getNearbyProperties);
-router.get('/',        getProperties);
+router.get('/search',  cacheResponse(300), searchProperties);
+router.get('/nearby',  cacheResponse(300), getNearbyProperties);
+router.get('/',        cacheResponse(300), getProperties);
 router.get('/:id',     getPropertyById);
 
 // Protected — Landlord
