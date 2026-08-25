@@ -90,8 +90,8 @@ app.use(globalErrorHandler);
 
 // ── Start ─────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`\n🚀  Space Rentals API running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[Server] Space Rentals API running on port ${PORT}`);
   startBackgroundWorkers();
   console.log(`📐  Architecture : MVC (Controller → Service → Repository)`);
   console.log(`💳  Payments     : Fapshi (MTN / Orange Money)`);

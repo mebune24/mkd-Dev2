@@ -44,6 +44,21 @@ export class AuthService {
     if (!user) throw { status: 404, message: 'User not found.' };
     return { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status, createdAt: user.createdAt };
   }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    if (!currentPassword || !newPassword) {
+      throw { status: 400, message: 'Current password and new password are required.' };
+    }
+    const user = await userRepository.findById(userId);
+    if (!user) throw { status: 404, message: 'User not found.' };
+    
+    const match = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!match) throw { status: 401, message: 'Incorrect current password.' };
+    
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await userRepository.update(userId, { passwordHash: newPasswordHash });
+    return { message: 'Password updated successfully.' };
+  }
 }
 
 export const authService = new AuthService();

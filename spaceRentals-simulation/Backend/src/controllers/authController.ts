@@ -32,3 +32,11 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     return res.json(result);
   } catch (err) { return handle(res, err); }
 };
+
+// PATCH /api/auth/change-password
+export const changePassword = async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await authService.changePassword(req.user!.userId, req.body.currentPassword, req.body.newPassword);
+    return res.json(result);
+  } catch (err) { return handle(res, err); }
+};

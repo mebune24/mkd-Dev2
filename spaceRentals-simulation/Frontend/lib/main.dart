@@ -9,8 +9,8 @@ import 'widgets/error_boundary.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Disable runtime font fetching — use bundled Inter font from assets/fonts/
-  GoogleFonts.config.allowRuntimeFetching = false;
+  // Allow runtime fetching so google_fonts can load Inter variants from network
+  // GoogleFonts.config.allowRuntimeFetching = false;
   setupGlobalErrorHandling();
   runApp(
     const ProviderScope(

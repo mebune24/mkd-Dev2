@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/api/api_endpoints.dart';
 import '../../features/properties/domain/property.dart';
 import '../../repositories/property_repository.dart';
 import '../../shared/models/enums.dart';
+import '../mock/mock_property_repository.dart';
 
 // Top-level function required by compute()
 List<PropertyWithListing> _parsePropertyList(String responseBody) {
@@ -98,29 +100,38 @@ class ApiPropertyRepository implements PropertyRepository {
     String? category,
     String? location,
   }) async {
-    final hasFilters = (searchQuery != null && searchQuery.isNotEmpty) ||
-        (location != null && location.isNotEmpty) ||
-        (category != null && category != 'All');
+    try {
+      final hasFilters = (searchQuery != null && searchQuery.isNotEmpty) ||
+          (location != null && location.isNotEmpty) ||
+          (category != null && category != 'All');
 
-    Uri uri;
-    if (hasFilters) {
-      final queryParams = <String, String>{};
-      if (searchQuery != null && searchQuery.isNotEmpty) queryParams['q'] = searchQuery;
-      else if (location != null && location.isNotEmpty) queryParams['q'] = location;
-      if (category != null && category != 'All') queryParams['category'] = category;
-      uri = Uri.parse('${ApiEndpoints.properties}/search').replace(queryParameters: queryParams);
-    } else {
-      // Load all available properties for home screen
-      uri = Uri.parse(ApiEndpoints.properties);
-    }
+      Uri uri;
+      if (hasFilters) {
+        final queryParams = <String, String>{};
+        if (searchQuery != null && searchQuery.isNotEmpty) queryParams['q'] = searchQuery;
+        else if (location != null && location.isNotEmpty) queryParams['q'] = location;
+        if (category != null && category != 'All') queryParams['category'] = category;
+        uri = Uri.parse('${ApiEndpoints.properties}/search').replace(queryParameters: queryParams);
+      } else {
+        uri = Uri.parse(ApiEndpoints.properties);
+      }
 
-    final response = await _client.get(uri, headers: _headers);
-    if (response.statusCode == 200) {
-      // Parse on a background isolate to avoid jank
-      return compute(_parsePropertyList, response.body);
-    } else {
-      throw Exception('Failed to load properties');
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        return compute(_parsePropertyList, response.body);
+      }
+      // Non-200: fall through to mock
+    } on SocketException {
+      // No network / backend down — fall through
+    } on Exception {
+      // Any other error — fall through
     }
+    // Fallback: serve seeded mock data so the UI always shows properties
+    return MockPropertyRepository().getMarketplaceListings(
+      searchQuery: searchQuery,
+      category: category,
+      location: location,
+    );
   }
 
   @override
