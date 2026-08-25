@@ -178,7 +178,7 @@ class ApiPropertyRepository implements PropertyRepository {
     
     if (response.statusCode == 201) {
       final data = json.decode(response.body);
-      return _parseProperty(data).property;
+      return _parsePropertyMap(data as Map<String, dynamic>).property;
     } else {
       throw Exception('Failed to submit property');
     }
@@ -190,7 +190,7 @@ class ApiPropertyRepository implements PropertyRepository {
     final response = await _client.patch(uri, headers: _headers);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return _parseProperty(data).listing;
+      return _parsePropertyMap(data as Map<String, dynamic>).listing;
     } else {
       throw Exception('Failed to confirm availability');
     }
@@ -208,7 +208,7 @@ class ApiPropertyRepository implements PropertyRepository {
     final response = await _client.patch(uri, headers: _headers);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return _parseProperty(data).listing;
+      return _parsePropertyMap(data as Map<String, dynamic>).listing;
     } else {
       throw Exception('Failed to unpublish listing');
     }
@@ -220,7 +220,7 @@ class ApiPropertyRepository implements PropertyRepository {
     final response = await _client.patch(uri, headers: _headers);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return _parseProperty(data).listing;
+      return _parsePropertyMap(data as Map<String, dynamic>).listing;
     } else {
       throw Exception('Failed to republish listing');
     }
