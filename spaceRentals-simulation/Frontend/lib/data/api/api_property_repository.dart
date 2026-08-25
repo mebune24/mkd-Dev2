@@ -1,9 +1,81 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/api/api_endpoints.dart';
 import '../../features/properties/domain/property.dart';
 import '../../repositories/property_repository.dart';
 import '../../shared/models/enums.dart';
+
+// Top-level function required by compute()
+List<PropertyWithListing> _parsePropertyList(String responseBody) {
+  final List<dynamic> data = json.decode(responseBody);
+  return data.map((j) => _parsePropertyMap(j as Map<String, dynamic>)).toList();
+}
+
+PropertyWithListing _parsePropertyMap(Map<String, dynamic> jsonMap) {
+  final property = Property(
+    id: jsonMap['id'],
+    landlordId: jsonMap['landlordId'],
+    title: jsonMap['title'],
+    description: jsonMap['description'],
+    location: jsonMap['location'],
+    bedrooms: jsonMap['bedrooms'] ?? 0,
+    bathrooms: jsonMap['bathrooms'] ?? 0,
+    monthlyRentUnits: jsonMap['monthlyRent'] ?? 0,
+    depositUnits: jsonMap['deposit'] ?? 0,
+    images: _parseStringListStatic(jsonMap['images']),
+    category: jsonMap['category'] ?? 'Apartment',
+    furnished: jsonMap['furnished'] ?? false,
+    areaSqM: (jsonMap['areaSqM'] ?? 0).toDouble(),
+    hasWater: jsonMap['hasWater'] ?? false,
+    hasElectricity: jsonMap['hasElectricity'] ?? false,
+    isFenced: jsonMap['isFenced'] ?? false,
+    createdAt: DateTime.tryParse(jsonMap['createdAt'] ?? '') ?? DateTime.now(),
+    updatedAt: DateTime.tryParse(jsonMap['updatedAt'] ?? '') ?? DateTime.now(),
+  );
+
+  final statusStr = jsonMap['status'] ?? 'draft';
+  PropertyAvailabilityStatus availStatus = PropertyAvailabilityStatus.stale;
+  if (statusStr == 'available') availStatus = PropertyAvailabilityStatus.available;
+  if (statusStr == 'draft' || statusStr == 'auto_unpublished') availStatus = PropertyAvailabilityStatus.autoUnpublished;
+  if (statusStr == 'rented') availStatus = PropertyAvailabilityStatus.rented;
+
+  final listing = PropertyListing(
+    id: jsonMap['id'],
+    propertyId: jsonMap['id'],
+    availabilityStatus: availStatus,
+    lastAvailabilityConfirmedAt: DateTime.tryParse(jsonMap['lastConfirmedAvailableAt'] ?? '') ?? DateTime.now(),
+    publishedAt: DateTime.tryParse(jsonMap['createdAt'] ?? ''),
+  );
+
+  final verificationMap = jsonMap['propertyVerification'];
+  PropertyVerificationLevel level = PropertyVerificationLevel.unverified;
+  if (verificationMap != null) {
+    final lvl = verificationMap['level'];
+    if (lvl == 1) level = PropertyVerificationLevel.documentsSubmitted;
+    else if (lvl == 2) level = PropertyVerificationLevel.ownerVerified;
+    else if (lvl == 3) level = PropertyVerificationLevel.propertyVerified;
+    else if (lvl == 4) level = PropertyVerificationLevel.physicallyInspected;
+  }
+
+  return PropertyWithListing(
+    property: property,
+    listing: listing,
+    verification: PropertyVerificationInfo(level: level),
+  );
+}
+
+List<String> _parseStringListStatic(dynamic value) {
+  if (value == null) return [];
+  if (value is String) {
+    try {
+      final parsed = json.decode(value);
+      if (parsed is List) return parsed.map((e) => e.toString()).toList();
+    } catch (_) { return []; }
+  }
+  if (value is List) return value.map((e) => e.toString()).toList();
+  return [];
+}
 
 class ApiPropertyRepository implements PropertyRepository {
   final http.Client _client = http.Client();
@@ -24,20 +96,28 @@ class ApiPropertyRepository implements PropertyRepository {
   Future<List<PropertyWithListing>> getMarketplaceListings({
     String? searchQuery,
     String? category,
-    String? location, // Note: backend search uses 'q' for location too
+    String? location,
   }) async {
-    final queryParams = <String, String>{};
-    if (searchQuery != null && searchQuery.isNotEmpty) queryParams['q'] = searchQuery;
-    else if (location != null && location.isNotEmpty) queryParams['q'] = location;
-    
-    if (category != null && category != 'All') queryParams['category'] = category;
-    
-    final uri = Uri.parse('${ApiEndpoints.properties}/search').replace(queryParameters: queryParams);
-    
+    final hasFilters = (searchQuery != null && searchQuery.isNotEmpty) ||
+        (location != null && location.isNotEmpty) ||
+        (category != null && category != 'All');
+
+    Uri uri;
+    if (hasFilters) {
+      final queryParams = <String, String>{};
+      if (searchQuery != null && searchQuery.isNotEmpty) queryParams['q'] = searchQuery;
+      else if (location != null && location.isNotEmpty) queryParams['q'] = location;
+      if (category != null && category != 'All') queryParams['category'] = category;
+      uri = Uri.parse('${ApiEndpoints.properties}/search').replace(queryParameters: queryParams);
+    } else {
+      // Load all available properties for home screen
+      uri = Uri.parse(ApiEndpoints.properties);
+    }
+
     final response = await _client.get(uri, headers: _headers);
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => _parseProperty(json)).toList();
+      // Parse on a background isolate to avoid jank
+      return compute(_parsePropertyList, response.body);
     } else {
       throw Exception('Failed to load properties');
     }
@@ -48,8 +128,7 @@ class ApiPropertyRepository implements PropertyRepository {
     final uri = Uri.parse('${ApiEndpoints.properties}/$propertyId');
     final response = await _client.get(uri, headers: _headers);
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return _parseProperty(data);
+      return compute(_parsePropertyMap, json.decode(response.body) as Map<String, dynamic>);
     } else {
       throw Exception('Property not found');
     }
@@ -60,8 +139,7 @@ class ApiPropertyRepository implements PropertyRepository {
     final uri = Uri.parse('${ApiEndpoints.properties}/my/listings');
     final response = await _client.get(uri, headers: _headers);
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => _parseProperty(json)).toList();
+      return compute(_parsePropertyList, response.body);
     } else {
       throw Exception('Failed to load landlord properties');
     }
@@ -148,74 +226,4 @@ class ApiPropertyRepository implements PropertyRepository {
     }
   }
 
-  // --- Helper to parse Backend JSON to Frontend Domain Models ---
-  PropertyWithListing _parseProperty(Map<String, dynamic> jsonMap) {
-    // Parse core property
-    final property = Property(
-      id: jsonMap['id'],
-      landlordId: jsonMap['landlordId'],
-      title: jsonMap['title'],
-      description: jsonMap['description'],
-      location: jsonMap['location'],
-      bedrooms: jsonMap['bedrooms'] ?? 0,
-      bathrooms: jsonMap['bathrooms'] ?? 0,
-      monthlyRentUnits: jsonMap['monthlyRent'] ?? 0,
-      depositUnits: jsonMap['deposit'] ?? 0,
-      images: _parseStringList(jsonMap['images']),
-      category: jsonMap['category'] ?? 'Apartment',
-      furnished: jsonMap['furnished'] ?? false,
-      areaSqM: (jsonMap['areaSqM'] ?? 0).toDouble(),
-      hasWater: jsonMap['hasWater'] ?? false,
-      hasElectricity: jsonMap['hasElectricity'] ?? false,
-      isFenced: jsonMap['isFenced'] ?? false,
-      createdAt: DateTime.tryParse(jsonMap['createdAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(jsonMap['updatedAt'] ?? '') ?? DateTime.now(),
-    );
-
-    // Backend groups availability/status directly on the Property object
-    final statusStr = jsonMap['status'] ?? 'draft';
-    PropertyAvailabilityStatus availStatus = PropertyAvailabilityStatus.stale;
-    if (statusStr == 'available') availStatus = PropertyAvailabilityStatus.available;
-    if (statusStr == 'draft' || statusStr == 'auto_unpublished') availStatus = PropertyAvailabilityStatus.autoUnpublished;
-    if (statusStr == 'rented') availStatus = PropertyAvailabilityStatus.rented;
-
-    final listing = PropertyListing(
-      id: jsonMap['id'], // We map listing ID to property ID for simplicity
-      propertyId: jsonMap['id'],
-      availabilityStatus: availStatus,
-      lastAvailabilityConfirmedAt: DateTime.tryParse(jsonMap['lastConfirmedAvailableAt'] ?? '') ?? DateTime.now(),
-      publishedAt: DateTime.tryParse(jsonMap['createdAt'] ?? ''),
-    );
-
-    // Map Verification
-    final verificationMap = jsonMap['propertyVerification'];
-    PropertyVerificationLevel level = PropertyVerificationLevel.unverified;
-    if (verificationMap != null) {
-      final lvl = verificationMap['level'];
-      if (lvl == 1) level = PropertyVerificationLevel.documentsSubmitted;
-      else if (lvl == 2) level = PropertyVerificationLevel.ownerVerified;
-      else if (lvl == 3) level = PropertyVerificationLevel.propertyVerified;
-      else if (lvl == 4) level = PropertyVerificationLevel.physicallyInspected;
-    }
-
-    return PropertyWithListing(
-      property: property,
-      listing: listing,
-      verification: PropertyVerificationInfo(level: level),
-    );
-  }
-
-  List<String> _parseStringList(dynamic value) {
-    if (value == null) return [];
-    if (value is String) {
-      try {
-        final parsed = json.decode(value);
-        if (parsed is List) return parsed.map((e) => e.toString()).toList();
-      } catch (_) {
-        return [];
-      }
-    }
-    if (value is List) return value.map((e) => e.toString()).toList();
-    return [];
-  }
 }
