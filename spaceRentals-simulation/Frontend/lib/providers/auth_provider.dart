@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/domain/user_session.dart';
 import '../shared/models/enums.dart';
+import '../services/session_storage_service.dart';
 import 'di_providers.dart';
 
 /// State class to hold the authenticated session.
@@ -22,7 +23,7 @@ class AuthState {
 
   /// True if the user has been granted browse-only guest access.
   bool get hasAccess => isAuthenticated || isGuest;
-  
+
   AuthState copyWith({
     UserSession? session,
     bool? isLoading,
@@ -46,6 +47,7 @@ class AuthNotifier extends Notifier<AuthState> {
     return const AuthState(isLoading: true);
   }
 
+  /// On cold start: restore session from device storage (encrypted).
   Future<void> _init() async {
     try {
       final repo = ref.read(authRepositoryProvider);
@@ -80,8 +82,11 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final repo = ref.read(authRepositoryProvider);
       final session = await repo.signUp(
-        email: email, password: password, firstName: firstName, 
-        lastName: lastName, role: role,
+        email: email,
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
+        role: role,
       );
       state = AuthState(session: session, isLoading: false);
       return true;
@@ -97,7 +102,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> signOut() async {
-    // Clear guest state too
+    // Clear guest state
     if (state.isGuest) {
       state = const AuthState();
       return;
@@ -110,6 +115,42 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  /// Update in-memory session and persist profile changes to local storage.
+  Future<void> updateSessionProfile({
+    String? firstName,
+    String? lastName,
+    String? phone,
+    String? avatarUrl,
+    bool? twoFactorEnabled,
+    bool? pushNotificationsEnabled,
+  }) async {
+    final current = state.session;
+    if (current == null) return;
+
+    // Update device storage
+    await SessionStorageService.instance.updateProfile(
+      userId: current.userId,
+      firstName: firstName,
+      lastName: lastName,
+      phone: phone,
+      avatarUrl: avatarUrl,
+      twoFactorEnabled: twoFactorEnabled,
+      pushNotificationsEnabled: pushNotificationsEnabled,
+    );
+
+    // Update in-memory state
+    state = state.copyWith(
+      session: current.copyWith(
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+        avatarUrl: avatarUrl,
+        twoFactorEnabled: twoFactorEnabled,
+        pushNotificationsEnabled: pushNotificationsEnabled,
+      ),
+    );
   }
 }
 

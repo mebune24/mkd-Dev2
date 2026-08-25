@@ -3,68 +3,121 @@ import '../../features/auth/domain/user_session.dart';
 import '../../features/auth/domain/user_profile.dart';
 import '../../repositories/auth_repository.dart';
 import '../../shared/models/enums.dart';
+import '../../services/session_storage_service.dart';
 
 const _uuid = Uuid();
 
+/// MockAuthRepository with persistent session storage.
+///
+/// Session is saved to device storage (encrypted JWT + SharedPreferences)
+/// on every signIn/signUp and cleared on signOut. On cold-start,
+/// [getCurrentSession] restores the saved session automatically.
 class MockAuthRepository implements AuthRepository {
-  // No session on cold start — user must sign in or continue as guest
+  // In-memory cache — rebuilt from storage on first call to getCurrentSession
   UserSession? _currentSession;
 
   @override
   Future<UserSession?> getCurrentSession() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    // Return in-memory session if already loaded
+    if (_currentSession != null && !_currentSession!.isExpired) {
+      return _currentSession;
+    }
+    // Otherwise try to restore from device storage
+    final stored = await SessionStorageService.instance.loadSession();
+    _currentSession = stored;
     return _currentSession;
   }
 
   @override
   Future<UserSession> signIn({required String email, required String password}) async {
     await Future.delayed(const Duration(seconds: 1));
+
     // Dev convenience: role is determined by email prefix
+    UserSession session;
     if (email.startsWith('admin')) {
-      _currentSession = UserSession(
-        userId: 'admin_1', email: email, firstName: 'System', lastName: 'Admin',
-        role: Role.admin, accessToken: 'mock_admin_token',
-        expiresAt: DateTime.now().add(const Duration(days: 1)),
+      session = UserSession(
+        userId: 'admin_1',
+        email: email,
+        firstName: 'System',
+        lastName: 'Admin',
+        role: Role.admin,
+        accessToken: 'mock_admin_token_${DateTime.now().millisecondsSinceEpoch}',
+        expiresAt: DateTime.now().add(const Duration(days: 30)),
       );
     } else if (email.startsWith('agent')) {
-      _currentSession = UserSession(
-        userId: 'agent_1', email: email, firstName: 'Top', lastName: 'Agent',
-        role: Role.agent, accessToken: 'mock_agent_token',
-        expiresAt: DateTime.now().add(const Duration(days: 1)),
+      session = UserSession(
+        userId: 'agent_1',
+        email: email,
+        firstName: 'Top',
+        lastName: 'Agent',
+        role: Role.agent,
+        accessToken: 'mock_agent_token_${DateTime.now().millisecondsSinceEpoch}',
+        expiresAt: DateTime.now().add(const Duration(days: 30)),
       );
     } else if (email.startsWith('landlord')) {
-      _currentSession = UserSession(
-        userId: 'landlord_1', email: email, firstName: 'Space', lastName: 'Landlord',
-        role: Role.landlord, accessToken: 'mock_landlord_token',
-        expiresAt: DateTime.now().add(const Duration(days: 1)),
+      session = UserSession(
+        userId: 'landlord_1',
+        email: email,
+        firstName: 'Space',
+        lastName: 'Landlord',
+        role: Role.landlord,
+        accessToken: 'mock_landlord_token_${DateTime.now().millisecondsSinceEpoch}',
+        expiresAt: DateTime.now().add(const Duration(days: 30)),
       );
     } else {
-      _currentSession = UserSession(
-        userId: 'tenant_1', email: email, firstName: 'Happy', lastName: 'Tenant',
-        role: Role.tenant, accessToken: 'mock_tenant_token',
-        expiresAt: DateTime.now().add(const Duration(days: 1)),
+      session = UserSession(
+        userId: 'tenant_1',
+        email: email,
+        firstName: 'Happy',
+        lastName: 'Tenant',
+        role: Role.tenant,
+        accessToken: 'mock_tenant_token_${DateTime.now().millisecondsSinceEpoch}',
+        expiresAt: DateTime.now().add(const Duration(days: 30)),
       );
     }
-    return _currentSession!;
+
+    // Persist to device storage
+    await SessionStorageService.instance.saveSession(session);
+    _currentSession = session;
+    return session;
   }
 
   @override
   Future<UserSession> signUp({
-    required String email, required String password, required String firstName,
-    required String lastName, required String role, String? referralCode,
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+    required String role,
+    String? referralCode,
   }) async {
     await Future.delayed(const Duration(seconds: 1));
-    final userRole = Role.values.firstWhere((e) => e.name == role.toLowerCase(), orElse: () => Role.tenant);
-    _currentSession = UserSession(
-      userId: _uuid.v4(), email: email, firstName: firstName, lastName: lastName,
-      role: userRole, accessToken: 'mock_new_token', expiresAt: DateTime.now().add(const Duration(days: 1)),
+
+    final userRole = Role.values.firstWhere(
+      (e) => e.name == role.toLowerCase(),
+      orElse: () => Role.tenant,
     );
-    return _currentSession!;
+    final session = UserSession(
+      userId: _uuid.v4(),
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+      role: userRole,
+      accessToken: 'mock_new_token_${_uuid.v4()}',
+      expiresAt: DateTime.now().add(const Duration(days: 30)),
+    );
+
+    // Persist to device storage
+    await SessionStorageService.instance.saveSession(session);
+    _currentSession = session;
+    return session;
   }
 
   @override
   Future<void> signOut() async {
     await Future.delayed(const Duration(milliseconds: 400));
+    // Wipe from device storage
+    await SessionStorageService.instance.clearSession();
     _currentSession = null;
   }
 
@@ -72,18 +125,31 @@ class MockAuthRepository implements AuthRepository {
   Future<UserSession> refreshSession() async {
     await Future.delayed(const Duration(milliseconds: 400));
     if (_currentSession == null) throw Exception('No active session');
-    _currentSession = UserSession(
-      userId: _currentSession!.userId, email: _currentSession!.email,
-      firstName: _currentSession!.firstName, lastName: _currentSession!.lastName,
-      role: _currentSession!.role, accessToken: 'refreshed_token',
-      expiresAt: DateTime.now().add(const Duration(days: 7)),
+
+    final refreshed = UserSession(
+      userId: _currentSession!.userId,
+      email: _currentSession!.email,
+      firstName: _currentSession!.firstName,
+      lastName: _currentSession!.lastName,
+      role: _currentSession!.role,
+      accessToken: 'refreshed_token_${DateTime.now().millisecondsSinceEpoch}',
+      expiresAt: DateTime.now().add(const Duration(days: 30)),
     );
-    return _currentSession!;
+
+    // Persist refreshed token to storage
+    await SessionStorageService.instance.updateToken(
+      refreshed.accessToken,
+      refreshed.expiresAt,
+      refreshed.userId,
+    );
+    _currentSession = refreshed;
+    return refreshed;
   }
 
   @override
   Future<void> requestPasswordReset({required String email}) async {
     await Future.delayed(const Duration(milliseconds: 800));
+    // No-op in mock
   }
 
   @override

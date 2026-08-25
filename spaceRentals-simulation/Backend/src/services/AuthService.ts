@@ -19,7 +19,7 @@ export class AuthService {
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await userRepository.create({ name, email, passwordHash, role });
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
     return { token, user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status } };
   }
 
@@ -35,7 +35,7 @@ export class AuthService {
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) throw { status: 401, message: 'Invalid credentials.' };
 
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
     return { token, user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status } };
   }
 

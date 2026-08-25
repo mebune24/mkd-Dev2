@@ -4,6 +4,7 @@ class UserProfile {
   final String id;
   final String email;
   final String? phone;
+  final String? avatarUrl;
   final String firstName;
   final String lastName;
   final Role role;
@@ -14,6 +15,7 @@ class UserProfile {
     required this.id,
     required this.email,
     this.phone,
+    this.avatarUrl,
     required this.firstName,
     required this.lastName,
     required this.role,

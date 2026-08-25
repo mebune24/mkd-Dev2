@@ -46,6 +46,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   shared_preferences: ^2.5.3
+  flutter_secure_storage: ^9.2.4
   url_launcher: ^6.3.0
 
 dev_dependencies:
