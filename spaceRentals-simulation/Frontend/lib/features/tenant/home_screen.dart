@@ -337,77 +337,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // ── Agent Promo Banner ─────────────────────────────────────
+          // ── Agent Promo Banner (Full Width) ────────────────────────
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-              child: Container(
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 8)),
-                  ],
-                ),
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        flex: 5,
-                        child: Image.asset(
-                          'assets/images/agent_promo.jpg',
-                          fit: BoxFit.cover,
-                          alignment: Alignment.centerLeft,
-                          errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[300], child: const Icon(Icons.real_estate_agent, size: 50, color: Colors.grey)),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 5,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(colors: [Color(0xFF6A1B9A), Color(0xFF4A148C)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                isFr ? 'Rejoignez le Réseau' : 'Join Our Network',
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                isFr ? 'Devenez agent et gagnez des commissions.' : 'Become an agent and earn commissions.',
-                                style: const TextStyle(color: Colors.white70, fontSize: 12),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () => context.push('/agent/onboarding'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: const Color(0xFF6A1B9A),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  elevation: 4,
-                                ),
-                                child: Text(
-                                  isFr ? 'Je suis un agent' : 'I am an agent',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            child: _buildAgentPromoSection(isFr, theme),
           ),
 
           // ── All Properties (Explore) ────────────────────────────
@@ -461,6 +393,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ]),
               error: (e, _) => _buildErrorState(theme, isFr),
             ),
+          ),
+
+          // ── App Showcase Section ───────────────────────────────────
+          SliverToBoxAdapter(
+            child: _buildAppShowcaseSection(isFr, theme),
           ),
 
           // ── Platform Statistics ────────────────────────────────────
@@ -1841,3 +1778,279 @@ class _FaqSectionState extends State<_FaqSection> {
   }
 }
 
+
+extension _HomeScreenAgentAndShowcase on _HomeScreenState {
+  // ── Full-Width Agent Promo Section ───────────────────────────────────────
+  Widget _buildAgentPromoSection(bool isFr, ThemeData theme) {
+    final benefits = isFr
+        ? [
+            {'icon': Icons.payments_outlined, 'text': 'Gagnez jusqu\'à 5% de commission sur chaque transaction réussie'},
+            {'icon': Icons.verified_user_outlined, 'text': 'Badge Agent Vérifié pour renforcer votre crédibilité en ligne'},
+            {'icon': Icons.people_alt_outlined, 'text': 'Accès à un réseau actif de propriétaires & locataires au Cameroun'},
+            {'icon': Icons.trending_up_outlined, 'text': 'Tableau de bord analytique pour suivre leads & performances'},
+            {'icon': Icons.support_agent_outlined, 'text': 'Support dédié 24/7 et formations gratuites sur la plateforme'},
+          ]
+        : [
+            {'icon': Icons.payments_outlined, 'text': 'Earn up to 5% commission on every successful rental deal'},
+            {'icon': Icons.verified_user_outlined, 'text': 'Receive a Verified Agent badge to build instant trust with clients'},
+            {'icon': Icons.people_alt_outlined, 'text': 'Access an active network of landlords & tenants across Cameroon'},
+            {'icon': Icons.trending_up_outlined, 'text': 'Analytics dashboard to track your earnings, leads & performance'},
+            {'icon': Icons.support_agent_outlined, 'text': 'Dedicated 24/7 support team & free onboarding training included'},
+          ];
+
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF4A148C), Color(0xFF6A1B9A), Color(0xFF7B1FA2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(child: CustomPaint(painter: _DotPatternPainter())),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.real_estate_agent, color: Colors.amberAccent, size: 14),
+                      const SizedBox(width: 7),
+                      Text(
+                        isFr ? 'Programme Agent SpaceRentals' : 'SpaceRentals Agent Programme',
+                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.4),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Text(
+                  isFr ? 'Transformez votre réseau\nen revenus réels.' : 'Turn Your Network\nInto Real Income.',
+                  style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold, height: 1.2, letterSpacing: -0.5),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  isFr
+                      ? 'Des centaines d\'agents gagnent déjà des commissions en aidant des Camerounais à trouver ou louer des propriétés. Rejoignez le mouvement — c\'est entièrement gratuit, sans abonnement mensuel.'
+                      : 'Hundreds of agents are already earning commissions helping Cameroonians find and rent properties. Join the movement — it\'s completely free with no monthly subscription required.',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontSize: 14, height: 1.65),
+                ),
+                const SizedBox(height: 30),
+                Row(
+                  children: [
+                    _agentStat2('500+', isFr ? 'Agents actifs' : 'Active Agents'),
+                    _agentStatDivider2(),
+                    _agentStat2('5%', isFr ? 'Commission max' : 'Max Commission'),
+                    _agentStatDivider2(),
+                    _agentStat2('24h', isFr ? 'Approbation' : 'Approval Time'),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                ...benefits.map((b) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(b['icon'] as IconData, color: Colors.amberAccent, size: 18),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(b['text'] as String,
+                          style: const TextStyle(color: Colors.white, fontSize: 13.5, height: 1.45)),
+                      ),
+                    ],
+                  ),
+                )),
+                const SizedBox(height: 26),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.push('/agent/onboarding'),
+                        icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                        label: Text(isFr ? 'Je suis un agent' : 'I Am an Agent',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF6A1B9A),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          elevation: 6,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton(
+                      onPressed: () async {
+                        final Uri url = Uri.parse('https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
+                        if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white54, width: 1.5),
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: Text(isFr ? 'En savoir plus' : 'Learn More',
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _agentStat2(String value, String label) => Expanded(
+    child: Column(children: [
+      Text(value, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 3),
+      Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11), textAlign: TextAlign.center),
+    ]),
+  );
+
+  Widget _agentStatDivider2() => Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.2));
+
+  // ── App Showcase Section ──────────────────────────────────────────────────
+  Widget _buildAppShowcaseSection(bool isFr, ThemeData theme) {
+    return Container(
+      color: const Color(0xFFF8F4FF),
+      padding: const EdgeInsets.fromLTRB(0, 44, 0, 28),
+      child: Column(children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                isFr ? '📱 Application Mobile' : '📱 Mobile Application',
+                style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isFr ? 'Tout ce dont vous avez besoin,\ndans votre poche.' : 'Everything You Need,\nRight in Your Pocket.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, height: 1.25, letterSpacing: -0.3),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isFr
+                  ? 'SpaceRentals est conçu pour le Cameroun. Trouvez une propriété, gérez vos baux, payez votre loyer via MTN Money ou Orange Money, et chattez directement avec les propriétaires — tout depuis une seule application.'
+                  : 'SpaceRentals is built for Cameroon. Find a property, manage your leases, pay rent via MTN Money or Orange Money, and chat directly with landlords — all from a single app.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.65),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 28),
+        Image.asset(
+          'assets/images/app_mockup.png',
+          width: double.infinity,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Container(
+            height: 260, color: const Color(0xFFEDE7F6),
+            child: Center(child: Icon(Icons.phone_android_rounded, size: 80, color: Colors.purple.shade200)),
+          ),
+        ),
+        const SizedBox(height: 28),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 10, runSpacing: 10, alignment: WrapAlignment.center,
+            children: [
+              _appFeatureChip2(Icons.search_rounded, isFr ? 'Recherche avancée' : 'Smart Search', theme),
+              _appFeatureChip2(Icons.verified_rounded, isFr ? 'Annonces vérifiées' : 'Verified Listings', theme),
+              _appFeatureChip2(Icons.mobile_friendly_rounded, 'Mobile Money', theme),
+              _appFeatureChip2(Icons.chat_bubble_outline_rounded, isFr ? 'Chat en direct' : 'Live Chat', theme),
+              _appFeatureChip2(Icons.build_circle_outlined, isFr ? 'Maintenance' : 'Maintenance', theme),
+              _appFeatureChip2(Icons.bar_chart_rounded, isFr ? 'Tableau de bord' : 'Dashboard', theme),
+            ],
+          ),
+        ),
+        const SizedBox(height: 30),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              final Uri url = Uri.parse('https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
+              if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
+            },
+            icon: const Icon(Icons.download_rounded, size: 20),
+            label: Text(isFr ? 'Obtenir un accès anticipé' : 'Get Early Access',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 54),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              elevation: 4,
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _appFeatureChip2(IconData icon, String label, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: theme.colorScheme.primary),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade800)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dot grid painter for the agent promo background texture
+class _DotPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.05)
+      ..style = PaintingStyle.fill;
+    const spacing = 26.0;
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), 2.0, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
