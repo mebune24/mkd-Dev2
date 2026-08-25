@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app/routes.dart';
 import 'app/theme.dart';
 import 'providers/locale_provider.dart';
@@ -8,6 +9,8 @@ import 'widgets/error_boundary.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Disable runtime font fetching — use bundled Inter font from assets/fonts/
+  GoogleFonts.config.allowRuntimeFetching = false;
   setupGlobalErrorHandling();
   runApp(
     const ProviderScope(
