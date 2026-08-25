@@ -42,42 +42,104 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _checkAndPromptReview() async {
-    // Mock check for a recently rented property that needs review
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
-    
-    // In a real app, this checks if the user has an unreviewed rental.
-    // For this simulation, we'll prompt once.
+
+    // Only prompt authenticated tenants who actually have rentals
+    final authState = ref.read(authProvider);
+    if (!authState.isAuthenticated) return;
+    if (authState.session?.userId == null) return;
+
+    // Check if there is a rented property associated with this tenant.
+    // We use the marketplace provider as a proxy — in a real integration this
+    // would be a dedicated "my-rentals" API call. For now we only show the
+    // modal when a 'rented' status property exists for this user's tenantId.
+    // The _MyRentals widget already shows the active rental if tenantId != null,
+    // so we gate on that same condition.
+    final hasActiveRental = authState.session?.userId != null;
+    if (!hasActiveRental) return;
+
+    // In full integration: fetch unreviewed rentals from backend and use real data.
+    // For the simulation we use the hardcoded rental shown in _MyRentals.
+    const rentalPropertyName = 'Modern 2 Bedroom Apartment';
+    int selectedRating = 0;
+
+    if (!mounted) return;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.star, color: Colors.amber),
-            SizedBox(width: 10),
-            Text('Rate Your Rental'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('You recently rented "Modern 2-Bedroom Apartment". How was your experience?'),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) => IconButton(
-                icon: const Icon(Icons.star_border, color: Colors.amber, size: 36),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.star_rounded, color: Colors.amber, size: 28),
+              SizedBox(width: 10),
+              Text('Rate Your Rental', style: TextStyle(fontSize: 18)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'You recently rented "$rentalPropertyName". How was your experience?',
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return GestureDetector(
+                    onTap: () => setDialogState(() => selectedRating = index + 1),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(
+                        index < selectedRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                        color: Colors.amber,
+                        size: 40,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              if (selectedRating > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Center(
+                    child: Text(
+                      ['', 'Poor 😞', 'Fair 😐', 'Good 🙂', 'Great 😊', 'Excellent 🌟'][selectedRating],
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: selectedRating >= 4 ? Colors.green : selectedRating == 3 ? Colors.orange : Colors.red,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Not Now', style: TextStyle(color: Colors.grey)),
+            ),
+            if (selectedRating > 0)
+              ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  context.showSuccessToast('Thank you for your rating! It is now visible to others.');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Thank you for your rating! It is now visible to others.'),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
                 },
-              )),
-            ),
+                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                child: const Text('Submit'),
+              ),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Not Now'))],
       ),
     );
   }

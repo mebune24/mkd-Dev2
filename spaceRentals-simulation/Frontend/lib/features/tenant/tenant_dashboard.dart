@@ -212,7 +212,7 @@ class _TenantDrawer extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 Text(user.session?.fullName ?? 'Guest', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                Text(user?.email ?? '', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                Text(user?.session?.email ?? '', style: const TextStyle(color: Colors.white70, fontSize: 13)),
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
