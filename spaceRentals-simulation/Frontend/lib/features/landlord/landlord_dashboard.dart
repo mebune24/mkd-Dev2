@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/url_helper.dart';
 import 'my_properties.dart';
 import 'tenant_management.dart';
 import 'landlord_payments_screen.dart';
@@ -70,12 +70,10 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
               if (_currentIndex != 1) ...[
                 FloatingActionButton(
                   heroTag: 'whatsapp_fab_landlord',
-                  onPressed: () async {
-                    final Uri url = Uri.parse('https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url, mode: LaunchMode.externalApplication);
-                    }
-                  },
+                  onPressed: () => UrlHelper.openWhatsApp(
+                    context,
+                    'https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4',
+                  ),
                   backgroundColor: const Color(0xFF25D366),
                   foregroundColor: Colors.white,
                   elevation: 6,

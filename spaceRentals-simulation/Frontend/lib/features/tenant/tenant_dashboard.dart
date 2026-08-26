@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../core/utils/url_helper.dart';
+import '../../widgets/guest_guard.dart';
 import 'home_screen.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../profile/profile_screen.dart';
@@ -71,12 +72,10 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
             children: [
               FloatingActionButton(
                 heroTag: 'whatsapp_fab_tenant',
-                onPressed: () async {
-                  final Uri url = Uri.parse('https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                  }
-                },
+                onPressed: () => UrlHelper.openWhatsApp(
+                  context,
+                  'https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4',
+                ),
                 backgroundColor: const Color(0xFF25D366),
                 foregroundColor: Colors.white,
                 elevation: 6,
@@ -126,10 +125,10 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home', index: 0, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.favorite_outline, activeIcon: Icons.favorite_rounded, label: 'Saved', index: 1, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.chat_bubble_outline, activeIcon: Icons.chat_bubble_rounded, label: 'Messages', index: 2, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.key_outlined, activeIcon: Icons.key_rounded, label: 'My Rentals', index: 3, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.person_outline, activeIcon: Icons.person_rounded, label: 'Profile', index: 4, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
+                _NavItem(icon: Icons.favorite_outline, activeIcon: Icons.favorite_rounded, label: 'Saved', index: 1, currentIndex: _currentIndex, onTap: (i) => GuestGuard.check(context, ref, () => setState(() => _currentIndex = i), featureName: 'saved properties'), theme: theme),
+                _NavItem(icon: Icons.chat_bubble_outline, activeIcon: Icons.chat_bubble_rounded, label: 'Messages', index: 2, currentIndex: _currentIndex, onTap: (i) => GuestGuard.check(context, ref, () => setState(() => _currentIndex = i), featureName: 'messages'), theme: theme),
+                _NavItem(icon: Icons.key_outlined, activeIcon: Icons.key_rounded, label: 'My Rentals', index: 3, currentIndex: _currentIndex, onTap: (i) => GuestGuard.check(context, ref, () => setState(() => _currentIndex = i), featureName: 'your rentals'), theme: theme),
+                _NavItem(icon: Icons.person_outline, activeIcon: Icons.person_rounded, label: 'Profile', index: 4, currentIndex: _currentIndex, onTap: (i) => GuestGuard.check(context, ref, () => setState(() => _currentIndex = i), featureName: 'your profile'), theme: theme),
               ],
             ),
           ),
@@ -179,12 +178,12 @@ class _NavItem extends StatelessWidget {
 }
 
 /// Hamburger Drawer for Tenant dashboard
-class _TenantDrawer extends StatelessWidget {
+class _TenantDrawer extends ConsumerWidget {
   final dynamic user;
   const _TenantDrawer({required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return Drawer(
       child: Column(
@@ -236,7 +235,7 @@ class _TenantDrawer extends StatelessWidget {
                   subtitle: 'Solde, parrainage & cashout',
                   onTap: () {
                     Navigator.pop(context);
-                    context.push('/tenant/monetization');
+                    GuestGuard.check(context, ref, () => context.push('/tenant/monetization'), featureName: 'wallet & earnings');
                   },
                 ),
                 _DrawerTile(
@@ -246,7 +245,7 @@ class _TenantDrawer extends StatelessWidget {
                   subtitle: 'Gagnez en aidant votre communauté',
                   onTap: () {
                     Navigator.pop(context);
-                    context.push('/tenant/gigs');
+                    GuestGuard.check(context, ref, () => context.push('/tenant/gigs'), featureName: 'micro-gigs');
                   },
                 ),
                 _DrawerTile(

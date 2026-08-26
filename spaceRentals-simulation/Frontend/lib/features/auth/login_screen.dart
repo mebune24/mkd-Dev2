@@ -20,8 +20,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController(text: 'tenant1@spacerentals.cm');
+  final _passwordController = TextEditingController(text: 'Password123!');
   bool _obscurePassword = true;
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -51,6 +51,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         msg: isFr ? 'Veuillez remplir tous les champs' : 'Please fill all input fields',
         backgroundColor: Colors.orange,
       );
+      return;
     }
 
     if (!_formKey.currentState!.validate()) {
@@ -439,8 +440,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                         child: Text(
                           isFr
-                              ? '🔑 Astuce: "tenant@x.com" · "landlord@x.com" · "admin@x.com"'
-                              : '🔑 Tip: "tenant@x.com" · "landlord@x.com" · "admin@x.com"',
+                              ? '🔑 Astuce: "tenant1@spacerentals.cm" / "Password123!"'
+                              : '🔑 Tip: "tenant1@spacerentals.cm" / "Password123!"',
                           style: const TextStyle(
                               fontSize: 11,
                               color: Colors.grey,
@@ -476,9 +477,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   void _showAdminLoginModal(BuildContext context, bool isFr) {
-    final adminEmailController = TextEditingController(text: 'admin@spacerentals.com');
-    final adminPasswordController = TextEditingController(text: 'admin123');
+    final adminEmailController = TextEditingController(text: 'admin@spacerentals.cm');
+    final adminPasswordController = TextEditingController(text: 'Password123!');
     bool isLoading = false;
+    final router = GoRouter.of(context);
 
     showModalBottomSheet(
       context: context,
@@ -549,7 +551,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         if (!ctx.mounted) return;
                         if (success) {
                           Navigator.pop(ctx);
-                          context.go('/admin');
+                          router.go('/admin');
                         } else {
                           setState(() => isLoading = false);
                           final error = ref.read(authProvider).error ?? 'Login failed';

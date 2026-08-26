@@ -438,6 +438,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                                     msg: isFr ? 'Veuillez remplir tous les champs' : 'Please fill all input fields',
                                     backgroundColor: Colors.orange,
                                   );
+                                  return;
                                 }
 
                                 if (!_formKey.currentState!.validate()) {

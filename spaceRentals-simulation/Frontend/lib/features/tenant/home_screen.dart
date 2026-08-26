@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/url_helper.dart';
+import '../../widgets/guest_guard.dart';
 import '../../providers/property_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
@@ -1236,10 +1238,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     ElevatedButton.icon(
                       onPressed: () async {
-                        final Uri url = Uri.parse('https://wa.me/652856939');
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url);
-                        }
+                        UrlHelper.openWhatsApp(context, 'https://wa.me/652856939');
                       },
                       icon: const Icon(Icons.message_rounded, size: 18),
                       label: const Text('Contact Us', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1253,7 +1252,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     const SizedBox(width: 16),
                     OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () => context.push('/chatbot'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
                         side: const BorderSide(color: Colors.white54),
@@ -1898,8 +1897,7 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
                     const SizedBox(width: 12),
                     OutlinedButton(
                       onPressed: () async {
-                        final Uri url = Uri.parse('https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
-                        if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
+                        UrlHelper.openWhatsApp(context, 'https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
@@ -1996,8 +1994,7 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: ElevatedButton.icon(
             onPressed: () async {
-              final Uri url = Uri.parse('https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
-              if (await canLaunchUrl(url)) await launchUrl(url, mode: LaunchMode.externalApplication);
+              UrlHelper.openWhatsApp(context, 'https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
             },
             icon: const Icon(Icons.download_rounded, size: 20),
             label: Text(isFr ? 'Obtenir un accès anticipé' : 'Get Early Access',

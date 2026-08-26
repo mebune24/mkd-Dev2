@@ -115,7 +115,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (authState.isLoading) return null; // wait
 
       final hasAccess = authState.hasAccess;   // true for guests AND signed-in users
-      final isAuth = authState.isAuthenticated; // true only for signed-in users
       final isGuest = authState.isGuest;
 
       final isGoingToSplash = state.matchedLocation == '/splash';
@@ -134,10 +133,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // Guest: allow splash/auth routes to pass through to /tenant
       if (isGuest) {
         if (isAuthRoute || isGoingToSplash) return '/tenant';
-        // Guests can only browse /tenant; block everything else
+        // Guests can browse /tenant, /chatbot, and /agent/onboarding
         final loc = state.matchedLocation;
-        if (!loc.startsWith('/tenant')) return '/tenant';
-        return null;
+        if (loc.startsWith('/tenant')) return null;
+        if (loc == '/chatbot') return null;
+        if (loc == '/agent/onboarding') return null;
+        if (loc == '/notifications') return null;
+        return '/tenant';
       }
 
       // Signed-in user: redirect away from auth/splash screens to their dashboard

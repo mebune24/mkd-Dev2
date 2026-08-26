@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/reviews_provider.dart';
 import '../../core/utils/ui_helpers.dart';
+import '../../widgets/guest_guard.dart';
 
 class PropertyDetails extends ConsumerStatefulWidget {
   final PropertyWithListing property;
@@ -61,8 +62,11 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                 IconButton(
                   icon: Icon(isFav ? Icons.favorite : Icons.favorite_border,
                       color: isFav ? Colors.red : Colors.white),
-                  onPressed: () =>
-                      ref.read(favoritesProvider.notifier).toggleFavorite(property),
+                  onPressed: () => GuestGuard.check(
+                    context, ref,
+                    () => ref.read(favoritesProvider.notifier).toggleFavorite(property),
+                    featureName: 'saved properties',
+                  ),
                 ),
               ],
               flexibleSpace: FlexibleSpaceBar(
@@ -414,6 +418,7 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
         ),
         child: Consumer(
           builder: (context, ref, child) {
+            final auth = ref.watch(authProvider);
             return Row(
               children: [
                 Container(
@@ -423,11 +428,13 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                   ),
                   child: IconButton(
                     icon: Icon(Icons.chat_bubble_outline, color: theme.colorScheme.primary),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                    onPressed: () => GuestGuard.check(
+                      context, ref,
+                      () => ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Opening chat with landlord...')),
-                      );
-                    },
+                      ),
+                      featureName: 'landlord chat',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -439,27 +446,11 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: () {
-                      final user = ref.read(authProvider);
-                      if (user == null) {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Account Required'),
-                            content: const Text('You must create an account to apply for properties.'),
-                            actions: [
-                              TextButton(onPressed: () => context.pop(), child: const Text('Cancel')),
-                              ElevatedButton(
-                                onPressed: () { context.pop(); context.go('/register'); },
-                                child: const Text('Create Account'),
-                              ),
-                            ],
-                          ),
-                        );
-                        return;
-                      }
-                      context.push('/tenant/apply', extra: property);
-                    },
+                    onPressed: () => GuestGuard.check(
+                      context, ref,
+                      () => context.push('/tenant/apply', extra: property),
+                      featureName: 'property applications',
+                    ),
                     child: const Text('Apply / Rent Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
