@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/domain_providers.dart';
 import '../../core/utils/url_helper.dart';
 import '../../widgets/guest_guard.dart';
 import 'home_screen.dart';
@@ -185,6 +186,13 @@ class _TenantDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final session = user.session;
+    
+    // Calculate real balance
+    final transactions = ref.watch(agentTransactionsProvider);
+    final myTx = transactions.where((t) => t.agentId == session?.userId).toList();
+    final balance = myTx.where((t) => t.status == 'Approved' || t.status == 'Available').fold(0.0, (s, t) => s + t.amount);
+    
     return Drawer(
       child: Column(
         children: [
@@ -217,7 +225,7 @@ class _TenantDrawer extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
                   child: Text(
-                    CurrencyFormatter.formatCFA(25000),
+                    CurrencyFormatter.formatCFA(balance),
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
