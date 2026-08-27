@@ -406,7 +406,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 16.0),
-              child: _buildPlatformStatistics(),
+              child: _buildPlatformStatistics(marketplaceAsync),
             ),
           ),
 
