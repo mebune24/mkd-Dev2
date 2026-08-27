@@ -152,6 +152,15 @@ class AuthNotifier extends Notifier<AuthState> {
       ),
     );
   }
+
+  /// Called when admin approves an agent's KYC — immediately unlocks the dashboard.
+  void updateSessionKycStatus({required bool isVerified}) {
+    final current = state.session;
+    if (current == null) return;
+    state = state.copyWith(
+      session: current.copyWith(isKycVerified: isVerified),
+    );
+  }
 }
 
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {

@@ -10,6 +10,7 @@ class UserSession {
   final bool twoFactorEnabled;
   final bool pushNotificationsEnabled;
   final Role role;
+  final bool isKycVerified;
   final String accessToken;
   final DateTime expiresAt;
 
@@ -23,6 +24,7 @@ class UserSession {
     this.twoFactorEnabled = false,
     this.pushNotificationsEnabled = true,
     required this.role,
+    this.isKycVerified = false,
     required this.accessToken,
     required this.expiresAt,
   });
@@ -37,6 +39,7 @@ class UserSession {
     String? avatarUrl,
     bool? twoFactorEnabled,
     bool? pushNotificationsEnabled,
+    bool? isKycVerified,
   }) {
     return UserSession(
       userId: userId,
@@ -48,6 +51,7 @@ class UserSession {
       twoFactorEnabled: twoFactorEnabled ?? this.twoFactorEnabled,
       pushNotificationsEnabled: pushNotificationsEnabled ?? this.pushNotificationsEnabled,
       role: role,
+      isKycVerified: isKycVerified ?? this.isKycVerified,
       accessToken: accessToken,
       expiresAt: expiresAt,
     );

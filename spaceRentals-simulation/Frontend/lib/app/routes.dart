@@ -149,8 +149,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           case Role.tenant: return '/tenant';
           case Role.landlord: return '/landlord';
           case Role.admin: return '/admin';
-          case Role.agent: return '/agent/dashboard';
+          case Role.agent:
+            // Route agents based on their KYC status
+            if (session.isKycVerified) return '/agent/dashboard';
+            return '/agent/pending'; // they've applied and are waiting
         }
+      }
+
+      // Agent routing: pending agents can browse /tenant, /chatbot while waiting
+      if (session.role == Role.agent && !session.isKycVerified) {
+        final loc = state.matchedLocation;
+        if (loc.startsWith('/agent/pending')) return null;
+        if (loc.startsWith('/agent/kyc')) return null;
+        if (loc.startsWith('/tenant')) return null;
+        if (loc == '/chatbot') return null;
+        if (loc == '/notifications') return null;
+        return '/agent/pending'; // block everything else
       }
 
       // Role enforcement: prevent cross-role navigation
@@ -158,6 +172,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (loc.startsWith('/tenant') && session.role != Role.tenant) {
         if (session.role == Role.landlord) return '/landlord';
         if (session.role == Role.admin) return '/admin';
+        if (session.role == Role.agent && session.isKycVerified) return '/agent/dashboard';
       }
       if (loc.startsWith('/landlord') && session.role != Role.landlord) {
         if (session.role == Role.tenant) return '/tenant';

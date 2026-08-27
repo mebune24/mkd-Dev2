@@ -7,8 +7,8 @@ class ApiEndpoints {
   static const String _base = '$baseUrl/api';
 
   // Auth
-  static const String signIn = '$_base/auth/signin';
-  static const String signUp = '$_base/auth/signup';
+  static const String signIn = '$_base/auth/login';
+  static const String signUp = '$_base/auth/register';
   static const String signOut = '$_base/auth/signout';
   static const String refreshToken = '$_base/auth/refresh';
   static const String me = '$_base/auth/me';

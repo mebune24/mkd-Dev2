@@ -7,6 +7,7 @@ import 'package:space_rentals/features/landlord/domain/kyc_submission.dart';
 import 'package:space_rentals/features/rentals/domain/dispute_record.dart';
 import 'package:space_rentals/features/agents/domain/agent_models.dart';
 import 'package:space_rentals/core/domain/audit_entry.dart';
+import '../../providers/auth_provider.dart';
 import 'agent_properties_screen.dart';
 import 'agent_clients_screen.dart';
 import '../profile/profile_screen.dart';
@@ -59,13 +60,30 @@ class _AgentOverview extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    // Use the authenticated user's ID — never hardcoded
+    final session = ref.watch(authProvider).session;
+    final currentAgentId = session?.userId ?? '';
+    final agentDisplayId = currentAgentId.isNotEmpty
+        ? 'AGT-${currentAgentId.substring(0, 8).toUpperCase()}'
+        : 'AGT-UNKNOWN';
+
     final transactions = ref.watch(agentTransactionsProvider);
     final agents = ref.watch(agentProfilesProvider);
 
-    // Mock agent ID — will link to real auth user in production
-    const mockAgentId = 'agt_sample_1';
-    final agentProfile = agents.firstWhere((a) => a.agentId == mockAgentId, orElse: () => agents.first);
-    final myTx = transactions.where((t) => t.agentId == mockAgentId).toList();
+    // Filter ALL data strictly by the current agent's userId
+    final myTx = transactions.where((t) => t.agentId == currentAgentId).toList();
+    final agentProfile = agents.firstWhere(
+      (a) => a.userId == currentAgentId,
+      orElse: () => AgentProfile(
+        userId: currentAgentId,
+        name: session?.fullName ?? 'Agent',
+        email: session?.email ?? '',
+        status: 'active',
+        isWalletFrozen: false,
+        referralCode: agentDisplayId,
+      ),
+    );
+
     final balance = myTx.where((t) => t.status == 'Approved').fold(0.0, (s, t) => s + t.amount);
     final pending = myTx.where((t) => t.status == 'Pending').fold(0.0, (s, t) => s + t.amount);
     final totalEarned = myTx.fold(0.0, (s, t) => s + t.amount);
@@ -79,7 +97,7 @@ class _AgentOverview extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Agent Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            Text('ID: AGT-00231', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.75))),
+            Text('ID: $agentDisplayId', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.75))),
           ],
         ),
         flexibleSpace: Container(
@@ -172,8 +190,8 @@ class _AgentOverview extends ConsumerWidget {
               icon: Icons.group_add,
               color: Colors.orange,
               children: [
-                const _StatRow(label: 'Tenants Referred', value: '43'),
-                const _StatRow(label: 'Qualified Tenants', value: '38', valueColor: Colors.green),
+                _StatRow(label: 'Tenants Referred', value: '${agentProfile.tenantsReferred}'),
+                _StatRow(label: 'Qualified Tenants', value: '${agentProfile.qualifiedTenants}', valueColor: Colors.green),
                 _StatRow(label: 'Tenant Commission', value: CurrencyFormatter.formatCFA(tenantCommission), valueColor: Colors.green, isBold: true),
               ],
             ),
@@ -185,12 +203,12 @@ class _AgentOverview extends ConsumerWidget {
               icon: Icons.home_work,
               color: Colors.blue,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Expanded(child: _MiniStat(label: 'Submitted', value: '31', color: Colors.blue)),
-                    Expanded(child: _MiniStat(label: 'Verified', value: '25', color: Colors.green)),
-                    Expanded(child: _MiniStat(label: 'Rejected', value: '4', color: Colors.red)),
-                    Expanded(child: _MiniStat(label: 'Pending', value: '2', color: Colors.orange)),
+                    Expanded(child: _MiniStat(label: 'Submitted', value: '${agentProfile.propertiesSubmitted}', color: Colors.blue)),
+                    Expanded(child: _MiniStat(label: 'Verified', value: '${agentProfile.propertiesVerified}', color: Colors.green)),
+                    Expanded(child: _MiniStat(label: 'Rejected', value: '${agentProfile.propertiesRejected}', color: Colors.red)),
+                    Expanded(child: _MiniStat(label: 'Pending', value: '${agentProfile.propertiesSubmitted - agentProfile.propertiesVerified - agentProfile.propertiesRejected}', color: Colors.orange)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -200,13 +218,13 @@ class _AgentOverview extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // ── Landlords ────────────────────────────────────────────
-            const _SectionCard(
+            _SectionCard(
               title: 'Landlords',
               icon: Icons.handshake,
               color: Colors.teal,
               children: [
-                _StatRow(label: 'Active Relationships', value: '4', valueColor: Colors.green),
-                _StatRow(label: 'Pending Requests', value: '2', valueColor: Colors.orange),
+                _StatRow(label: 'Active Relationships', value: '${agentProfile.landlordRelationships}', valueColor: Colors.green),
+                _StatRow(label: 'Pending Requests', value: '${agentProfile.pendingLandlordRequests}', valueColor: Colors.orange),
               ],
             ),
             const SizedBox(height: 24),

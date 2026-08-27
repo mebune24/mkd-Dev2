@@ -348,6 +348,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                                 ],
                               ),
                             ),
+                            DropdownMenuItem(
+                              value: 'agent',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.handshake,
+                                      size: 18,
+                                      color: theme.colorScheme.primary),
+                                  const SizedBox(width: 10),
+                                  Text(isFr
+                                      ? 'Agent Immobilier'
+                                      : 'Agent'),
+                                ],
+                              ),
+                            ),
                           ],
                           onChanged: (val) {
                             if (val != null) {
@@ -452,7 +466,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                                 // Determine role from dropdown
                                 Role roleToRegister = Role.tenant;
                                 if (_selectedRole == 'landlord') roleToRegister = Role.landlord;
-                                if (_selectedRole == 'admin') roleToRegister = Role.admin;
+                                if (_selectedRole == 'agent') roleToRegister = Role.agent;
 
                                 try {
                                   final nameParts = _nameController.text.trim().split(' ');
@@ -481,6 +495,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                                   if (authState.session!.role == Role.landlord) {
                                     // Landlords always go to KYC first
                                     context.go('/landlord/kyc');
+                                  } else if (authState.session!.role == Role.agent) {
+                                    // Agents go to the onboarding/KYC flow
+                                    context.go('/agent/onboarding');
                                   } else if (authState.session!.role == Role.admin) {
                                     context.go('/admin');
                                   } else {

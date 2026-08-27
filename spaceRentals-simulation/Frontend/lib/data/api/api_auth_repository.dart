@@ -127,6 +127,7 @@ class ApiAuthRepository implements AuthRepository {
       firstName: nameParts.isNotEmpty ? nameParts.first : '',
       lastName: nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
       role: _parseRole(body['role']),
+      isKycVerified: body['isKycVerified'] == true || body['kycVerified'] == true,
       accessToken: token,
       expiresAt: DateTime.now().add(const Duration(days: 7)),
     );
@@ -244,6 +245,7 @@ class ApiAuthRepository implements AuthRepository {
       firstName: firstName ?? (nameParts.isNotEmpty ? nameParts.first : ''),
       lastName: lastName ?? (nameParts.length > 1 ? nameParts.sublist(1).join(' ') : ''),
       role: _parseRole(user['role']),
+      isKycVerified: user['isKycVerified'] == true || user['kycVerified'] == true,
       accessToken: token,
       expiresAt: expiresAt,
     );

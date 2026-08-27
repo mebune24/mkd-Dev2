@@ -157,3 +157,62 @@ class AuditLogNotifier extends Notifier<List<AuditEntry>> {
   }
 }
 final auditLogProvider = NotifierProvider<AuditLogNotifier, List<AuditEntry>>(AuditLogNotifier.new);
+
+// --- App Notifications ---
+class AppNotification {
+  final String id;
+  final String userId;   // empty = broadcast to all
+  final String title;
+  final String body;
+  final String type;
+  final DateTime createdAt;
+  bool isRead;
+
+  AppNotification({
+    required this.id,
+    required this.userId,
+    required this.title,
+    required this.body,
+    required this.type,
+    required this.createdAt,
+    this.isRead = false,
+  });
+}
+
+class AppNotificationsNotifier extends Notifier<List<AppNotification>> {
+  @override
+  List<AppNotification> build() => [];
+
+  void addNotification({
+    required String userId,
+    required String title,
+    required String body,
+    required String type,
+  }) {
+    final notif = AppNotification(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userId: userId,
+      title: title,
+      body: body,
+      type: type,
+      createdAt: DateTime.now(),
+    );
+    state = [notif, ...state];
+  }
+
+  List<AppNotification> forUser(String userId) {
+    return state.where((n) => n.userId == userId || n.userId.isEmpty).toList();
+  }
+
+  void markRead(String id) {
+    state = state.map((n) => n.id == id ? (n..isRead = true) : n).toList();
+  }
+
+  void markAllRead(String userId) {
+    state = state
+        .map((n) => (n.userId == userId || n.userId.isEmpty) ? (n..isRead = true) : n)
+        .toList();
+  }
+}
+final appNotificationsProvider =
+    NotifierProvider<AppNotificationsNotifier, List<AppNotification>>(AppNotificationsNotifier.new);
