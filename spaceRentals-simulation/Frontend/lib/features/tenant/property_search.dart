@@ -452,22 +452,126 @@ class _PropertySearchState extends ConsumerState<PropertySearch> {
                     child: Center(child: Text(isFr ? 'Aucune propriété trouvée' : 'No properties found')),
                   );
                 }
-                double latSum = 0; double lngSum = 0;
-                for (var p in filtered) { latSum += (p.property.latitude ?? 0.0); lngSum += (p.property.longitude ?? 0.0); }
-                final center = LatLng(latSum / filtered.length, lngSum / filtered.length);
+                // ── Map placeholder with property location cards ──────
                 return SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: GoogleMap(
-                    initialCameraPosition: CameraPosition(target: center, zoom: 9),
-                    markers: filtered.map((p) => Marker(
-                      markerId: MarkerId(p.property.id),
-                      position: LatLng((p.property.latitude ?? 0.0), (p.property.longitude ?? 0.0)),
-                      infoWindow: InfoWindow(
-                        title: p.property.title,
-                        snippet: '${CurrencyFormatter.formatCFA(p.property.monthlyRentUnits.toDouble())}/mo',
-                        onTap: () => context.push('/tenant/property/${p.property.id}', extra: p),
+                  hasScrollBody: true,
+                  child: Column(
+                    children: [
+                      // Map placeholder banner
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [theme.colorScheme.primary.withValues(alpha: 0.08), const Color(0xFF5D3F6A).withValues(alpha: 0.05)],
+                          ),
+                          border: Border(bottom: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.12))),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.map_outlined, color: theme.colorScheme.primary, size: 22),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isFr ? '${filtered.length} propriétés trouvées' : '${filtered.length} properties found',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: theme.colorScheme.primary),
+                                  ),
+                                  Text(
+                                    isFr ? 'Vue carte interactive bientôt disponible' : 'Interactive map view coming soon',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    )).toSet(),
+                      // Property location cards
+                      Expanded(
+                        child: ListView.separated(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final p = filtered[index];
+                            return GestureDetector(
+                              onTap: () => context.push('/tenant/property/${p.property.id}', extra: p),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2))],
+                                ),
+                                child: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.network(
+                                        p.property.images.isNotEmpty ? p.property.images.first : '',
+                                        width: 64, height: 64, fit: BoxFit.cover,
+                                        cacheWidth: 128, cacheHeight: 128,
+                                        errorBuilder: (_, __, ___) => Container(
+                                          width: 64, height: 64,
+                                          decoration: BoxDecoration(
+                                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Icon(Icons.home_outlined, color: theme.colorScheme.primary),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(p.property.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                          const SizedBox(height: 4),
+                                          Row(children: [
+                                            Icon(Icons.location_on, size: 12, color: theme.colorScheme.primary),
+                                            const SizedBox(width: 3),
+                                            Expanded(child: Text(p.property.location, style: TextStyle(color: Colors.grey[600], fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                          ]),
+                                          if (p.property.latitude != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text('${p.property.latitude!.toStringAsFixed(4)}°N, ${p.property.longitude!.toStringAsFixed(4)}°E',
+                                              style: TextStyle(color: Colors.grey[400], fontSize: 10)),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          CurrencyFormatter.formatCFA(p.property.monthlyRentUnits.toDouble()),
+                                          style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
+                                        ),
+                                        Text('/mo', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                                        const SizedBox(height: 6),
+                                        Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey[300]),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -489,6 +593,7 @@ class _PropertySearchState extends ConsumerState<PropertySearch> {
                 ),
               ),
             )
+
           else
             propertiesAsync.when(
               data: (allProperties) {

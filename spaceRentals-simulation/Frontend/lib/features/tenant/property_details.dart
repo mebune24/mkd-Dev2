@@ -264,27 +264,27 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                     const SizedBox(height: 20),
 
                     // ── Multimedia buttons ─────────────────────────────
-                    if ((<String>[]).isNotEmpty || (<String>[]).isNotEmpty) ...[
+                    if (property.property.floorPlanUrls.isNotEmpty || property.property.videoTourUrls.isNotEmpty) ...[
                       Row(
                         children: [
-                          if ((<String>[]).isNotEmpty)
+                          if (property.property.floorPlanUrls.isNotEmpty)
                             Expanded(
                               child: _buildMediaButton(
                                 icon: Icons.architecture,
                                 label: 'Floor Plan',
                                 color: Colors.indigo,
-                                onTap: () => _showFloorPlanGallery(context, (<String>[])),
+                                onTap: () => _showFloorPlanGallery(context, property.property.floorPlanUrls),
                               ),
                             ),
-                          if ((<String>[]).isNotEmpty && (<String>[]).isNotEmpty)
+                          if (property.property.floorPlanUrls.isNotEmpty && property.property.videoTourUrls.isNotEmpty)
                             const SizedBox(width: 12),
-                          if ((<String>[]).isNotEmpty)
+                          if (property.property.videoTourUrls.isNotEmpty)
                             Expanded(
                               child: _buildMediaButton(
                                 icon: Icons.play_circle_filled,
                                 label: 'Video Tour',
                                 color: Colors.red,
-                                onTap: () => _showVideoDialog(context, (<String>[])),
+                                onTap: () => _showVideoDialog(context, property.property.videoTourUrls),
                               ),
                             ),
                         ],
@@ -376,27 +376,7 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                     // ── Map ────────────────────────────────────────────
                     _buildSectionHeader('Location on Map'),
                     const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: SizedBox(
-                        height: 220,
-                        child: GoogleMap(
-                          initialCameraPosition: CameraPosition(
-                            target: LatLng((property.property.latitude ?? 3.848), (property.property.longitude ?? 11.502)),
-                            zoom: 15,
-                          ),
-                          markers: {
-                            Marker(
-                              markerId: MarkerId(property.property.id),
-                              position: LatLng((property.property.latitude ?? 3.848), (property.property.longitude ?? 11.502)),
-                              infoWindow: InfoWindow(title: property.property.title, snippet: property.property.location),
-                            ),
-                          },
-                          zoomControlsEnabled: false,
-                          myLocationButtonEnabled: false,
-                        ),
-                      ),
-                    ),
+                    _MapSection(property: property),
                     const SizedBox(height: 28),
 
                     // ── Reviews ────────────────────────────────────────
@@ -661,7 +641,139 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
   }
 }
 
-// ── Reviews Section ────────────────────────────────────────────────────────────
+// ── Map Section ───────────────────────────────────────────────────────────────
+/// Shows a real Google Map when MAPS_API_KEY is configured, or a premium
+/// placeholder otherwise. To enable: replace YOUR_MAPS_API_KEY in AndroidManifest.xml.
+const bool _mapsEnabled = false; // flip to true once API key is set
+
+class _MapSection extends StatelessWidget {
+  final PropertyWithListing property;
+  const _MapSection({required this.property});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final lat = property.property.latitude ?? 3.848;
+    final lng = property.property.longitude ?? 11.502;
+
+    if (_mapsEnabled) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          height: 220,
+          child: GoogleMap(
+            initialCameraPosition: CameraPosition(target: LatLng(lat, lng), zoom: 15),
+            markers: {
+              Marker(
+                markerId: MarkerId(property.property.id),
+                position: LatLng(lat, lng),
+                infoWindow: InfoWindow(title: property.property.title, snippet: property.property.location),
+              ),
+            },
+            zoomControlsEnabled: false,
+            myLocationButtonEnabled: false,
+          ),
+        ),
+      );
+    }
+
+    // ── Placeholder map card ───────────────────────────────────────
+    return Container(
+      height: 220,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.08),
+            const Color(0xFF5D3F6A).withValues(alpha: 0.06),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.15)),
+      ),
+      child: Stack(
+        children: [
+          // Decorative grid lines to suggest a map
+          CustomPaint(painter: _MapGridPainter(color: theme.colorScheme.primary.withValues(alpha: 0.06))),
+          // Center content
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.location_on, color: theme.colorScheme.primary, size: 32),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  property.property.location,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: theme.colorScheme.primary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${lat.toStringAsFixed(4)}°N, ${lng.toStringAsFixed(4)}°E',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.map_outlined, size: 14, color: theme.colorScheme.primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Interactive Map Coming Soon',
+                        style: TextStyle(fontSize: 12, color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MapGridPainter extends CustomPainter {
+  final Color color;
+  _MapGridPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color..strokeWidth = 1;
+    const step = 30.0;
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MapGridPainter old) => old.color != color;
+}
+
+// ── Reviews Section ───────────────────────────────────────────────────────────
 class _ReviewsSection extends ConsumerStatefulWidget {
   final String propertyId;
   const _ReviewsSection({required this.propertyId});

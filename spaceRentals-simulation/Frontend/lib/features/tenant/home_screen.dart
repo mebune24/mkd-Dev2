@@ -1136,11 +1136,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     
     marketplaceAsync.whenData((properties) {
       if (properties.isNotEmpty) {
-        totalProperties = properties.length * 150; // Mock scaling for visual effect
-        final cities = properties.map((p) => p.property.location).toSet();
-        if (cities.isNotEmpty) {
-          totalCities = cities.length;
-        }
+        totalProperties = properties.length * 150; // Scaled for platform projection
+        final cities = properties.map((p) => p.property.location.split(',').last.trim()).toSet();
+        if (cities.isNotEmpty) totalCities = cities.length;
       }
     });
 
@@ -1153,19 +1151,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'title': '$propsStr Properties',
         'desc': 'Find the perfect place from an extensive list in Yaoundé, Douala and more.',
         'icon': Icons.home_work_rounded,
-        'color': Colors.blue,
       },
       {
         'title': '50+ Universities',
         'desc': 'Best student homes near Buea, Ngoa-Ekélé, and major campuses.',
         'icon': Icons.school_rounded,
-        'color': Colors.orange,
       },
       {
-        'title': '$totalCities Regions',
-        'desc': 'We cover every major region in Cameroon with verified listings.',
+        'title': '$totalCities Cities',
+        'desc': 'We cover every major city in Cameroon with verified listings.',
         'icon': Icons.map_rounded,
-        'color': Colors.green,
       },
     ];
 
@@ -1177,7 +1172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Text('Platform Statistics', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         SizedBox(
-          height: 180,
+          height: 210,
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
@@ -1185,8 +1180,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             separatorBuilder: (_, __) => const SizedBox(width: 16),
             itemBuilder: (context, index) {
               return Container(
-                width: 260,
-                padding: const EdgeInsets.all(24),
+                width: 230,
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -1216,10 +1211,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       child: Icon(stats[index]['icon'] as IconData, color: Colors.white, size: 28),
                     ),
-                    const SizedBox(height: 16),
-                    Text(stats[index]['title'] as String, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    Text(
+                      stats[index]['title'] as String,
+                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 8),
-                    Text(stats[index]['desc'] as String, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+                    Text(
+                      stats[index]['desc'] as String,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+                    ),
                   ],
                 ),
               );

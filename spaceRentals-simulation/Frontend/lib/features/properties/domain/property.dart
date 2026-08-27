@@ -16,6 +16,8 @@ class Property {
   final int monthlyRentUnits; // FCFA, integer
   final int depositUnits;
   final List<String> images;
+  final List<String> floorPlanUrls;
+  final List<String> videoTourUrls;
   final double areaSqM;
   final bool furnished;
   final int parkingSpaces;
@@ -44,6 +46,8 @@ class Property {
     required this.monthlyRentUnits,
     required this.depositUnits,
     required this.images,
+    this.floorPlanUrls = const [],
+    this.videoTourUrls = const [],
     this.areaSqM = 0,
     this.furnished = false,
     this.parkingSpaces = 0,
