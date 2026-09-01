@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../core/api/api_endpoints.dart';
 import '../../features/auth/domain/user_session.dart';
 import '../../features/auth/domain/user_profile.dart';
+import '../../core/api/api_client.dart';
 import '../../repositories/auth_repository.dart';
 import '../../services/session_storage_service.dart';
 import '../../shared/models/enums.dart';
@@ -13,9 +14,10 @@ import '../../shared/models/enums.dart';
 /// All successful auth calls persist the session to device storage via
 /// SessionStorageService so the user stays logged in across app restarts.
 class ApiAuthRepository implements AuthRepository {
+  final ApiClient _apiClient;
   UserSession? _cachedSession;
 
-  @override
+  ApiAuthRepository(this._apiClient);
   Future<UserSession?> getCurrentSession() async {
     // 1. Return in-memory cache if valid
     if (_cachedSession != null && !_cachedSession!.isExpired) {

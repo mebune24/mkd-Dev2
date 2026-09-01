@@ -49,6 +49,8 @@ import platformFeeRoutes   from './routes/platformFees';
 import adminRoutes         from './routes/admin';
 import dashboardRoutes     from './routes/dashboard';
 import disputeRoutes       from './routes/disputes';
+import storageRoutes       from './routes/storage';
+import auditLogRoutes      from './routes/auditLogs';
 import { globalErrorHandler } from './middleware/errorMiddleware';
 import { startBackgroundWorkers } from './workers';
 
@@ -68,6 +70,8 @@ app.use(`${BASE}/platform-fees`, platformFeeRoutes);
 app.use(`${BASE}/admin`,         adminRoutes);
 app.use(`${BASE}/dashboard`,     dashboardRoutes);
 app.use(`${BASE}/disputes`,      disputeRoutes);
+app.use(`${BASE}/storage`,       storageRoutes);
+app.use(`${BASE}/audit-logs`,    auditLogRoutes);
 
 // ── Health ────────────────────────────────────────────────────
 app.get(`${BASE}/health`, (_req, res) => {
@@ -101,7 +105,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`💳  Payments     : Fapshi (MTN / Orange Money)`);
   console.log(`🗄️   Database     : PostgreSQL (Prisma ORM)`);
   console.log(`🔒  Security     : Helmet + Rate Limiting`);
-  console.log(`📦  Routes       : 12 feature groups registered\n`);
+  console.log(`📦  Routes       : 15 feature groups registered (incl. storage + audit)\n`);
 });
 
 export { app };

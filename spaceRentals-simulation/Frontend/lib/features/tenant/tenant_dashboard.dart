@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/domain_providers.dart';
+import '../../providers/applications_provider.dart';
+import '../../features/applications/domain/application.dart';
+import '../../shared/models/enums.dart';
 import '../../core/utils/url_helper.dart';
 import '../../widgets/guest_guard.dart';
 import 'home_screen.dart';
@@ -372,10 +375,12 @@ class _MyRentals extends ConsumerWidget {
       );
     }
 
+    final applicationsAsync = ref.watch(tenantApplicationsProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
       appBar: AppBar(
-        title: const Text('My Rentals'),
+        title: const Text('My Rentals & Applications'),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
@@ -384,141 +389,89 @@ class _MyRentals extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
-              ),
+      body: applicationsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Failed to load rentals: $e')),
+        data: (applications) {
+          if (applications.isEmpty) {
+            return Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.circle, color: Colors.greenAccent, size: 8),
-                        SizedBox(width: 6),
-                        Text('Active Rental', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
+                  Icon(Icons.home_work_outlined, size: 64, color: Colors.grey.shade400),
                   const SizedBox(height: 16),
-                  const Text('Modern 2 Bedroom Apartment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
-                  const SizedBox(height: 4),
-                  const Row(children: [Icon(Icons.location_on, color: Colors.white70, size: 14), SizedBox(width: 4), Text('Bastos, Yaoundé', style: TextStyle(color: Colors.white70, fontSize: 13))]),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const Text('Monthly Rent', style: TextStyle(color: Colors.white60, fontSize: 11)),
-                        Text(CurrencyFormatter.formatCFA(150000), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22)),
-                      ]),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                        child: Text('Due Aug 31', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
-                      ),
-                    ],
-                  ),
+                  Text('No rentals yet', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
+                  const SizedBox(height: 8),
+                  const Text('Start by searching for properties and applying.', style: TextStyle(color: Colors.grey)),
                 ],
               ),
-            ),
-            const SizedBox(height: 28),
-            Text('Rental Actions', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            _buildActionTile(context, icon: Icons.description, color: theme.colorScheme.primary, title: 'Rental Agreement', subtitle: 'View and confirm your agreement', onTap: () => context.push('/tenant/agreement', extra: tenantId!)),
-            const SizedBox(height: 12),
-            _buildActionTile(context, icon: Icons.payments, color: Colors.teal, title: 'Payments', subtitle: 'View history and pay rent', onTap: () => context.push('/tenant/payments', extra: tenantId!)),
-            const SizedBox(height: 12),
-            _buildActionTile(context, icon: Icons.account_balance, color: Colors.indigo, title: 'RNLP Financing', subtitle: 'Manage your deposit financing', onTap: () => context.push('/tenant/rnlp', extra: tenantId!)),
-            const SizedBox(height: 12),
-            _buildActionTile(context, icon: Icons.handyman, color: Colors.orange, title: 'Maintenance & Services', subtitle: 'Request repairs and premium services', onTap: () => context.push('/tenant/maintenance', extra: tenantId!)),
-            const SizedBox(height: 28),
-            Text('History & Tracking', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            _buildActionTile(context, icon: Icons.history, color: Colors.blueGrey, title: 'Operations History', subtitle: 'Track your payments, RNLP, and requests', onTap: () => _showHistoryModal(context, theme)),
-            const SizedBox(height: 80),
-          ],
-        ),
-      ),
-    );
-  }
+            );
+          }
 
-  void _showHistoryModal(BuildContext context, ThemeData theme) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Operations History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            _historyRow(Icons.payments, Colors.teal, 'Rent Paid — 150,000 CFA', 'August 1, 2026'),
-            _historyRow(Icons.handyman, Colors.orange, 'Plumbing Repair', 'July 20, 2026'),
-            _historyRow(Icons.account_balance, Colors.indigo, 'RNLP Disbursed', 'June 15, 2026'),
-            _historyRow(Icons.description, theme.colorScheme.primary, 'Agreement Signed', 'June 10, 2026'),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _historyRow(IconData icon, Color color, String title, String date) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
-        children: [
-          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(icon, color: color, size: 20)),
-          const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            Text(date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          ])),
-          const Icon(Icons.check_circle, color: Colors.green, size: 18),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionTile(BuildContext context, {required IconData icon, required Color color, required String title, required String subtitle, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade100),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2))],
-        ),
-        child: Row(
-          children: [
-            Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 22)),
-            const SizedBox(width: 16),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-              const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-            ])),
-            Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle), child: const Icon(Icons.chevron_right, color: Colors.grey, size: 18)),
-          ],
-        ),
+          return ListView.separated(
+            padding: const EdgeInsets.all(20),
+            itemCount: applications.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final app = applications[index];
+              final isApproved = app.status == ApplicationStatus.approved;
+              
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: isApproved 
+                      ? LinearGradient(colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                      : null,
+                  color: isApproved ? null : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                  border: isApproved ? null : Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isApproved ? Colors.white.withValues(alpha: 0.2) : Colors.grey.shade100, 
+                        borderRadius: BorderRadius.circular(20)
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.circle, color: isApproved ? Colors.greenAccent : Colors.orange, size: 8),
+                          const SizedBox(width: 6),
+                          Text(
+                            isApproved ? 'Approved — Action Required' : app.status.name.toUpperCase(), 
+                            style: TextStyle(color: isApproved ? Colors.white : Colors.grey.shade800, fontSize: 12, fontWeight: FontWeight.w600)
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(app.propertyTitle, style: TextStyle(color: isApproved ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
+                    const SizedBox(height: 4),
+                    Text('Submitted on ${app.submittedAt.day}/${app.submittedAt.month}/${app.submittedAt.year}', style: TextStyle(color: isApproved ? Colors.white70 : Colors.grey, fontSize: 13)),
+                    const SizedBox(height: 16),
+                    if (isApproved) ...[
+                      ElevatedButton.icon(
+                        onPressed: () => context.push('/tenant/lease/${app.id}'),
+                        icon: const Icon(Icons.draw, size: 18),
+                        label: const Text('Sign Lease Agreement'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: theme.colorScheme.primary,
+                          minimumSize: const Size(double.infinity, 44),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

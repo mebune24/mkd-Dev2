@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/payments_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../models/payment_model.dart';
+import '../../data/api/api_payment_repository.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/ui_helpers.dart';
+import 'package:intl/intl.dart';
 
 class LandlordPaymentsScreen extends ConsumerStatefulWidget {
   const LandlordPaymentsScreen({super.key});
@@ -32,13 +33,11 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final user = ref.watch(authProvider);
-    final landlordId = user.session?.userId ?? 'landlord_001';
-    final allPayments = ref.watch(landlordPaymentsProvider(landlordId));
-    final pending = ref.watch(pendingPaymentsProvider(landlordId));
-    final approved = ref.watch(approvedPaymentsProvider(landlordId));
-    final totalRevenue = ref.watch(totalRevenueProvider(landlordId));
-    final rejected = allPayments.where((p) => p.status == 'rejected').toList();
+    
+    final allAsync = ref.watch(myTransactionsProvider);
+    final pendingAsync = ref.watch(pendingTransactionsProvider);
+    final successfulAsync = ref.watch(successfulTransactionsProvider);
+    final totalRevenueAsync = ref.watch(totalRevenueProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
@@ -69,11 +68,11 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            Expanded(child: _buildHeaderStat('Total Revenue', CurrencyFormatter.formatCFA(totalRevenue), Icons.account_balance_wallet, Colors.greenAccent)),
+                            Expanded(child: _buildHeaderStat('Total Revenue', totalRevenueAsync.when(data: (d) => CurrencyFormatter.formatCFA(d as double), loading: () => '...', error: (_,__) => 'Err'), Icons.account_balance_wallet, Colors.greenAccent)),
                             const SizedBox(width: 12),
-                            Expanded(child: _buildHeaderStat('Pending', '${pending.length}', Icons.pending_actions, Colors.orangeAccent)),
+                            Expanded(child: _buildHeaderStat('Pending', pendingAsync.when(data: (l) => '${l.length}', loading: () => '...', error: (_,__) => 'Err'), Icons.pending_actions, Colors.orangeAccent)),
                             const SizedBox(width: 12),
-                            Expanded(child: _buildHeaderStat('Approved', '${approved.length}', Icons.check_circle_outline, Colors.lightGreenAccent)),
+                            Expanded(child: _buildHeaderStat('Approved', successfulAsync.when(data: (l) => '${l.length}', loading: () => '...', error: (_,__) => 'Err'), Icons.check_circle_outline, Colors.lightGreenAccent)),
                           ],
                         ),
                       ],
@@ -96,13 +95,22 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
             ),
           ),
         ],
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _PendingTab(payments: pending),
-            _HistoryTab(payments: [...approved, ...rejected]..sort((a, b) => b.createdAt.compareTo(a.createdAt))),
-            _LedgerTab(payments: allPayments, totalRevenue: totalRevenue),
-          ],
+        body: allAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, st) => Center(child: Text('Error: \$e')),
+          data: (all) {
+            final pending = all.where((t) => t.status == 'PENDING').toList();
+            final history = all.where((t) => t.status != 'PENDING').toList();
+            final rev = totalRevenueAsync.value ?? 0.0;
+            return TabBarView(
+              controller: _tabController,
+              children: [
+                _PendingTab(transactions: pending),
+                _HistoryTab(transactions: history),
+                _LedgerTab(transactions: all, totalRevenue: rev),
+              ],
+            );
+          }
         ),
       ),
     );
@@ -130,12 +138,12 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
 
 // ── Pending Payments Tab ────────────────────────────────────────────────────────
 class _PendingTab extends ConsumerWidget {
-  final List<PaymentModel> payments;
-  const _PendingTab({required this.payments});
+  final List<TransactionRecord> transactions;
+  const _PendingTab({required this.transactions});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (payments.isEmpty) {
+    if (transactions.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -152,109 +160,50 @@ class _PendingTab extends ConsumerWidget {
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: payments.length,
+      itemCount: transactions.length,
       itemBuilder: (context, index) {
-        final payment = payments[index];
-        return _PaymentCard(
-          payment: payment,
-          showActions: true,
-          onApprove: () => _confirmApprove(context, ref, payment),
-          onReject: () => _confirmReject(context, ref, payment),
+        final tx = transactions[index];
+        return _TransactionCard(
+          tx: tx,
+          showActions: false, 
         );
       },
-    );
-  }
-
-  void _confirmApprove(BuildContext context, WidgetRef ref, PaymentModel payment) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.green),
-            SizedBox(width: 8),
-            Text('Approve Payment'),
-          ],
-        ),
-        content: Text('Approve ${CurrencyFormatter.formatCFA(payment.amount)} from ${payment.tenantName} for ${payment.month}?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            onPressed: () {
-              ref.read(paymentsProvider.notifier).approvePayment(payment.id);
-              Navigator.pop(ctx);
-              context.showSuccessToast('Payment approved ✓');
-            },
-            child: const Text('Approve'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmReject(BuildContext context, WidgetRef ref, PaymentModel payment) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.cancel, color: Colors.red),
-            SizedBox(width: 8),
-            Text('Reject Payment'),
-          ],
-        ),
-        content: Text('Reject ${CurrencyFormatter.formatCFA(payment.amount)} from ${payment.tenantName}?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            onPressed: () {
-              ref.read(paymentsProvider.notifier).rejectPayment(payment.id);
-              Navigator.pop(ctx);
-              context.showErrorToast('Payment rejected');
-            },
-            child: const Text('Reject'),
-          ),
-        ],
-      ),
     );
   }
 }
 
 // ── History Tab ────────────────────────────────────────────────────────────────
 class _HistoryTab extends StatelessWidget {
-  final List<PaymentModel> payments;
-  const _HistoryTab({required this.payments});
+  final List<TransactionRecord> transactions;
+  const _HistoryTab({required this.transactions});
 
   @override
   Widget build(BuildContext context) {
-    if (payments.isEmpty) {
+    if (transactions.isEmpty) {
       return const Center(child: Text('No payment history yet.', style: TextStyle(color: Colors.grey)));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: payments.length,
-      itemBuilder: (context, index) => _PaymentCard(payment: payments[index], showActions: false),
+      itemCount: transactions.length,
+      itemBuilder: (context, index) => _TransactionCard(tx: transactions[index], showActions: false),
     );
   }
 }
 
 // ── Ledger Tab ────────────────────────────────────────────────────────────────
 class _LedgerTab extends StatelessWidget {
-  final List<PaymentModel> payments;
+  final List<TransactionRecord> transactions;
   final double totalRevenue;
-  const _LedgerTab({required this.payments, required this.totalRevenue});
+  const _LedgerTab({required this.transactions, required this.totalRevenue});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Group by month
-    final Map<String, List<PaymentModel>> byMonth = {};
-    for (final p in payments) {
-      byMonth.putIfAbsent(p.month, () => []).add(p);
+    
+    final Map<String, List<TransactionRecord>> byMonth = {};
+    for (final t in transactions) {
+      final month = DateFormat('MMMM yyyy').format(t.createdAt);
+      byMonth.putIfAbsent(month, () => []).add(t);
     }
     final months = byMonth.keys.toList()..sort((a, b) => b.compareTo(a));
 
@@ -263,7 +212,6 @@ class _LedgerTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Revenue summary card
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -281,11 +229,11 @@ class _LedgerTab extends StatelessWidget {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _ledgerBadge('${payments.where((p) => p.status == 'approved').length} Approved', Colors.greenAccent),
+                    _ledgerBadge("${transactions.where((p) => p.status == 'SUCCESSFUL').length} Approved", Colors.greenAccent),
                     const SizedBox(width: 8),
-                    _ledgerBadge('${payments.where((p) => p.status == 'pending').length} Pending', Colors.orangeAccent),
+                    _ledgerBadge("${transactions.where((p) => p.status == 'PENDING').length} Pending", Colors.orangeAccent),
                     const SizedBox(width: 8),
-                    _ledgerBadge('${payments.where((p) => p.status == 'rejected').length} Rejected', Colors.redAccent),
+                    _ledgerBadge("${transactions.where((p) => p.status == 'FAILED').length} Failed", Colors.redAccent),
                   ],
                 ),
               ],
@@ -293,8 +241,8 @@ class _LedgerTab extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ...months.map((month) {
-            final monthPayments = byMonth[month]!;
-            final monthTotal = monthPayments.where((p) => p.status == 'approved').fold(0.0, (s, p) => s + p.amount);
+            final monthTxs = byMonth[month]!;
+            final monthTotal = monthTxs.where((p) => p.status == 'SUCCESSFUL').fold(0.0, (s, p) => s + p.amount);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -306,7 +254,7 @@ class _LedgerTab extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                ...monthPayments.map((p) => _LedgerRow(payment: p)),
+                ...monthTxs.map((t) => _LedgerRow(tx: t)),
                 const SizedBox(height: 20),
               ],
             );
@@ -326,12 +274,12 @@ class _LedgerTab extends StatelessWidget {
 }
 
 class _LedgerRow extends StatelessWidget {
-  final PaymentModel payment;
-  const _LedgerRow({required this.payment});
+  final TransactionRecord tx;
+  const _LedgerRow({required this.tx});
 
   @override
   Widget build(BuildContext context) {
-    Color statusColor = payment.status == 'approved' ? Colors.green : payment.status == 'pending' ? Colors.orange : Colors.red;
+    Color statusColor = tx.status == 'SUCCESSFUL' ? Colors.green : tx.status == 'PENDING' ? Colors.orange : Colors.red;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -344,19 +292,19 @@ class _LedgerRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(payment.tenantName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                Text(payment.description, style: const TextStyle(color: Colors.grey, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(tx.transactionType, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(DateFormat('MMM dd, yyyy').format(tx.createdAt), style: const TextStyle(color: Colors.grey, fontSize: 11)),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(CurrencyFormatter.formatCFA(payment.amount), style: TextStyle(fontWeight: FontWeight.bold, color: statusColor, fontSize: 13)),
+              Text(CurrencyFormatter.formatCFA(tx.amount.toDouble()), style: TextStyle(fontWeight: FontWeight.bold, color: statusColor, fontSize: 13)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Text(payment.status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 9, fontWeight: FontWeight.bold)),
+                child: Text(tx.status, style: TextStyle(color: statusColor, fontSize: 9, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -366,20 +314,17 @@ class _LedgerRow extends StatelessWidget {
   }
 }
 
-// ── Shared Payment Card ────────────────────────────────────────────────────────
-class _PaymentCard extends StatelessWidget {
-  final PaymentModel payment;
+class _TransactionCard extends StatelessWidget {
+  final TransactionRecord tx;
   final bool showActions;
-  final VoidCallback? onApprove;
-  final VoidCallback? onReject;
 
-  const _PaymentCard({required this.payment, required this.showActions, this.onApprove, this.onReject});
+  const _TransactionCard({required this.tx, required this.showActions});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final statusColor = payment.status == 'approved' ? Colors.green : payment.status == 'pending' ? Colors.orange : Colors.red;
-    final typeIcon = payment.type == 'rent' ? Icons.home : payment.type == 'deposit' ? Icons.lock : payment.type == 'maintenance' ? Icons.handyman : Icons.payments;
+    final statusColor = tx.status == 'SUCCESSFUL' ? Colors.green : tx.status == 'PENDING' ? Colors.orange : Colors.red;
+    final typeIcon = Icons.payments;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -404,19 +349,17 @@ class _PaymentCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(payment.tenantName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text(tx.transactionType, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                       const SizedBox(height: 2),
-                      Text(payment.propertyTitle, style: const TextStyle(color: Colors.grey, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(DateFormat('MMM dd, yyyy HH:mm').format(tx.createdAt), style: const TextStyle(color: Colors.grey, fontSize: 12)),
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                            child: Text(payment.type.toUpperCase(), style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
+                            child: Text(tx.paymentMethod, style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
                           ),
-                          const SizedBox(width: 6),
-                          Text(payment.month, style: const TextStyle(color: Colors.grey, fontSize: 11)),
                         ],
                       ),
                     ],
@@ -425,53 +368,18 @@ class _PaymentCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(CurrencyFormatter.formatCFA(payment.amount), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: statusColor)),
+                    Text(CurrencyFormatter.formatCFA(tx.amount.toDouble()), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: statusColor)),
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                      child: Text(payment.status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)),
+                      child: Text(tx.status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          if (showActions && payment.status == 'pending') ...[
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.close, size: 16),
-                      label: const Text('Reject'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onPressed: onReject,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.check, size: 16),
-                      label: const Text('Approve'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onPressed: onApprove,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );

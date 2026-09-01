@@ -32,6 +32,15 @@ export const getLeaseById = async (req: AuthRequest, res: Response) => {
   catch (err) { return handle(res, err); }
 };
 
+// GET /api/leases/by-application/:applicationId
+export const getLeaseByApplicationId = async (req: AuthRequest, res: Response) => {
+  try {
+    const lease = await leaseService.getByApplicationId(String(req.params.applicationId), req.user!.userId, req.user!.role);
+    return res.json(lease);
+  }
+  catch (err) { return handle(res, err); }
+};
+
 // PATCH /api/leases/:id/sign
 export const signLease = async (req: AuthRequest, res: Response) => {
   try { 

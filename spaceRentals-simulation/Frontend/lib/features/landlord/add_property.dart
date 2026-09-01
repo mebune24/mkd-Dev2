@@ -10,6 +10,7 @@ import '../../features/properties/domain/property.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/ui_helpers.dart';
 import '../../widgets/form_safe_modal.dart';
+import '../../core/api/storage_service.dart';
 
 class AddProperty extends ConsumerStatefulWidget {
   const AddProperty({super.key});
@@ -547,35 +548,58 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
 
     final user = ref.read(authProvider);
     final repo = ref.read(propertyRepositoryProvider);
-    
-    await repo.submitProperty(
-      title: _titleCtrl.text,
-      description: _descCtrl.text.isEmpty ? 'No description provided.' : _descCtrl.text,
-      location: _locationCtrl.text,
-      bedrooms: _bedrooms,
-      bathrooms: _bathrooms,
-      monthlyRentUnits: (double.tryParse(_rentCtrl.text) ?? 0).toInt(),
-      depositUnits: (double.tryParse(_depositCtrl.text) ?? 0).toInt(),
-      imageUrls: _photos.isNotEmpty
-          ? _photos.map((f) => f.path).toList()
-          : ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800'],
-      category: _category,
-      amenities: {
-        'hasWater': _hasWater,
-        'hasElectricity': _hasElectricity,
-        'isFenced': _isFenced,
-        'closeToRoad': _closeToRoad,
-        'securityMeans': _securityMeans,
-        'furnished': _furnished,
-        'parkingSpaces': _parkingSpaces,
-        'floor': _floor,
-        'totalFloors': _totalFloors,
-        'nearbyAmenities': _nearbyAmenities.toList(),
-        'floorPlanImages': _floorPlanImages.map((f) => f.path).toList(),
-        'videoUrls': _videoFiles.map((f) => f.path).toList(),
-        'rentalAgreementTerms': _terms,
-      },
-    );
+
+    try {
+      List<String> imageUrls = [];
+      if (_photos.isNotEmpty) {
+        imageUrls = await StorageService.instance.uploadMultipleFiles(_photos, 'property-images');
+      } else {
+        imageUrls = ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800'];
+      }
+
+      List<String> floorPlans = [];
+      if (_floorPlanImages.isNotEmpty) {
+        floorPlans = await StorageService.instance.uploadMultipleFiles(_floorPlanImages, 'property-images');
+      }
+
+      List<String> videoUrls = [];
+      if (_videoFiles.isNotEmpty) {
+        videoUrls = await StorageService.instance.uploadMultipleFiles(_videoFiles, 'property-images');
+      }
+
+      await repo.submitProperty(
+        title: _titleCtrl.text,
+        description: _descCtrl.text.isEmpty ? 'No description provided.' : _descCtrl.text,
+        location: _locationCtrl.text,
+        bedrooms: _bedrooms,
+        bathrooms: _bathrooms,
+        monthlyRentUnits: (double.tryParse(_rentCtrl.text) ?? 0).toInt(),
+        depositUnits: (double.tryParse(_depositCtrl.text) ?? 0).toInt(),
+        imageUrls: imageUrls,
+        category: _category,
+        amenities: {
+          'hasWater': _hasWater,
+          'hasElectricity': _hasElectricity,
+          'isFenced': _isFenced,
+          'closeToRoad': _closeToRoad,
+          'securityMeans': _securityMeans,
+          'furnished': _furnished,
+          'parkingSpaces': _parkingSpaces,
+          'floor': _floor,
+          'totalFloors': _totalFloors,
+          'nearbyAmenities': _nearbyAmenities.toList(),
+          'floorPlanImages': floorPlans,
+          'videoUrls': videoUrls,
+          'rentalAgreementTerms': _terms,
+        },
+      );
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to publish property: $e')));
+      }
+      return;
+    }
 
     // Refresh providers
     ref.invalidate(landlordPropertiesProvider);

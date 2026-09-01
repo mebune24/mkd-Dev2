@@ -2,6 +2,8 @@ import { applicationRepository } from '../repositories/ApplicationRepository';
 import { propertyRepository } from '../repositories/PropertyRepository';
 import { leaseRepository } from '../repositories/LeaseRepository';
 import { leaseService } from './LeaseService';
+import { prisma } from '../lib/prisma';
+import { auditLogService } from './AuditLogService';
 
 export class ApplicationService {
   async getTenantApplications(tenantId: string) {
@@ -28,7 +30,7 @@ export class ApplicationService {
     const existing = await applicationRepository.countByPropertyAndTenant(propertyId, tenantId);
     if (existing > 0) throw { status: 409, message: 'You have already applied for this property.' };
 
-    return applicationRepository.create({
+    const app = await applicationRepository.create({
       property: { connect: { id: propertyId } },
       tenant: { connect: { id: tenantId } },
       coverLetter,
@@ -36,6 +38,16 @@ export class ApplicationService {
       proofOfIncomeUrl,
       status: 'submitted',
     });
+
+    await auditLogService.log({
+      userId: tenantId,
+      action: 'application.submitted',
+      resourceId: app.id,
+      resourceType: 'application',
+      metadata: { propertyId },
+    });
+
+    return app;
   }
 
   async approve(id: string, landlordId: string, note?: string) {
@@ -45,26 +57,56 @@ export class ApplicationService {
     if (app.status !== 'submitted' && app.status !== 'under_review') {
       throw { status: 400, message: 'Cannot approve an application in its current state.' };
     }
-    const updated = await applicationRepository.update(id, { status: 'approved' });
-    // Auto-generate a Lease upon approval
-    const existingLease = await leaseRepository.findByApplicationId(id);
-    if (!existingLease) {
-      const lease = await leaseRepository.create({
-        application: { connect: { id } },
-        property: { connect: { id: app.propertyId } },
-        tenant: { connect: { id: app.tenantId } },
-        landlord: { connect: { id: app.property.landlordId } },
-        status: 'generated',
+    
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.application.update({
+        where: { id },
+        data: { status: 'approved', landlordNote: note }
       });
-    }
-    return updated;
+      
+      const existingLease = await tx.lease.findUnique({ where: { applicationId: id } });
+      let leaseId: string | undefined;
+      if (!existingLease) {
+        const lease = await tx.lease.create({
+          data: {
+            application: { connect: { id } },
+            property: { connect: { id: app.propertyId } },
+            tenant: { connect: { id: app.tenantId } },
+            landlord: { connect: { id: app.property.landlordId } },
+            status: 'generated',
+          }
+        });
+        leaseId = lease.id;
+      } else {
+        leaseId = existingLease.id;
+      }
+      return { updated, leaseId };
+    });
+
+    await auditLogService.log({
+      userId: landlordId,
+      action: 'application.approved',
+      resourceId: id,
+      resourceType: 'application',
+      metadata: { note, leaseId: result.leaseId },
+    });
+
+    return result.updated;
   }
 
   async reject(id: string, landlordId: string, note?: string) {
     const app = await applicationRepository.findById(id);
     if (!app) throw { status: 404, message: 'Application not found.' };
     if (app.property.landlordId !== landlordId) throw { status: 403, message: 'Forbidden.' };
-    return applicationRepository.update(id, { status: 'rejected' });
+    const updated = await applicationRepository.update(id, { status: 'rejected', landlordNote: note });
+    await auditLogService.log({
+      userId: landlordId,
+      action: 'application.rejected',
+      resourceId: id,
+      resourceType: 'application',
+      metadata: { note },
+    });
+    return updated;
   }
 
   async withdraw(id: string, tenantId: string) {

@@ -1,6 +1,7 @@
 import { leaseRepository } from '../repositories/LeaseRepository';
 import { applicationRepository } from '../repositories/ApplicationRepository';
 import { prisma } from '../lib/prisma';
+import { auditLogService } from './AuditLogService';
 
 export class LeaseService {
   /**
@@ -36,6 +37,17 @@ export class LeaseService {
       include: { property: true, tenant: true, landlord: true },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /**
+   * Get a lease by its parent application ID.
+   */
+  async getByApplicationId(applicationId: string, userId: string, role: string) {
+    const lease = await leaseRepository.findByApplicationId(applicationId);
+    if (!lease) throw { status: 404, message: 'No lease found for this application.' };
+    const isParty = lease.tenantId === userId || lease.landlordId === userId;
+    if (!isParty && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
+    return lease;
   }
 
   /**
@@ -94,6 +106,16 @@ export class LeaseService {
     }
 
     const updated = await leaseRepository.update(leaseId, updateData);
+
+    // Immutable audit trail — OHADA-aligned e-signature record
+    await auditLogService.log({
+      userId,
+      action: 'lease.signed',
+      resourceId: leaseId,
+      resourceType: 'lease',
+      metadata: { role, isTenant, isLandlord, newStatus: updateData.status },
+      signatureHash,
+    });
 
     // If fully signed → create Rental and mark property rented
     if (tenantSigned && landlordSigned) {

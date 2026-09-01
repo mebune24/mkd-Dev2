@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { transactionRepository } from '../repositories/TransactionRepository';
 import { redisClient } from '../config/redis';
+import { prisma } from '../lib/prisma';
 
 const FAPSHI_API_URL = process.env.FAPSHI_API_URL || 'https://live.fapshi.com';
 const FAPSHI_API_USER = process.env.FAPSHI_API_USER || '';
@@ -157,10 +158,74 @@ export class FapshiPaymentService {
 
     const mappedStatus = status === 'SUCCESSFUL' ? 'SUCCESSFUL' : 'FAILED';
 
-    return transactionRepository.updateByGatewayTxId(transId, {
+    const updatedTransaction = await transactionRepository.updateByGatewayTxId(transId, {
       status: mappedStatus,
       metadata: JSON.stringify(payload),
     });
+
+    // Execute business logic on successful payment
+    if (mappedStatus === 'SUCCESSFUL') {
+      if (existing.referenceType === 'LEASE') {
+        await this.handleLeasePaymentSuccess(existing.referenceId);
+      }
+    }
+
+    return updatedTransaction;
+  }
+
+  /**
+   * Called when a lease payment (deposit + first month) is successfully completed.
+   * Activates the lease, creates the Rental record, and marks the property as rented.
+   */
+  private async handleLeasePaymentSuccess(leaseId: string) {
+    const lease = await prisma.lease.findUnique({
+      where: { id: leaseId },
+      include: { property: true },
+    });
+
+    if (!lease) {
+      console.warn(`[FapshiWebhook] Lease ${leaseId} not found for successful payment.`);
+      return;
+    }
+
+    if (lease.status === 'active') {
+      return; // Already active
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Activate Lease
+      await tx.lease.update({
+        where: { id: leaseId },
+        data: { status: 'active' },
+      });
+
+      // 2. Create Rental Record
+      if (lease.tenantId && lease.landlordId) {
+        // Check if rental already exists to be idempotent
+        const existingRental = await tx.rental.findUnique({ where: { leaseId } });
+        if (!existingRental) {
+          await tx.rental.create({
+            data: {
+              leaseId: lease.id,
+              propertyId: lease.propertyId,
+              tenantId: lease.tenantId,
+              landlordId: lease.landlordId,
+              status: 'active',
+              monthlyRent: lease.property.monthlyRent,
+              activatedAt: new Date(),
+            },
+          });
+        }
+      }
+
+      // 3. Mark Property as Rented
+      await tx.property.update({
+        where: { id: lease.propertyId },
+        data: { status: 'rented' },
+      });
+    });
+    
+    console.log(`[FapshiWebhook] Lease ${leaseId} activated. Rental created. Property marked as rented.`);
   }
 
   /**

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../features/properties/domain/property.dart';
 import '../../features/applications/domain/application.dart';
 import '../../core/utils/currency_formatter.dart';
@@ -10,7 +11,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/animated_loading_button.dart';
 import '../../widgets/form_safe_modal.dart';
 import '../../core/utils/ui_helpers.dart';
-import '../../core/utils/ui_helpers.dart';
+import '../../core/api/storage_service.dart';
 
 class RentalApplication extends ConsumerStatefulWidget {
   final PropertyWithListing property;
@@ -23,6 +24,8 @@ class RentalApplication extends ConsumerStatefulWidget {
 
 class _RentalApplicationState extends ConsumerState<RentalApplication> {
   final _coverLetterCtrl = TextEditingController();
+  bool _isUploading = false;
+  final ImagePicker _picker = ImagePicker();
   final Map<String, bool> _uploadedDocs = {
     'National ID / Passport': false,
     'Proof of Income (Pay Slip)': false,
@@ -177,27 +180,41 @@ class _RentalApplicationState extends ConsumerState<RentalApplication> {
                         ],
                       ),
                     ),
-                    ElevatedButton(
-                      onPressed: entry.value
-                          ? null
-                          : () {
-                              setState(() {
-                                _uploadedDocs[entry.key] = true;
-                                if (entry.key == 'National ID / Passport') {
-                                  _nationalIdUrl = 'https://storage.spacerentals.cm/docs/${DateTime.now().millisecondsSinceEpoch}_national_id.jpg';
-                                } else if (entry.key == 'Proof of Income (Pay Slip)') {
-                                  _proofOfIncomeUrl = 'https://storage.spacerentals.cm/docs/${DateTime.now().millisecondsSinceEpoch}_proof_of_income.jpg';
-                                }
-                              });
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: entry.value ? Colors.green : theme.colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12),
-                      ),
-                      child: Text(entry.value ? 'Done' : 'Upload'),
-                    ),
+                    _isUploading
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                        : ElevatedButton(
+                            onPressed: entry.value
+                                ? null
+                                : () async {
+                                    final file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+                                    if (file == null) return;
+                                    
+                                    setState(() => _isUploading = true);
+                                    try {
+                                      final path = await StorageService.instance.uploadFile(file, 'kyc-documents');
+                                      setState(() {
+                                        _uploadedDocs[entry.key] = true;
+                                        if (entry.key == 'National ID / Passport') _nationalIdUrl = path;
+                                        if (entry.key == 'Proof of Income (Pay Slip)') _proofOfIncomeUrl = path;
+                                      });
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Upload failed: $e'), backgroundColor: Colors.red),
+                                        );
+                                      }
+                                    } finally {
+                                      setState(() => _isUploading = false);
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: entry.value ? Colors.green : theme.colorScheme.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              textStyle: const TextStyle(fontSize: 12),
+                            ),
+                            child: Text(entry.value ? 'Done' : 'Upload'),
+                          ),
                   ],
                 ),
               );

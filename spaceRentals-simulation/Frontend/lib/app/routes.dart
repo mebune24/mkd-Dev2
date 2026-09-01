@@ -39,6 +39,7 @@ import '../features/agent/agent_kyc_screen.dart';
 import '../features/agent/agent_kyc_pending_screen.dart';
 import '../features/chatbot/chatbot_screen.dart';
 import '../features/properties/domain/property.dart';
+import '../features/leases/lease_signing_screen.dart';
 
 // ── Reusable transition builders ──────────────────────────────────────────────
 
@@ -284,6 +285,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               return _slideRight(context, state, CategoryPropertiesScreen(categoryName: categoryName, propertyIds: extra));
             },
           ),
+          GoRoute(
+            path: 'lease/:id',
+            pageBuilder: (context, state) {
+              final applicationId = state.pathParameters['id'] ?? '';
+              return _slideUp(context, state, LeaseSigningScreen(applicationId: applicationId));
+            },
+          ),
         ],
       ),
 
@@ -315,6 +323,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'agents/marketplace',
             pageBuilder: (context, state) => _slideRight(context, state, const AgentMarketplaceScreen()),
+          ),
+          GoRoute(
+            path: 'lease/:id',
+            pageBuilder: (context, state) {
+              final applicationId = state.pathParameters['id'] ?? '';
+              return _slideUp(context, state, LeaseSigningScreen(applicationId: applicationId));
+            },
           ),
         ],
       ),

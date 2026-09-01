@@ -1,59 +1,66 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../features/properties/domain/property.dart';
 import '../../repositories/property_repository.dart';
 import '../../shared/models/enums.dart';
-import '../mock/mock_property_repository.dart';
 
-// Top-level function required by compute()
+// ── Top-level parse helpers (required by compute()) ───────────────────────────
+
 List<PropertyWithListing> _parsePropertyList(String responseBody) {
   final List<dynamic> data = json.decode(responseBody);
   return data.map((j) => _parsePropertyMap(j as Map<String, dynamic>)).toList();
 }
 
-PropertyWithListing _parsePropertyMap(Map<String, dynamic> jsonMap) {
+PropertyWithListing _parsePropertyMap(Map<String, dynamic> j) {
   final property = Property(
-    id: jsonMap['id'],
-    landlordId: jsonMap['landlordId'],
-    title: jsonMap['title'],
-    description: jsonMap['description'],
-    location: jsonMap['location'],
-    bedrooms: jsonMap['bedrooms'] ?? 0,
-    bathrooms: jsonMap['bathrooms'] ?? 0,
-    monthlyRentUnits: jsonMap['monthlyRent'] ?? 0,
-    depositUnits: jsonMap['deposit'] ?? 0,
-    images: _parseStringListStatic(jsonMap['images']),
-    category: jsonMap['category'] ?? 'Apartment',
-    furnished: jsonMap['furnished'] ?? false,
-    areaSqM: (jsonMap['areaSqM'] ?? 0).toDouble(),
-    hasWater: jsonMap['hasWater'] ?? false,
-    hasElectricity: jsonMap['hasElectricity'] ?? false,
-    isFenced: jsonMap['isFenced'] ?? false,
-    createdAt: DateTime.tryParse(jsonMap['createdAt'] ?? '') ?? DateTime.now(),
-    updatedAt: DateTime.tryParse(jsonMap['updatedAt'] ?? '') ?? DateTime.now(),
+    id: j['id'] ?? '',
+    landlordId: j['landlordId'] ?? '',
+    title: j['title'] ?? '',
+    description: j['description'] ?? '',
+    location: j['location'] ?? '',
+    bedrooms: j['bedrooms'] ?? 0,
+    bathrooms: j['bathrooms'] ?? 0,
+    monthlyRentUnits: j['monthlyRent'] ?? 0,
+    depositUnits: j['deposit'] ?? 0,
+    images: _parseStringList(j['images']),
+    category: j['category'] ?? 'Apartment',
+    furnished: j['furnished'] ?? false,
+    areaSqM: (j['areaSqM'] ?? 0).toDouble(),
+    hasWater: j['hasWater'] ?? false,
+    hasElectricity: j['hasElectricity'] ?? false,
+    isFenced: j['isFenced'] ?? false,
+    createdAt: DateTime.tryParse(j['createdAt'] ?? '') ?? DateTime.now(),
+    updatedAt: DateTime.tryParse(j['updatedAt'] ?? '') ?? DateTime.now(),
   );
 
-  final statusStr = jsonMap['status'] ?? 'draft';
-  PropertyAvailabilityStatus availStatus = PropertyAvailabilityStatus.stale;
-  if (statusStr == 'available') availStatus = PropertyAvailabilityStatus.available;
-  if (statusStr == 'draft' || statusStr == 'auto_unpublished') availStatus = PropertyAvailabilityStatus.autoUnpublished;
-  if (statusStr == 'rented') availStatus = PropertyAvailabilityStatus.rented;
+  final statusStr = j['status'] ?? 'draft';
+  PropertyAvailabilityStatus availStatus;
+  switch (statusStr) {
+    case 'available':
+      availStatus = PropertyAvailabilityStatus.available;
+      break;
+    case 'rented':
+      availStatus = PropertyAvailabilityStatus.rented;
+      break;
+    default:
+      availStatus = PropertyAvailabilityStatus.autoUnpublished;
+  }
 
   final listing = PropertyListing(
-    id: jsonMap['id'],
-    propertyId: jsonMap['id'],
+    id: j['id'] ?? '',
+    propertyId: j['id'] ?? '',
     availabilityStatus: availStatus,
-    lastAvailabilityConfirmedAt: DateTime.tryParse(jsonMap['lastConfirmedAvailableAt'] ?? '') ?? DateTime.now(),
-    publishedAt: DateTime.tryParse(jsonMap['createdAt'] ?? ''),
+    lastAvailabilityConfirmedAt:
+        DateTime.tryParse(j['lastConfirmedAvailableAt'] ?? '') ?? DateTime.now(),
+    publishedAt: DateTime.tryParse(j['createdAt'] ?? ''),
   );
 
-  final verificationMap = jsonMap['propertyVerification'];
+  final vm = j['propertyVerification'];
   PropertyVerificationLevel level = PropertyVerificationLevel.unverified;
-  if (verificationMap != null) {
-    final lvl = verificationMap['level'];
+  if (vm != null) {
+    final lvl = vm['level'];
     if (lvl == 1) level = PropertyVerificationLevel.documentsSubmitted;
     else if (lvl == 2) level = PropertyVerificationLevel.ownerVerified;
     else if (lvl == 3) level = PropertyVerificationLevel.propertyVerified;
@@ -67,32 +74,30 @@ PropertyWithListing _parsePropertyMap(Map<String, dynamic> jsonMap) {
   );
 }
 
-List<String> _parseStringListStatic(dynamic value) {
+List<String> _parseStringList(dynamic value) {
   if (value == null) return [];
   if (value is String) {
     try {
       final parsed = json.decode(value);
       if (parsed is List) return parsed.map((e) => e.toString()).toList();
-    } catch (_) { return []; }
+    } catch (_) {}
+    return [];
   }
   if (value is List) return value.map((e) => e.toString()).toList();
   return [];
 }
 
+// ── Repository ────────────────────────────────────────────────────────────────
+
 class ApiPropertyRepository implements PropertyRepository {
-  final http.Client _client = http.Client();
-  
-  // You would ideally pass this from an Auth provider
-  String? _token;
+  final ApiClient _apiClient;
+  ApiPropertyRepository(this._apiClient);
 
-  void setToken(String token) {
-    _token = token;
+  // ── Helper: unwrap ApiResponse or throw ──────────────────────────────────
+  T _unwrap<T>(ApiResponse<dynamic> response, T Function(dynamic data) parse) {
+    if (response.isSuccess) return parse(response.data);
+    throw Exception(response.error?.message ?? 'API error');
   }
-
-  Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        if (_token != null) 'Authorization': 'Bearer $_token',
-      };
 
   @override
   Future<List<PropertyWithListing>> getMarketplaceListings({
@@ -100,60 +105,38 @@ class ApiPropertyRepository implements PropertyRepository {
     String? category,
     String? location,
   }) async {
-    try {
-      final hasFilters = (searchQuery != null && searchQuery.isNotEmpty) ||
-          (location != null && location.isNotEmpty) ||
-          (category != null && category != 'All');
+    final hasFilters = (searchQuery != null && searchQuery.isNotEmpty) ||
+        (location != null && location.isNotEmpty) ||
+        (category != null && category != 'All');
 
-      Uri uri;
-      if (hasFilters) {
-        final queryParams = <String, String>{};
-        if (searchQuery != null && searchQuery.isNotEmpty) queryParams['q'] = searchQuery;
-        else if (location != null && location.isNotEmpty) queryParams['q'] = location;
-        if (category != null && category != 'All') queryParams['category'] = category;
-        uri = Uri.parse('${ApiEndpoints.properties}/search').replace(queryParameters: queryParams);
-      } else {
-        uri = Uri.parse(ApiEndpoints.properties);
-      }
+    final String path;
+    final Map<String, dynamic>? queryParams;
 
-      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
-      if (response.statusCode == 200) {
-        return compute(_parsePropertyList, response.body);
-      }
-      // Non-200: fall through to mock
-    } on SocketException {
-      // No network / backend down — fall through
-    } on Exception {
-      // Any other error — fall through
+    if (hasFilters) {
+      path = '${ApiEndpoints.properties}/search';
+      queryParams = <String, dynamic>{};
+      if (searchQuery != null && searchQuery.isNotEmpty) queryParams['q'] = searchQuery;
+      if (location != null && location.isNotEmpty) queryParams['location'] = location;
+      if (category != null && category != 'All') queryParams['category'] = category;
+    } else {
+      path = ApiEndpoints.properties;
+      queryParams = null;
     }
-    // Fallback: serve seeded mock data so the UI always shows properties
-    return MockPropertyRepository().getMarketplaceListings(
-      searchQuery: searchQuery,
-      category: category,
-      location: location,
-    );
+
+    final response = await _apiClient.get(path, queryParameters: queryParams);
+    return _unwrap(response, (data) => _parsePropertyList(json.encode(data)));
   }
 
   @override
   Future<PropertyWithListing> getProperty(String propertyId) async {
-    final uri = Uri.parse('${ApiEndpoints.properties}/$propertyId');
-    final response = await _client.get(uri, headers: _headers);
-    if (response.statusCode == 200) {
-      return compute(_parsePropertyMap, json.decode(response.body) as Map<String, dynamic>);
-    } else {
-      throw Exception('Property not found');
-    }
+    final response = await _apiClient.get(ApiEndpoints.property(propertyId));
+    return _unwrap(response, (data) => _parsePropertyMap(data as Map<String, dynamic>));
   }
 
   @override
   Future<List<PropertyWithListing>> getLandlordProperties() async {
-    final uri = Uri.parse('${ApiEndpoints.properties}/my/listings');
-    final response = await _client.get(uri, headers: _headers);
-    if (response.statusCode == 200) {
-      return compute(_parsePropertyList, response.body);
-    } else {
-      throw Exception('Failed to load landlord properties');
-    }
+    final response = await _apiClient.get('${ApiEndpoints.properties}/my/listings');
+    return _unwrap(response, (data) => _parsePropertyList(json.encode(data)));
   }
 
   @override
@@ -169,11 +152,9 @@ class ApiPropertyRepository implements PropertyRepository {
     required String category,
     required Map<String, dynamic> amenities,
   }) async {
-    final uri = Uri.parse(ApiEndpoints.properties);
-    final response = await _client.post(
-      uri,
-      headers: _headers,
-      body: json.encode({
+    final response = await _apiClient.post(
+      ApiEndpoints.properties,
+      data: {
         'title': title,
         'description': description,
         'location': location,
@@ -184,66 +165,40 @@ class ApiPropertyRepository implements PropertyRepository {
         'images': imageUrls,
         'category': category,
         'amenities': amenities,
-      }),
+      },
     );
-    
-    if (response.statusCode == 201) {
-      final data = json.decode(response.body);
-      return _parsePropertyMap(data as Map<String, dynamic>).property;
-    } else {
-      throw Exception('Failed to submit property');
-    }
+    return _unwrap(response, (data) => _parsePropertyMap(data as Map<String, dynamic>).property);
   }
 
   @override
   Future<PropertyListing> confirmAvailability(String propertyId) async {
-    final uri = Uri.parse(ApiEndpoints.confirmAvailability(propertyId));
-    final response = await _client.patch(uri, headers: _headers);
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return _parsePropertyMap(data as Map<String, dynamic>).listing;
-    } else {
-      throw Exception('Failed to confirm availability');
-    }
+    final response = await _apiClient.patch(ApiEndpoints.confirmAvailability(propertyId));
+    return _unwrap(response, (data) => _parsePropertyMap(data as Map<String, dynamic>).listing);
   }
 
   @override
-  Future<PropertyVerificationInfo> updateVerificationLevel(String propertyId, PropertyVerificationLevel level) async {
-    // Admin only route in typical setups
+  Future<PropertyVerificationInfo> updateVerificationLevel(
+      String propertyId, PropertyVerificationLevel level) async {
     throw UnimplementedError('updateVerificationLevel not implemented in API');
   }
 
   @override
   Future<PropertyListing> unpublishListing(String propertyId) async {
-    final uri = Uri.parse('${ApiEndpoints.properties}/$propertyId/unpublish');
-    final response = await _client.patch(uri, headers: _headers);
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return _parsePropertyMap(data as Map<String, dynamic>).listing;
-    } else {
-      throw Exception('Failed to unpublish listing');
-    }
+    final response = await _apiClient.patch('${ApiEndpoints.properties}/$propertyId/unpublish');
+    return _unwrap(response, (data) => _parsePropertyMap(data as Map<String, dynamic>).listing);
   }
 
   @override
   Future<PropertyListing> republishListing(String propertyId) async {
-    final uri = Uri.parse('${ApiEndpoints.properties}/$propertyId/publish');
-    final response = await _client.patch(uri, headers: _headers);
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return _parsePropertyMap(data as Map<String, dynamic>).listing;
-    } else {
-      throw Exception('Failed to republish listing');
-    }
+    final response = await _apiClient.patch('${ApiEndpoints.properties}/$propertyId/publish');
+    return _unwrap(response, (data) => _parsePropertyMap(data as Map<String, dynamic>).listing);
   }
 
   @override
   Future<void> deleteProperty(String propertyId) async {
-    final uri = Uri.parse('${ApiEndpoints.properties}/$propertyId');
-    final response = await _client.delete(uri, headers: _headers);
-    if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('Failed to delete property');
+    final response = await _apiClient.delete(ApiEndpoints.property(propertyId));
+    if (!response.isSuccess) {
+      throw Exception(response.error?.message ?? 'Failed to delete property');
     }
   }
-
 }

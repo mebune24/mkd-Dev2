@@ -27,7 +27,7 @@ router.get('/:id',     getPropertyById);
 
 // Protected — Landlord
 router.get('/my/listings', authenticate, getMyProperties);
-router.post('/', authenticate, requireLandlord, createProperty);
+router.post('/', authenticate, requireLandlord, validateRequest(createPropertySchema), createProperty);
 router.patch('/:id',                      authenticate, requireLandlord, updateProperty);
 router.delete('/:id',                     authenticate, requireLandlord, deleteProperty);
 router.patch('/:id/publish',              authenticate, requireLandlord, publishProperty);
