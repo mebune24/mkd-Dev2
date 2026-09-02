@@ -35,6 +35,33 @@ const authLimiter = rateLimit({
   message: { message: 'Too many authentication attempts, please try again later.' },
 });
 
+// Admin routes: moderate limit (protects bulk DB queries)
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: { message: 'Too many admin requests, please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Payment routes: strict limit to prevent fraud / duplicate charges
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { message: 'Too many payment requests, please wait before trying again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Agent routes: moderate limit
+const agentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { message: 'Too many agent requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(express.json({ limit: '10mb' }));
 
 // ── Routes ────────────────────────────────────────────────────
@@ -66,14 +93,14 @@ app.use(`${BASE}/auth`,          authLimiter, authRoutes);
 app.use(`${BASE}/users`,         userRoutes);
 app.use(`${BASE}/properties`,    propertyRoutes);
 app.use(`${BASE}/applications`,  applicationRoutes);
-app.use(`${BASE}/payments`,      paymentRoutes);
+app.use(`${BASE}/payments`,      paymentLimiter, paymentRoutes);
 app.use(`${BASE}/leases`,        leaseRoutes);
 app.use(`${BASE}/rentals`,       rentalRoutes);
-app.use(`${BASE}/agents`,        agentRoutes);
+app.use(`${BASE}/agents`,        agentLimiter, agentRoutes);
 app.use(`${BASE}/subscriptions`, subscriptionRoutes);
 app.use(`${BASE}/commissions`,   commissionRoutes);
 app.use(`${BASE}/platform-fees`, platformFeeRoutes);
-app.use(`${BASE}/admin`,         adminRoutes);
+app.use(`${BASE}/admin`,         adminLimiter, adminRoutes);
 app.use(`${BASE}/dashboard`,     dashboardRoutes);
 app.use(`${BASE}/disputes`,      disputeRoutes);
 app.use(`${BASE}/storage`,       storageRoutes);

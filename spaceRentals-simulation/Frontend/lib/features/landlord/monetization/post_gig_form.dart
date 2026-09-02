@@ -1,28 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/ui_helpers.dart';
+import '../../../providers/di_providers.dart';
 
-// Mock property options
-const _mockProperties = ['Apt. Bastos A', 'Villa Bonamoussadi', 'Studio Makepe'];
-
-class PostPropertyGigForm extends StatefulWidget {
+class PostPropertyGigForm extends ConsumerStatefulWidget {
   const PostPropertyGigForm({super.key});
 
   @override
-  State<PostPropertyGigForm> createState() => _PostPropertyGigFormState();
+  ConsumerState<PostPropertyGigForm> createState() => _PostPropertyGigFormState();
 }
 
-class _PostPropertyGigFormState extends State<PostPropertyGigForm> {
+class _PostPropertyGigFormState extends ConsumerState<PostPropertyGigForm> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
   final _budgetController = TextEditingController();
-  String? _selectedProperty;
+  String? _selectedPropertyId;
+  String? _selectedPropertyTitle;
   DateTime? _targetDate;
+  List<Map<String, dynamic>> _myProperties = [];
+  bool _loadingProperties = true;
 
   static const double _minBudget = 2000;
   static const double _maxBudget = 150000;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProperties();
+  }
+
+  Future<void> _fetchProperties() async {
+    try {
+      final client = ref.read(apiClientProvider);
+      final resp = await client.get('/properties/my');
+      if (resp.statusCode == 200) {
+        final List<dynamic> data = resp.data is List ? resp.data : (resp.data['properties'] ?? []);
+        setState(() {
+          _myProperties = data.map((p) => {'id': p['id'] as String, 'title': p['title'] as String}).toList();
+          _loadingProperties = false;
+        });
+      } else {
+        setState(() => _loadingProperties = false);
+      }
+    } catch (_) {
+      setState(() => _loadingProperties = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -160,16 +186,27 @@ class _PostPropertyGigFormState extends State<PostPropertyGigForm> {
               ],
               const SizedBox(height: 20),
 
-              // ── Property Dropdown ────────────────────────
               _buildLabel('Propriété concernée'),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedProperty,
+              _loadingProperties
+                  ? const Center(child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: CircularProgressIndicator(strokeWidth: 2)))
+                  : DropdownButtonFormField<String>(
+                value: _selectedPropertyId,
                 decoration: _fieldDecoration('Sélectionnez une propriété', Icons.home),
-                items: _mockProperties
-                    .map((p) => DropdownMenuItem<String>(value: p, child: Text(p)))
+                items: _myProperties
+                    .map((p) => DropdownMenuItem<String>(
+                          value: p['id'],
+                          child: Text(p['title'] ?? 'Property')))
                     .toList(),
-                onChanged: (v) => setState(() => _selectedProperty = v),
+                onChanged: (v) {
+                  final found = _myProperties.firstWhere((p) => p['id'] == v, orElse: () => {});
+                  setState(() {
+                    _selectedPropertyId = v;
+                    _selectedPropertyTitle = found['title'];
+                  });
+                },
                 validator: (v) => v == null ? 'Veuillez sélectionner une propriété' : null,
               ),
               const SizedBox(height: 20),
