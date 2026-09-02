@@ -131,9 +131,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // Guest: allow splash/auth routes to pass through to /tenant
+      // Guest: allow splash routes to pass through to /tenant, but let them visit auth routes to log in
       if (isGuest) {
-        if (isAuthRoute || isGoingToSplash) return '/tenant';
+        if (isGoingToSplash) return '/tenant';
+        if (isAuthRoute) return null; // Allow guests to visit login/register
+
         // Guests can browse /tenant, /chatbot, and /agent/onboarding
         final loc = state.matchedLocation;
         if (loc.startsWith('/tenant')) return null;

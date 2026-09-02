@@ -92,8 +92,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   void _continueAsGuest() {
-    // Signal the authProvider so the goRouter redirect handles navigation
     ref.read(authProvider.notifier).continueAsGuest();
+    // Explicitly navigate to tenant since the router no longer auto-redirects
+    // guests away from the login screen (guests are now allowed to visit auth routes)
+    if (mounted) context.go('/tenant');
   }
 
   @override

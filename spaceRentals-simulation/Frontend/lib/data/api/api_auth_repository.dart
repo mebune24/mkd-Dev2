@@ -43,7 +43,7 @@ class ApiAuthRepository implements AuthRepository {
       Uri.parse(ApiEndpoints.signIn),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'email': email, 'password': password}),
-    );
+    ).timeout(const Duration(seconds: 10));
 
     final body = json.decode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
@@ -75,7 +75,7 @@ class ApiAuthRepository implements AuthRepository {
         'password': password,
         'role': role.toLowerCase(),
       }),
-    );
+    ).timeout(const Duration(seconds: 10));
 
     final body = json.decode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 201) {
