@@ -139,7 +139,7 @@ class NotificationsScreen extends ConsumerWidget {
                       children: [
                         CircleAvatar(
                           backgroundColor: _getColorForType(n.type).withValues(alpha: 0.1),
-                          child: Icon(_getColorForType(n.type), color: _getColorForType(n.type)),
+                          child: Icon(_getIconForType(n.type), color: _getColorForType(n.type)),
                         ),
                         const SizedBox(width: 16),
                         Expanded(

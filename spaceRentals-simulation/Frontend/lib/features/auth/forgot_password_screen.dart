@@ -5,6 +5,8 @@ import '../../providers/locale_provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../widgets/animated_loading_button.dart';
 import '../../core/utils/ui_helpers.dart';
+import '../../core/api/api_endpoints.dart';
+import '../../providers/di_providers.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -46,8 +48,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
       await Future.delayed(const Duration(milliseconds: 500)); 
       if (!mounted) return;
       
-      final repo = ref.read(authRepositoryProvider);
-      await repo.requestPasswordReset(email: _emailController.text.trim());
+      final client = ref.read(apiClientProvider);
+      await client.post(
+        ApiEndpoints.passwordReset,
+        data: {'email': _emailController.text.trim()},
+      );
       
       if (!mounted) return;
       setState(() => _emailSent = true);
