@@ -1,181 +1,186 @@
 import 'package:flutter/material.dart';
-import '../../core/utils/ui_helpers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/notification_provider.dart';
+import '../../widgets/empty_state.dart';
+import '../../core/api/api_endpoints.dart';
+import '../../providers/di_providers.dart';
 
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
-  @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
-}
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'application_update':
+        return Icons.assignment_outlined;
+      case 'lease_signed':
+        return Icons.draw_outlined;
+      case 'payment_due':
+        return Icons.payment_outlined;
+      case 'maintenance_update':
+        return Icons.build_outlined;
+      default:
+        return Icons.notifications_none;
+    }
+  }
 
-class _NotificationsScreenState extends State<NotificationsScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  
-  final List<Map<String, dynamic>> _activeAlerts = [
-    {
-      'id': '1',
-      'icon': Icons.check_circle,
-      'color': Colors.green,
-      'title': 'Payment Successful',
-      'subtitle': 'Your rent payment of 150,000 FCFA was received.',
-      'time': '2 hours ago',
-    },
-    {
-      'id': '2',
-      'icon': Icons.description,
-      'color': Colors.purple,
-      'title': 'Agreement Updated',
-      'subtitle': 'The landlord has confirmed your rental agreement.',
-      'time': '1 day ago',
-    },
-    {
-      'id': '3',
-      'icon': Icons.account_balance,
-      'color': Colors.indigo,
-      'title': 'RNLP Pre-approved',
-      'subtitle': 'You are eligible for RNLP deposit financing.',
-      'time': '2 days ago',
-    },
-  ];
-
-  final List<Map<String, dynamic>> _historyAlerts = [
-    {
-      'id': 'h1',
-      'icon': Icons.home,
-      'color': Colors.orange,
-      'title': 'Welcome to SpaceRentals',
-      'subtitle': 'Your account has been successfully created.',
-      'time': 'Last month',
-    },
-    {
-      'id': 'h2',
-      'icon': Icons.security,
-      'color': Colors.blueGrey,
-      'title': 'Password Changed',
-      'subtitle': 'Your account password was updated securely.',
-      'time': '2 months ago',
-    },
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+  Color _getColorForType(String type) {
+    switch (type) {
+      case 'application_update':
+        return Colors.blue;
+      case 'lease_signed':
+        return Colors.green;
+      case 'payment_due':
+        return Colors.orange;
+      case 'maintenance_update':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
   }
 
   @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  void _clearAllAlerts() {
-    setState(() {
-      _historyAlerts.insertAll(0, _activeAlerts);
-      _activeAlerts.clear();
-    });
-    context.showToast('All alerts cleared to history.');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notificationsAsync = ref.watch(notificationsProvider);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F7),
       appBar: AppBar(
-        title: const Text('Alerts & Notifications'),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          tabs: const [
-            Tab(text: 'New Alerts'),
-            Tab(text: 'History'),
-          ],
-        ),
+        title: const Text('Notifications'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
         actions: [
-          if (_activeAlerts.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.clear_all),
-              tooltip: 'Clear All Alerts',
-              onPressed: _clearAllAlerts,
-            ),
-        ],
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildAlertsList(_activeAlerts, true),
-          _buildAlertsList(_historyAlerts, false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAlertsList(List<Map<String, dynamic>> alerts, bool isActive) {
-    if (alerts.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.notifications_off, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              isActive ? 'No new alerts' : 'No history yet',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600], fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: alerts.length,
-      itemBuilder: (context, index) {
-        final alert = alerts[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: (alert['color'] as Color).withValues(alpha: 0.1),
-              child: Icon(alert['icon'] as IconData, color: alert['color'] as Color),
-            ),
-            title: Text(alert['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 4),
-                Text(alert['subtitle'] as String),
-                const SizedBox(height: 8),
-                Text(alert['time'] as String, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-              ],
-            ),
-            isThreeLine: true,
-            trailing: isActive
-                ? IconButton(
-                    icon: const Icon(Icons.close, size: 18, color: Colors.grey),
-                    onPressed: () {
-                      setState(() {
-                        _historyAlerts.insert(0, alert);
-                        _activeAlerts.removeAt(index);
-                      });
-                    },
-                  )
-                : null,
+          notificationsAsync.maybeWhen(
+            data: (notifications) {
+              if (notifications.any((n) => !n.isRead)) {
+                return IconButton(
+                  icon: const Icon(Icons.done_all),
+                  tooltip: 'Mark all as read',
+                  onPressed: () async {
+                    try {
+                      final client = ref.read(apiClientProvider);
+                      await client.patch(ApiEndpoints.notificationsReadAll);
+                      ref.invalidate(notificationsProvider);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to mark all as read: $e')),
+                        );
+                      }
+                    }
+                  },
+                );
+              }
+              return const SizedBox.shrink();
+            },
+            orElse: () => const SizedBox.shrink(),
           ),
-        );
-      },
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async => ref.invalidate(notificationsProvider),
+        child: notificationsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => EmptyState(
+            title: 'Failed to load notifications',
+            message: e.toString(),
+            icon: Icons.error_outline,
+            actionLabel: 'Retry',
+            onAction: () => ref.invalidate(notificationsProvider),
+          ),
+          data: (notifications) {
+            if (notifications.isEmpty) {
+              return EmptyState(
+                title: 'No Notifications',
+                message: "You're all caught up! Check back later for updates.",
+                icon: Icons.notifications_none_rounded,
+                onAction: () => ref.invalidate(notificationsProvider),
+                actionLabel: 'Refresh',
+              );
+            }
+
+            return ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: notifications.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final n = notifications[index];
+                return InkWell(
+                  onTap: () async {
+                    if (!n.isRead) {
+                      try {
+                        final client = ref.read(apiClientProvider);
+                        await client.patch(ApiEndpoints.notificationRead(n.id));
+                        ref.invalidate(notificationsProvider);
+                      } catch (_) {}
+                    }
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: n.isRead ? Colors.white : Colors.blue.shade50.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border(
+                        left: BorderSide(
+                          color: n.isRead ? Colors.transparent : Colors.blue,
+                          width: 4,
+                        ),
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: _getColorForType(n.type).withValues(alpha: 0.1),
+                          child: Icon(_getColorForType(n.type), color: _getColorForType(n.type)),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                n.title,
+                                style: TextStyle(
+                                  fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                n.body,
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${n.createdAt.day}/${n.createdAt.month}/${n.createdAt.year}',
+                                style: TextStyle(
+                                  color: Colors.grey.shade500,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
     );
   }
 }

@@ -11,6 +11,7 @@ import '../../providers/favorites_provider.dart';
 import '../../providers/reviews_provider.dart';
 import '../../core/utils/ui_helpers.dart';
 import '../../widgets/guest_guard.dart';
+import '../../widgets/photo_gallery.dart';
 
 class PropertyDetails extends ConsumerStatefulWidget {
   final PropertyWithListing property;
@@ -78,15 +79,18 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                       itemCount: property.property.images.length,
                       onPageChanged: (i) => setState(() => _currentImageIndex = i),
                       itemBuilder: (context, index) {
-                        return Image.network(
-                          property.property.images[index],
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          cacheWidth: 800,
-                          cacheHeight: 600,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: Colors.grey[800],
-                            child: const Icon(Icons.image_not_supported, size: 60, color: Colors.white38),
+                        return GestureDetector(
+                          onTap: () => openPhotoGallery(context, property.property.images, initialIndex: index),
+                          child: Image.network(
+                            property.property.images[index],
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            cacheWidth: 800,
+                            cacheHeight: 600,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: Colors.grey[800],
+                              child: const Icon(Icons.image_not_supported, size: 60, color: Colors.white38),
+                            ),
                           ),
                         );
                       },

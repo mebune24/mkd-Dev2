@@ -4,6 +4,7 @@ import '../../core/utils/money.dart';
 import '../../providers/applications_provider.dart';
 import '../../providers/domain_providers.dart';
 import '../../shared/models/enums.dart';
+import '../../widgets/empty_state.dart';
 
 class PaymentsScreen extends ConsumerWidget {
   final String tenantId;
@@ -113,9 +114,10 @@ class PaymentsScreen extends ConsumerWidget {
               if (submitted.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  child: Text(
-                    'No application fees yet. Submit a rental application to get started.',
-                    style: TextStyle(color: Colors.grey.shade600),
+                  child: EmptyState(
+                    title: 'No Fees Yet',
+                    message: 'No application fees yet. Submit a rental application to get started.',
+                    icon: Icons.receipt_long_outlined,
                   ),
                 )
               else

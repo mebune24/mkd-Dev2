@@ -36,6 +36,10 @@ model User {
   subscriptions     Subscription[]
   openedDisputes    Dispute[]          @relation("OpenedDisputes")
   passwordResetToken PasswordResetToken?
+  notifications     Notification[]
+  maintenanceRequests MaintenanceRequest[] @relation("TenantMaintenanceRequests")
+  reviewsGiven      Review[]           @relation("TenantReviews")
+  reviewsReceived   Review[]           @relation("LandlordReviews")
 }
 
 model AgentVerification {
@@ -87,6 +91,7 @@ model Property {
   propertyVerification PropertyVerification?
   leases               Lease[]
   rentals              Rental[]
+  reviews              Review[]
 
   @@index([status])
   @@index([category])
@@ -166,6 +171,7 @@ model Rental {
 
   platformFees PlatformFee[]
   disputes     Dispute[]
+  maintenanceRequests MaintenanceRequest[]
 }
 
 model Subscription {
@@ -264,4 +270,57 @@ model PasswordResetToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // "application_update", "lease_signed", "payment_due", "maintenance_update", "general"
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  metadata  String?  // JSON string for extra data
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model MaintenanceRequest {
+  id           String   @id @default(uuid())
+  rentalId     String
+  rental       Rental   @relation(fields: [rentalId], references: [id])
+  tenantId     String
+  tenant       User     @relation("TenantMaintenanceRequests", fields: [tenantId], references: [id])
+  title        String
+  description  String
+  category     String   @default("General") // "Plumbing", "Electrical", "Structural", "Appliance", "General"
+  urgency      String   @default("Normal")  // "Low", "Normal", "High", "Emergency"
+  status       String   @default("open")    // "open", "acknowledged", "in_progress", "resolved", "closed"
+  images       String?  // JSON array of image URLs
+  landlordNote String?
+  resolvedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  @@index([rentalId])
+  @@index([status])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  tenantId   String
+  tenant     User     @relation("TenantReviews", fields: [tenantId], references: [id])
+  landlordId String
+  landlord   User     @relation("LandlordReviews", fields: [landlordId], references: [id])
+  rating     Int      // 1–5
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  @@unique([propertyId, tenantId])
+  @@index([propertyId])
+  @@index([landlordId])
 }

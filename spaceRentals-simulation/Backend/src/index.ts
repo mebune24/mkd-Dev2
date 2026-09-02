@@ -54,6 +54,9 @@ import dashboardRoutes     from './routes/dashboard';
 import disputeRoutes       from './routes/disputes';
 import storageRoutes       from './routes/storage';
 import auditLogRoutes      from './routes/auditLogs';
+import notificationRoutes  from './routes/notifications';
+import maintenanceRoutes   from './routes/maintenance';
+import reviewRoutes        from './routes/reviews';
 import { globalErrorHandler } from './middleware/errorMiddleware';
 import { startBackgroundWorkers } from './workers';
 
@@ -75,6 +78,9 @@ app.use(`${BASE}/dashboard`,     dashboardRoutes);
 app.use(`${BASE}/disputes`,      disputeRoutes);
 app.use(`${BASE}/storage`,       storageRoutes);
 app.use(`${BASE}/audit-logs`,    auditLogRoutes);
+app.use(`${BASE}/notifications`, notificationRoutes);
+app.use(`${BASE}/maintenance`,   maintenanceRoutes);
+app.use(`${BASE}/reviews`,       reviewRoutes);
 
 // ── Health ────────────────────────────────────────────────────
 app.get(`${BASE}/health`, (_req, res) => {
@@ -87,7 +93,7 @@ app.get(`${BASE}/health`, (_req, res) => {
     routes: [
       'auth', 'users', 'properties', 'applications', 'payments',
       'leases', 'rentals', 'agents', 'subscriptions', 'commissions',
-      'platform-fees', 'admin',
+      'platform-fees', 'admin', 'notifications', 'maintenance', 'reviews',
     ],
   });
 });

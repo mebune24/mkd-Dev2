@@ -55,8 +55,25 @@ class ApiEndpoints {
 
   // Subscriptions
   static String get subscriptions => '$_base/subscriptions';
+  static String subscription(String id) => '$_base/subscriptions/$id';
+  static String subscriptionStats(String id) => '$_base/subscriptions/$id/stats';
   static String get subscriptionPlans => '$_base/subscriptions/plans';
   static String get mySubscription => '$_base/subscriptions/me';
+
+  // Notifications
+  static String get notifications => '$_base/notifications';
+  static String notification(String id) => '$_base/notifications/$id';
+  static String get notificationsReadAll => '$_base/notifications/read-all';
+  static String notificationRead(String id) => '$_base/notifications/$id/read';
+
+  // Maintenance
+  static String get maintenance => '$_base/maintenance';
+  static String maintenanceRequest(String id) => '$_base/maintenance/$id';
+
+  // Reviews
+  static String get reviews => '$_base/reviews';
+  static String propertyReviews(String propertyId) => '$_base/reviews/property/$propertyId';
+  static String landlordReviews(String landlordId) => '$_base/reviews/landlord/$landlordId';
 
   // Agents
   static String get agentApplications => '$_base/agent-applications';

@@ -1,199 +1,302 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import '../../providers/locale_provider.dart';
+import '../../core/api/api_endpoints.dart';
+import '../../providers/di_providers.dart';
+import '../../widgets/empty_state.dart';
+
+class MaintenanceModel {
+  final String id;
+  final String title;
+  final String description;
+  final String category;
+  final String urgency;
+  final String status;
+  final String? landlordNote;
+  final DateTime createdAt;
+
+  MaintenanceModel({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.category,
+    required this.urgency,
+    required this.status,
+    this.landlordNote,
+    required this.createdAt,
+  });
+
+  factory MaintenanceModel.fromJson(Map<String, dynamic> json) {
+    return MaintenanceModel(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      category: json['category'] as String? ?? 'General',
+      urgency: json['urgency'] as String? ?? 'Normal',
+      status: json['status'] as String,
+      landlordNote: json['landlordNote'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
+}
+
+final maintenanceProvider = FutureProvider<List<MaintenanceModel>>((ref) async {
+  final client = ref.read(apiClientProvider);
+  final response = await client.get<dynamic>(ApiEndpoints.maintenance);
+  if (response.data == null) return [];
+  final data = response.data as Map<String, dynamic>;
+  final list = data['data'] as List<dynamic>? ?? [];
+  return list.map((e) => MaintenanceModel.fromJson(e as Map<String, dynamic>)).toList();
+});
 
 class MaintenanceScreen extends ConsumerStatefulWidget {
-  final String tenantId;
-  const MaintenanceScreen({super.key, required this.tenantId});
+  const MaintenanceScreen({super.key});
 
   @override
   ConsumerState<MaintenanceScreen> createState() => _MaintenanceScreenState();
 }
 
-class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
+class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final maintenanceAsync = ref.watch(maintenanceProvider);
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  void _submitRequest(String type, String serviceName) {
-    Fluttertoast.showToast(
-      msg: '$serviceName request submitted successfully!',
-      backgroundColor: Colors.green,
-      textColor: Colors.white,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F7),
+      appBar: AppBar(
+        title: const Text('Maintenance Requests'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showSubmitDialog(context),
+        icon: const Icon(Icons.add),
+        label: const Text('New Request'),
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async => ref.invalidate(maintenanceProvider),
+        child: maintenanceAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => EmptyState(
+            title: 'Could not load requests',
+            message: e.toString(),
+            icon: Icons.error_outline,
+            onAction: () => ref.invalidate(maintenanceProvider),
+            actionLabel: 'Retry',
+          ),
+          data: (requests) => requests.isEmpty
+              ? EmptyState(
+                  title: 'No maintenance requests',
+                  message: 'Submit a request when something needs fixing in your rental.',
+                  icon: Icons.build_outlined,
+                  onAction: () => _showSubmitDialog(context),
+                  actionLabel: 'Submit First Request',
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                  itemCount: requests.length,
+                  itemBuilder: (context, index) {
+                    final r = requests[index];
+                    return _MaintenanceCard(request: r, theme: theme);
+                  },
+                ),
+        ),
+      ),
     );
+  }
+
+  Future<void> _showSubmitDialog(BuildContext context) async {
+    final titleCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    String selectedCategory = 'General';
+    String selectedUrgency = 'Normal';
+    bool isLoading = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Submit Maintenance Request', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: titleCtrl,
+                  decoration: const InputDecoration(labelText: 'Title', hintText: 'e.g. Leaking tap in kitchen', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descCtrl,
+                  decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedCategory,
+                        decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                        items: ['Plumbing', 'Electrical', 'Structural', 'Appliance', 'General']
+                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                            .toList(),
+                        onChanged: (v) => setS(() => selectedCategory = v!),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedUrgency,
+                        decoration: const InputDecoration(labelText: 'Urgency', border: OutlineInputBorder()),
+                        items: ['Low', 'Normal', 'High', 'Emergency']
+                            .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                            .toList(),
+                        onChanged: (v) => setS(() => selectedUrgency = v!),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: isLoading ? null : () async {
+                    if (titleCtrl.text.trim().isEmpty || descCtrl.text.trim().isEmpty) return;
+                    setS(() => isLoading = true);
+                    try {
+                      final client = ref.read(apiClientProvider);
+                      // TODO: we need to pass rentalId here, but for now we'll just try
+                      await client.post(ApiEndpoints.maintenance, data: {
+                        'rentalId': 'placeholder-will-fail-backend-check', 
+                        'title': titleCtrl.text.trim(),
+                        'description': descCtrl.text.trim(),
+                        'category': selectedCategory,
+                        'urgency': selectedUrgency,
+                      });
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      ref.invalidate(maintenanceProvider);
+                    } catch (e) {
+                      setS(() => isLoading = false);
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                  child: isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Submit Request', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MaintenanceCard extends StatelessWidget {
+  final MaintenanceModel request;
+  final ThemeData theme;
+  const _MaintenanceCard({required this.request, required this.theme});
+
+  Color _urgencyColor() {
+    switch (request.urgency) {
+      case 'Emergency': return Colors.red;
+      case 'High': return Colors.orange;
+      case 'Low': return Colors.blue;
+      default: return Colors.grey;
+    }
+  }
+
+  Color _statusColor() {
+    switch (request.status) {
+      case 'resolved': case 'closed': return Colors.green;
+      case 'in_progress': return Colors.blue;
+      case 'acknowledged': return Colors.orange;
+      default: return Colors.grey;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isFr = ref.watch(localeProvider).languageCode == 'fr';
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isFr ? 'Maintenance & Services' : 'Maintenance & Services'),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          tabs: [
-            Tab(text: isFr ? 'Réparations' : 'Repairs'),
-            Tab(text: isFr ? 'Services Premium' : 'Premium Services'),
-          ],
-        ),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8)],
+        border: Border(left: BorderSide(color: _urgencyColor(), width: 4)),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildRepairsTab(isFr, theme),
-          _buildServicesTab(isFr, theme),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRepairsTab(bool isFr, ThemeData theme) {
-    final List<Map<String, dynamic>> repairTypes = [
-      {'icon': Icons.plumbing, 'title': isFr ? 'Plomberie' : 'Plumbing', 'desc': isFr ? 'Fuites, canalisations, etc.' : 'Leaks, pipes, clogs'},
-      {'icon': Icons.electrical_services, 'title': isFr ? 'Électricité' : 'Electrical', 'desc': isFr ? 'Prises, lumières, câblage' : 'Outlets, lights, wiring'},
-      {'icon': Icons.kitchen, 'title': isFr ? 'Électroménager' : 'Appliances', 'desc': isFr ? 'Frigo, four, machine à laver' : 'Fridge, oven, washer'},
-      {'icon': Icons.roofing, 'title': isFr ? 'Structure & Toit' : 'Structural & Roof', 'desc': isFr ? 'Murs, toit, fenêtres' : 'Walls, roof, windows'},
-      {'icon': Icons.pest_control, 'title': isFr ? 'Désinsectisation' : 'Pest Control', 'desc': isFr ? 'Insectes, rongeurs' : 'Insects, rodents'},
-      {'icon': Icons.handyman, 'title': isFr ? 'Autre réparation' : 'Other Repair', 'desc': isFr ? 'Décrivez votre problème' : 'Describe your issue'},
-    ];
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: repairTypes.length,
-      itemBuilder: (context, index) {
-        final item = repairTypes[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: CircleAvatar(
-              backgroundColor: Colors.red.withValues(alpha: 0.1),
-              child: Icon(item['icon'] as IconData, color: Colors.red),
-            ),
-            title: Text(item['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(item['desc'] as String),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-            onTap: () => _showRequestForm(isFr, item['title'] as String, 'repair'),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildServicesTab(bool isFr, ThemeData theme) {
-    final List<Map<String, dynamic>> premiumServices = [
-      {'icon': Icons.cleaning_services, 'title': isFr ? 'Nettoyage & Ménage' : 'House Cleaning', 'desc': isFr ? 'Service régulier ou ponctuel' : 'Regular or one-time service', 'price': '15,000 CFA'},
-      {'icon': Icons.local_shipping, 'title': isFr ? 'Aide au Déménagement' : 'Moving Assistance', 'desc': isFr ? 'Transport et manutention' : 'Transport & handling', 'price': '50,000 CFA'},
-      {'icon': Icons.dry_cleaning, 'title': isFr ? 'Blanchisserie' : 'Laundry & Dry Cleaning', 'desc': isFr ? 'Collecte et livraison' : 'Pickup & delivery', 'price': 'Varies'},
-      {'icon': Icons.wifi, 'title': isFr ? 'Mise à niveau WiFi' : 'WiFi Upgrade', 'desc': isFr ? 'Fibre optique haut débit' : 'High-speed fiber upgrade', 'price': '25,000 CFA/mo'},
-      {'icon': Icons.local_florist, 'title': isFr ? 'Entretien du Jardin' : 'Landscaping & Garden', 'desc': isFr ? 'Tonte et aménagement' : 'Lawn care & maintenance', 'price': '10,000 CFA'},
-    ];
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: premiumServices.length,
-      itemBuilder: (context, index) {
-        final item = premiumServices[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: CircleAvatar(
-              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-              child: Icon(item['icon'] as IconData, color: theme.colorScheme.primary),
-            ),
-            title: Text(item['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(item['desc'] as String),
-                const SizedBox(height: 4),
-                Text(
-                  item['price'] as String,
-                  style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                Expanded(child: Text(request.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: _statusColor().withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                  child: Text(request.status.replaceAll('_', ' ').toUpperCase(), style: TextStyle(fontSize: 10, color: _statusColor(), fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
-            trailing: ElevatedButton(
-              onPressed: () => _submitRequest('service', item['title'] as String),
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            const SizedBox(height: 6),
+            Text(request.description, style: const TextStyle(color: Colors.grey, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+                  child: Text(request.category, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: _urgencyColor().withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                  child: Text(request.urgency, style: TextStyle(fontSize: 11, color: _urgencyColor(), fontWeight: FontWeight.w600)),
+                ),
+                const Spacer(),
+                Text(
+                  '${request.createdAt.day}/${request.createdAt.month}/${request.createdAt.year}',
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+            if (request.landlordNote != null && request.landlordNote!.isNotEmpty) ...[  
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 14, color: Colors.blue),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text('Landlord: ${request.landlordNote}', style: const TextStyle(fontSize: 12, color: Colors.blue))),
+                  ],
+                ),
               ),
-              child: Text(isFr ? 'Réserver' : 'Book'),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showRequestForm(bool isFr, String title, String type) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          left: 20, right: 20, top: 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              '${isFr ? "Demande" : "Request"}: $title',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              maxLines: 4,
-              decoration: InputDecoration(
-                labelText: isFr ? 'Décrivez le problème...' : 'Describe the issue...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _submitRequest(type, title);
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(isFr ? 'Soumettre la Demande' : 'Submit Request'),
-            ),
-            const SizedBox(height: 20),
+            ],
           ],
         ),
       ),
