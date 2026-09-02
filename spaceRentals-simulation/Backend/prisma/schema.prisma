@@ -35,6 +35,7 @@ model User {
   landlordRentals   Rental[]           @relation("LandlordRentals")
   subscriptions     Subscription[]
   openedDisputes    Dispute[]          @relation("OpenedDisputes")
+  passwordResetToken PasswordResetToken?
 }
 
 model AgentVerification {
@@ -255,3 +256,12 @@ model Dispute {
   updatedAt   DateTime @default(now()) @updatedAt
 }
 
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

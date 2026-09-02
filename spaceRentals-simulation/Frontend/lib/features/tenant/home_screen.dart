@@ -13,6 +13,7 @@ import '../../widgets/property_card_shimmer.dart';
 import '../../features/properties/domain/property.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/ui_helpers.dart';
+import '../../widgets/empty_state.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -438,39 +439,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildGlobalEmptyState(ThemeData theme, bool isFr) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12)],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.home_work_outlined, size: 48, color: theme.colorScheme.primary.withValues(alpha: 0.6)),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isFr ? 'Aucune propriété disponible' : 'No properties available',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isFr ? 'Les propriétés apparaîtront ici une fois publiées.' : 'Properties will appear here once published.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 14, height: 1.5),
-            ),
-          ],
-        ),
-      ),
+    return EmptyState(
+      title: isFr ? 'Aucune propriété disponible' : 'No properties available',
+      message: isFr ? 'Les propriétés apparaîtront ici une fois publiées.' : 'Properties will appear here once published.',
+      icon: Icons.home_work_outlined,
     );
   }
 

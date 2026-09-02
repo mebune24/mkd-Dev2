@@ -10,14 +10,18 @@ export class PropertyService {
     const cached = await cacheGet(cacheKey);
     if (cached) return JSON.parse(cached);
 
-    const data = await prisma.property.findMany({
-      skip, take: limit,
-      include: { landlord: { select: { id: true, name: true } }, propertyVerification: { select: { status: true, level: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
+    const [data, total] = await Promise.all([
+      prisma.property.findMany({
+        skip, take: limit,
+        include: { landlord: { select: { id: true, name: true } }, propertyVerification: { select: { status: true, level: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.property.count(),
+    ]);
     
-    await cacheSet(cacheKey, JSON.stringify(data), 300); // 5 minutes cache
-    return data;
+    const result = { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+    await cacheSet(cacheKey, JSON.stringify(result), 300); // 5 minutes cache
+    return result;
   }
 
   // Haversine distance filter (no PostGIS required)
@@ -178,15 +182,19 @@ export class PropertyService {
       ];
     }
     
-    const data = await prisma.property.findMany({
-      where,
-      skip, take: limit,
-      include: { landlord: { select: { id: true, name: true } }, propertyVerification: { select: { status: true, level: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
+    const [data, total] = await Promise.all([
+      prisma.property.findMany({
+        where,
+        skip, take: limit,
+        include: { landlord: { select: { id: true, name: true } }, propertyVerification: { select: { status: true, level: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.property.count({ where }),
+    ]);
     
-    await cacheSet(cacheKey, JSON.stringify(data), 300); // 5 mins cache
-    return data;
+    const result = { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+    await cacheSet(cacheKey, JSON.stringify(result), 300); // 5 mins cache
+    return result;
   }
 }
 

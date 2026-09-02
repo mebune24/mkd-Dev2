@@ -38,6 +38,7 @@ class HttpApiClient implements ApiClient {
 
       if (response.statusCode == 401) {
         SessionStorageService.instance.clearSession();
+        errorMessage = 'Your session has expired. Please sign in again.';
       }
 
       return ApiResponse.failure(

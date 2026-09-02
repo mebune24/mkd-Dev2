@@ -39,16 +39,29 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
 
   Future<void> _handleSendReset() async {
     if (!_formKey.currentState!.validate()) return;
-    await Future.delayed(const Duration(milliseconds: 1500)); 
-    if (!mounted) return;
-    setState(() => _emailSent = true);
-    Fluttertoast.showToast(
-      msg: 'Reset link sent to ${_emailController.text.trim()}',
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.TOP,
-      backgroundColor: Colors.green,
-      textColor: Colors.white,
-    );
+    
+    // Using a try-catch for network request
+    try {
+      // Fake loading visual
+      await Future.delayed(const Duration(milliseconds: 500)); 
+      if (!mounted) return;
+      
+      final repo = ref.read(authRepositoryProvider);
+      await repo.requestPasswordReset(email: _emailController.text.trim());
+      
+      if (!mounted) return;
+      setState(() => _emailSent = true);
+      
+      Fluttertoast.showToast(
+        msg: 'Reset link sent to ${_emailController.text.trim()}',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.TOP,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
+    } catch (e) {
+      if (mounted) context.showErrorToast('Failed to send reset link: $e');
+    }
   }
 
   @override

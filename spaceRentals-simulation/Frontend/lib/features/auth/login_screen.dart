@@ -20,8 +20,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'tenant1@spacerentals.cm');
-  final _passwordController = TextEditingController(text: 'Password123!');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -429,29 +429,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       ),
                       const SizedBox(height: 12),
 
-                      // Tip box
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                              color: theme.colorScheme.primary.withValues(
-                                  alpha: 0.12)),
-                        ),
-                        child: Text(
-                          isFr
-                              ? '🔑 Astuce: "tenant1@spacerentals.cm" / "Password123!"'
-                              : '🔑 Tip: "tenant1@spacerentals.cm" / "Password123!"',
-                          style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey,
-                              fontStyle: FontStyle.italic),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
                       
                       // Admin Login link
                       Center(
@@ -479,9 +456,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   void _showAdminLoginModal(BuildContext context, bool isFr) {
-    final adminEmailController = TextEditingController(text: 'admin@spacerentals.cm');
-    final adminPasswordController = TextEditingController(text: 'Password123!');
+    final adminEmailController = TextEditingController();
+    final adminPasswordController = TextEditingController();
     bool isLoading = false;
+    bool adminObscurePassword = true;
     final router = GoRouter.of(context);
 
     showModalBottomSheet(
@@ -535,11 +513,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     icon: Icons.email_outlined,
                   ),
                   const SizedBox(height: 16),
-                  _inputField(
-                    controller: adminPasswordController,
-                    label: isFr ? 'Mot de passe' : 'Password',
-                    icon: Icons.lock_outline,
-                    isPassword: true,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
+                    ),
+                    child: TextFormField(
+                      controller: adminPasswordController,
+                      obscureText: adminObscurePassword,
+                      decoration: InputDecoration(
+                        labelText: isFr ? 'Mot de passe' : 'Password',
+                        labelStyle: const TextStyle(fontSize: 13),
+                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey, size: 20),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            adminObscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            color: Colors.grey, size: 20,
+                          ),
+                          onPressed: () => setState(() => adminObscurePassword = !adminObscurePassword),
+                        ),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(

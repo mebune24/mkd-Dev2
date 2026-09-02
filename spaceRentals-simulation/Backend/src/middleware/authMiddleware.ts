@@ -21,7 +21,9 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret') as {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) return res.status(500).json({ message: 'Server misconfiguration: JWT_SECRET not set.' });
+    const decoded = jwt.verify(token, jwtSecret) as {
       userId: string;
       role: UserRole;
     };

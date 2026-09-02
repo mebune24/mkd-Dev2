@@ -549,8 +549,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       // ── Logout ───────────────────────────────────────────
                       ElevatedButton.icon(
                         onPressed: () async {
-                          await ref.read(authProvider.notifier).signOut();
-                          if (mounted) context.go('/login');
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(isFrench ? 'Se déconnecter' : 'Log Out'),
+                              content: Text(isFrench 
+                                  ? 'Êtes-vous sûr de vouloir vous déconnecter ?' 
+                                  : 'Are you sure you want to log out?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: Text(isFrench ? 'Annuler' : 'Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                  child: Text(isFrench ? 'Oui, me déconnecter' : 'Yes, log out', style: const TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm == true) {
+                            await ref.read(authProvider.notifier).signOut();
+                            if (mounted) context.go('/login');
+                          }
                         },
                         icon: const Icon(Icons.logout),
                         label: Text(isFrench ? 'Se déconnecter' : 'Log Out'),

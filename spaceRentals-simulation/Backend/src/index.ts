@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
 
 dotenv.config();
 
@@ -14,6 +15,8 @@ app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') ?? '*',
   credentials: true,
 }));
+
+app.use(morgan('[:date[iso]] :method :url :status :response-time ms - :res[content-length]'));
 
 // ── Rate limiting ──────────────────────────────────────────────
 const limiter = rateLimit({

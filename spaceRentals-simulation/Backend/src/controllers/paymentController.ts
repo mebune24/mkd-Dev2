@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { fapshiPaymentService } from '../services/FapshiPaymentService';
 import { transactionRepository } from '../repositories/TransactionRepository';
@@ -70,6 +71,30 @@ export const getMyTransactions = async (req: AuthRequest, res: Response) => {
 // POST /api/payments/webhook  (no auth — called by Fapshi)
 export const fapshiWebhook = async (req: Request, res: Response) => {
   try {
+    // Verify Fapshi webhook signature if secret is configured
+    const webhookSecret = process.env.FAPSHI_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const signature = req.headers['x-fapshi-signature'] as string;
+      if (!signature) {
+        console.warn('[Webhook] Missing X-Fapshi-Signature header — rejecting request');
+        return res.status(401).json({ message: 'Missing webhook signature.' });
+      }
+      const expectedSig = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(JSON.stringify(req.body))
+        .digest('hex');
+      try {
+        if (!crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expectedSig, 'hex'))) {
+          console.warn('[Webhook] Invalid Fapshi signature — possible spoofed request');
+          return res.status(401).json({ message: 'Invalid webhook signature.' });
+        }
+      } catch {
+        return res.status(401).json({ message: 'Invalid webhook signature format.' });
+      }
+    } else {
+      console.warn('[Webhook] FAPSHI_WEBHOOK_SECRET not set — signature verification skipped (unsafe for production!)');
+    }
+
     const payload = req.body;
     if (!payload?.transId) {
       return res.status(400).json({ message: 'Invalid webhook payload.' });

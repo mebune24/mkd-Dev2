@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,8 +8,9 @@ import 'app/theme.dart';
 import 'providers/locale_provider.dart';
 import 'widgets/error_boundary.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   // Allow runtime fetching so google_fonts can load Inter variants from network
   // GoogleFonts.config.allowRuntimeFetching = false;
   setupGlobalErrorHandling();
