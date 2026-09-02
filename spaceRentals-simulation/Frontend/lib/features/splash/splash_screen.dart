@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../shared/models/enums.dart';
 import '../../features/auth/domain/user_session.dart';
 import '../../providers/domain_providers.dart';
+import 'onboarding_screen.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -36,32 +37,38 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     _controller.forward();
 
-    Timer(const Duration(milliseconds: 3200), () {
-      if (mounted) {
-        final authState = ref.read(authProvider);
-        if (authState.isAuthenticated) {
-          if (authState.session!.role == Role.admin) {
-            context.go('/admin');
-          } else if (authState.session!.role == Role.landlord) {
-            final kycList = ref.read(kycSubmissionsProvider);
-            final userKyc = kycList.where((k) => k.userId == authState.session!.userId);
-            final isKycVerified = userKyc.isNotEmpty && (userKyc.first.status == 'verified' || userKyc.first.status == 'premium');
-            final isKycPending = userKyc.isNotEmpty && userKyc.first.status == 'pending';
-            
-            if (isKycPending) {
-              context.go('/landlord/pending');
-            } else if (!isKycVerified && userKyc.isEmpty) {
-              context.go('/landlord/kyc');
-            } else {
-              context.go('/landlord');
-            }
-          } else if (authState.session!.role == Role.agent) {
-            context.go('/agent/dashboard');
+    Timer(const Duration(milliseconds: 3200), () async {
+      if (!mounted) return;
+      final authState = ref.read(authProvider);
+      if (authState.isAuthenticated) {
+        if (authState.session!.role == Role.admin) {
+          context.go('/admin');
+        } else if (authState.session!.role == Role.landlord) {
+          final kycList = ref.read(kycSubmissionsProvider);
+          final userKyc = kycList.where((k) => k.userId == authState.session!.userId);
+          final isKycVerified = userKyc.isNotEmpty && (userKyc.first.status == 'verified' || userKyc.first.status == 'premium');
+          final isKycPending = userKyc.isNotEmpty && userKyc.first.status == 'pending';
+          
+          if (isKycPending) {
+            context.go('/landlord/pending');
+          } else if (!isKycVerified && userKyc.isEmpty) {
+            context.go('/landlord/kyc');
           } else {
-            context.go('/tenant');
+            context.go('/landlord');
           }
+        } else if (authState.session!.role == Role.agent) {
+          context.go('/agent/dashboard');
         } else {
+          context.go('/tenant');
+        }
+      } else {
+        // First-time users see onboarding before login
+        final seenOnboarding = await hasSeenOnboarding();
+        if (!mounted) return;
+        if (seenOnboarding) {
           context.go('/login');
+        } else {
+          context.go('/onboarding');
         }
       }
     });

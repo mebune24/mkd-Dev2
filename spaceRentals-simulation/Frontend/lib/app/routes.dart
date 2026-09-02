@@ -40,6 +40,8 @@ import '../features/agent/agent_kyc_pending_screen.dart';
 import '../features/chatbot/chatbot_screen.dart';
 import '../features/properties/domain/property.dart';
 import '../features/leases/lease_signing_screen.dart';
+import '../features/splash/onboarding_screen.dart';
+import '../features/landlord/landlord_maintenance_screen.dart';
 
 // ── Reusable transition builders ──────────────────────────────────────────────
 
@@ -110,6 +112,8 @@ class AppRouter {
 final goRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: '/splash',
+    debugLogDiagnostics: false,
+    // Deep linking: uses path URL strategy so links look like /tenant/property/123
     redirect: (context, state) {
       final authState = ref.read(authProvider);
       
@@ -190,6 +194,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(
+        path: '/onboarding',
+        pageBuilder: (context, state) => _fade(context, state, const OnboardingScreen()),
+      ),
+      GoRoute(
         path: '/splash',
         pageBuilder: (context, state) => _fade(context, state, const SplashScreen()),
       ),
@@ -250,10 +258,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'maintenance',
-            pageBuilder: (context, state) {
-              final tenantId = state.extra as String? ?? 'guest';
-              return _slideRight(context, state, MaintenanceScreen(tenantId: tenantId));
-            },
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const MaintenanceScreen()),
           ),
           GoRoute(
             path: 'monetization',
@@ -325,6 +331,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'agents/marketplace',
             pageBuilder: (context, state) => _slideRight(context, state, const AgentMarketplaceScreen()),
+          ),
+          GoRoute(
+            path: 'maintenance',
+            pageBuilder: (context, state) => _slideRight(context, state, const LandlordMaintenanceScreen()),
           ),
           GoRoute(
             path: 'lease/:id',

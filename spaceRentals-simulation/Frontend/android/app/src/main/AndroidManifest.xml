@@ -25,6 +25,18 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Deep linking: spacerentals://property/123 and https://app.spacerentals.cm/... -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <!-- Custom scheme: spacerentals://tenant/property/abc123 -->
+                <data android:scheme="spacerentals"/>
+                <!-- HTTPS deep link: https://app.spacerentals.cm/tenant/property/abc123 -->
+                <data
+                    android:scheme="https"
+                    android:host="app.spacerentals.cm"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
