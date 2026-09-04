@@ -70,6 +70,7 @@ model Property {
   images                   String // JSON string
   latitude                 Float?
   longitude                Float?
+  h3Index                  String?
   bedrooms                 Int      @default(0)
   bathrooms                Int      @default(0)
   areaSqM                  Float    @default(0)
@@ -97,6 +98,7 @@ model Property {
   @@index([category])
   @@index([location])
   @@index([monthlyRent])
+  @@index([h3Index])
 }
 
 model PropertyVerification {

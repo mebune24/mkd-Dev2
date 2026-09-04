@@ -104,6 +104,8 @@ class ApiPropertyRepository implements PropertyRepository {
     String? searchQuery,
     String? category,
     String? location,
+    double? latitude,
+    double? longitude,
   }) async {
     final hasFilters = (searchQuery != null && searchQuery.isNotEmpty) ||
         (location != null && location.isNotEmpty) ||
@@ -118,6 +120,11 @@ class ApiPropertyRepository implements PropertyRepository {
       if (searchQuery != null && searchQuery.isNotEmpty) queryParams['q'] = searchQuery;
       if (location != null && location.isNotEmpty) queryParams['location'] = location;
       if (category != null && category != 'All') queryParams['category'] = category;
+      if (latitude != null) queryParams['latitude'] = latitude;
+      if (longitude != null) queryParams['longitude'] = longitude;
+    } else if (latitude != null && longitude != null) {
+      path = '${ApiEndpoints.properties}/search';
+      queryParams = { 'latitude': latitude, 'longitude': longitude };
     } else {
       path = ApiEndpoints.properties;
       queryParams = null;

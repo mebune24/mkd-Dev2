@@ -6,6 +6,8 @@ abstract class PropertyRepository {
     String? searchQuery,
     String? category,
     String? location,
+    double? latitude,
+    double? longitude,
   });
   Future<PropertyWithListing> getProperty(String propertyId);
   Future<List<PropertyWithListing>> getLandlordProperties();

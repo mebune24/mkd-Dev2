@@ -90,7 +90,7 @@ export const confirmAvailability = async (req: AuthRequest, res: Response) => {
 // GET /api/properties/search
 export const searchProperties = async (req: AuthRequest, res: Response) => {
   try {
-    const { q, category, minRent, maxRent, bedrooms, page, limit } = req.query;
+    const { q, category, minRent, maxRent, bedrooms, page, limit, latitude, longitude } = req.query;
     return res.json(await propertyService.search({
       q: q as string,
       category: category as string,
@@ -99,6 +99,8 @@ export const searchProperties = async (req: AuthRequest, res: Response) => {
       bedrooms: Number(bedrooms),
       page: Number(page) || 1,
       limit: Number(limit) || 20,
+      latitude: latitude ? Number(latitude) : undefined,
+      longitude: longitude ? Number(longitude) : undefined,
     }));
   } catch (err) { return handle(res, err); }
 };

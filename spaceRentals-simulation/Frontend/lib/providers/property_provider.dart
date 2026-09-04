@@ -3,24 +3,34 @@ import 'di_providers.dart';
 import '../features/properties/domain/property.dart';
 import '../shared/models/enums.dart';
 
+// --- User Location Simulation --- //
+// In a real app, this would use geolocator to get the device GPS.
+// For this simulation, we mock the user's location to Yaoundé (Lat: 3.8480, Lng: 11.5021).
+final userLocationProvider = Provider<Map<String, double>>((ref) {
+  return {'latitude': 3.8480, 'longitude': 11.5021}; // Yaoundé
+});
+
 // --- Marketplace Providers --- //
 
 /// Provides all published properties for the marketplace
 final marketplaceListingsProvider = FutureProvider<List<PropertyWithListing>>((ref) async {
   final repo = ref.watch(propertyRepositoryProvider);
-  return repo.getMarketplaceListings();
+  final location = ref.watch(userLocationProvider);
+  return repo.getMarketplaceListings(latitude: location['latitude'], longitude: location['longitude']);
 });
 
 /// Provides properties filtered by a specific category
 final propertiesByCategoryProvider = FutureProvider.family<List<PropertyWithListing>, String>((ref, category) async {
   final repo = ref.watch(propertyRepositoryProvider);
-  return repo.getMarketplaceListings(category: category);
+  final location = ref.watch(userLocationProvider);
+  return repo.getMarketplaceListings(category: category, latitude: location['latitude'], longitude: location['longitude']);
 });
 
 /// Provides properties filtered by a search query
 final propertiesBySearchProvider = FutureProvider.family<List<PropertyWithListing>, String>((ref, query) async {
   final repo = ref.watch(propertyRepositoryProvider);
-  return repo.getMarketplaceListings(searchQuery: query);
+  final location = ref.watch(userLocationProvider);
+  return repo.getMarketplaceListings(searchQuery: query, latitude: location['latitude'], longitude: location['longitude']);
 });
 
 /// Provides a single property by ID

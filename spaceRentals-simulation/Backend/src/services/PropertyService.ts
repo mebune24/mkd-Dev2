@@ -2,6 +2,9 @@ import { propertyRepository } from '../repositories/PropertyRepository';
 import { prisma } from '../lib/prisma';
 import { Property } from '@prisma/client';
 import { cacheGet, cacheSet, clearCacheByPattern } from '../config/redis';
+import { latLngToCell, gridDisk } from 'h3-js';
+
+const H3_RESOLUTION = 7; // Approx 5km area hexagon
 
 export class PropertyService {
   async getAll(page: number = 1, limit: number = 20) {
@@ -24,19 +27,19 @@ export class PropertyService {
     return result;
   }
 
-  // Haversine distance filter (no PostGIS required)
+  // Fast H3-based geospatial search
   async searchNearby(latitude: number, longitude: number, radiusKm: number) {
-    const properties = await prisma.property.findMany({
-      where: { status: 'available', latitude: { not: null }, longitude: { not: null } },
+    // Determine how many rings to search based on radius. At res 7, 1 ring is approx 3-5km.
+    const rings = radiusKm > 5 ? 2 : 1; 
+    const userHex = latLngToCell(latitude, longitude, H3_RESOLUTION);
+    const surroundingHexagons = gridDisk(userHex, rings);
+
+    return prisma.property.findMany({
+      where: { 
+        status: 'available', 
+        h3Index: { in: surroundingHexagons }
+      },
       include: { landlord: { select: { id: true, name: true } }, propertyVerification: { select: { status: true, level: true } } },
-    });
-    const toRad = (d: number) => d * Math.PI / 180;
-    return properties.filter(p => {
-      const dLat = toRad(p.latitude! - latitude);
-      const dLon = toRad(p.longitude! - longitude);
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(latitude)) * Math.cos(toRad(p.latitude!)) * Math.sin(dLon / 2) ** 2;
-      const dist = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return dist <= radiusKm;
     });
   }
 
@@ -90,6 +93,7 @@ export class PropertyService {
       category: category ? String(category) : 'Apartment',
       latitude: latitude ? Number(latitude) : undefined,
       longitude: longitude ? Number(longitude) : undefined,
+      h3Index: (latitude && longitude) ? latLngToCell(Number(latitude), Number(longitude), H3_RESOLUTION) : undefined,
       acquisitionSource: acquisitionSource ? String(acquisitionSource) : 'LANDLORD',
       acquisitionAgentId: acquisitionAgentId ? String(acquisitionAgentId) : undefined,
     });
@@ -109,7 +113,7 @@ export class PropertyService {
       throw { status: 403, message: 'Forbidden: You do not own this property.' };
     }
     const updateData: Record<string, unknown> = {};
-    const { title, description, location, monthlyRent, deposit, amenities, images, status } = data;
+    const { title, description, location, monthlyRent, deposit, amenities, images, status, latitude, longitude } = data as any;
     if (title) updateData.title = title as string;
     if (description) updateData.description = description as string;
     if (location) updateData.location = String(location);
@@ -118,6 +122,15 @@ export class PropertyService {
     if (amenities) updateData.amenities = JSON.stringify(amenities);
     if (images) updateData.images = JSON.stringify(images);
     if (status) updateData.status = String(status);
+    if (latitude !== undefined) updateData.latitude = Number(latitude);
+    if (longitude !== undefined) updateData.longitude = Number(longitude);
+
+    // Recompute H3 index if coordinates are updated
+    const finalLat = updateData.latitude !== undefined ? updateData.latitude as number : property.latitude;
+    const finalLng = updateData.longitude !== undefined ? updateData.longitude as number : property.longitude;
+    if (finalLat && finalLng) {
+      updateData.h3Index = latLngToCell(finalLat, finalLng, H3_RESOLUTION);
+    }
     
     const result = await propertyRepository.update(id, updateData);
     await clearCacheByPattern('properties:*');
@@ -160,8 +173,8 @@ export class PropertyService {
     return propertyRepository.update(id, { lastConfirmedAvailableAt: new Date() });
   }
 
-  async search(params: { q?: string; category?: string; minRent?: number; maxRent?: number; bedrooms?: number; page?: number; limit?: number }) {
-    const { q, category, minRent, maxRent, bedrooms, page = 1, limit = 20 } = params;
+  async search(params: { q?: string; category?: string; minRent?: number; maxRent?: number; bedrooms?: number; page?: number; limit?: number; latitude?: number; longitude?: number }) {
+    const { q, category, minRent, maxRent, bedrooms, page = 1, limit = 20, latitude, longitude } = params;
     
     const cacheKey = `properties:search:${JSON.stringify(params)}`;
     const cached = await cacheGet(cacheKey);
@@ -180,6 +193,13 @@ export class PropertyService {
         { location: { contains: q, mode: 'insensitive' } },
         { description: { contains: q, mode: 'insensitive' } },
       ];
+    }
+    
+    // H3 Geospatial restriction if latitude and longitude are provided
+    if (latitude && longitude) {
+      const userHex = latLngToCell(Number(latitude), Number(longitude), H3_RESOLUTION);
+      const surroundingHexagons = gridDisk(userHex, 1);
+      where.h3Index = { in: surroundingHexagons };
     }
     
     const [data, total] = await Promise.all([
