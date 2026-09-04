@@ -470,11 +470,11 @@ class _AdminOverviewScreen extends ConsumerWidget {
                   kycStatus: 'verified',
                 );
                 // ref.read(allUsersProvider.notifier).addAdmin(newAdmin);
-                // ref.read(auditLogProvider.notifier).log(
+                /* ref.read(auditLogProvider.notifier).log(
                   currentAuth.session?.userId ?? 'admin',
                   currentAuth.session?.fullName ?? 'Admin',
                   'Added new admin: ${newAdmin.name}',
-                );
+                ); */
                 Navigator.pop(ctx);
                 context.showSuccessToast('Admin ${newAdmin.name} added successfully');
               } catch (e) {
@@ -818,13 +818,13 @@ class _DisputeCard extends StatelessWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             onPressed: () {
               final admin = ref.read(authProvider);
-              // ref.read(disputesProvider.notifier).resolve(
+              /* ref.read(disputesProvider.notifier).resolve(
                     d.id,
                     ctrl.text.trim().isEmpty ? 'Resolved by admin' : ctrl.text.trim(),
                     adminId: admin.session?.userId ?? 'admin',
                     adminName: admin.session?.fullName ?? 'Admin',
                     subject: d.subject,
-                  );
+                  ); */
               Navigator.pop(ctx);
               context.showSuccessToast('Dispute resolved ✅');
             },
