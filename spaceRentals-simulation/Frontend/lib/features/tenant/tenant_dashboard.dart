@@ -13,7 +13,7 @@ import 'home_screen.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../profile/profile_screen.dart';
 import 'favorites_screen.dart';
-import 'messages_screen.dart';
+import '../messages/chat_screens.dart';
 
 class TenantDashboard extends ConsumerStatefulWidget {
   const TenantDashboard({super.key});

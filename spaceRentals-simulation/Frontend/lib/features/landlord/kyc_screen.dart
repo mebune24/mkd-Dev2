@@ -192,7 +192,7 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
                     documents: docs,
                   );
                   
-                  ref.read(kycSubmissionsProvider.notifier).submit(submission);
+                  // ref.read(kycSubmissionsProvider.notifier).submit(submission);
                 }
                 
                 if (mounted) context.go('/landlord/pending');

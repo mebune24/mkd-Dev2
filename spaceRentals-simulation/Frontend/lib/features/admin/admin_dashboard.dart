@@ -469,8 +469,8 @@ class _AdminOverviewScreen extends ConsumerWidget {
                   status: 'active',
                   kycStatus: 'verified',
                 );
-                ref.read(allUsersProvider.notifier).addAdmin(newAdmin);
-                ref.read(auditLogProvider.notifier).log(
+                // ref.read(allUsersProvider.notifier).addAdmin(newAdmin);
+                // ref.read(auditLogProvider.notifier).log(
                   currentAuth.session?.userId ?? 'admin',
                   currentAuth.session?.fullName ?? 'Admin',
                   'Added new admin: ${newAdmin.name}',
@@ -519,7 +519,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () {
                 for (final u in testAccounts) {
-                  ref.read(allUsersProvider.notifier).removeUser(u.id);
+                  // ref.read(allUsersProvider.notifier).removeUser(u.id);
                 }
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${testAccounts.length} test account(s) removed'), backgroundColor: Colors.orange));
@@ -818,7 +818,7 @@ class _DisputeCard extends StatelessWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             onPressed: () {
               final admin = ref.read(authProvider);
-              ref.read(disputesProvider.notifier).resolve(
+              // ref.read(disputesProvider.notifier).resolve(
                     d.id,
                     ctrl.text.trim().isEmpty ? 'Resolved by admin' : ctrl.text.trim(),
                     adminId: admin.session?.userId ?? 'admin',

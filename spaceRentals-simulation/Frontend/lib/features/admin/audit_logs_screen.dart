@@ -124,7 +124,6 @@ class AuditLogsScreen extends ConsumerWidget {
                 );
               },
             ),
-      ),
     );
   }
 }
