@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from './authMiddleware';
-import { redisClient } from '../config/redis';
+import { redisClient, isRedisAvailable } from '../config/redis';
 
 /**
  * Creates a rate limiter based on the authenticated user's ID.
@@ -12,6 +12,11 @@ import { redisClient } from '../config/redis';
  */
 export function createUserRateLimiter(windowMs: number, maxRequests: number, prefix: string = 'rate-limit') {
   return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    // Skip rate limiting entirely when Redis is unavailable to avoid request hangs
+    if (!isRedisAvailable()) {
+      return next();
+    }
+
     try {
       // Use userId if authenticated, fallback to IP address
       const identifier = req.user?.userId || req.ip || 'unknown-ip';

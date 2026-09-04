@@ -6,6 +6,11 @@ export const redisClient = createClient({ url: redisUrl });
 
 let redisAvailable = false;
 
+/** Returns true only when Redis is connected and accepting commands */
+export function isRedisAvailable(): boolean {
+  return redisAvailable;
+}
+
 redisClient.on('error', (_err) => {
   // Redis is optional — the API continues to work without caching
   if (redisAvailable) {

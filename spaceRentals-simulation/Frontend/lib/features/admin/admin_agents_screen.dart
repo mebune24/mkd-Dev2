@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../../core/api/api_endpoints.dart';
+import '../../providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/currency_formatter.dart';
 import 'package:space_rentals/providers/domain_providers.dart';
@@ -213,13 +216,25 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        if (agent.isWalletFrozen) {
-                          // ref.read(agentProfilesProvider.notifier).reactivate(agent.agentId);
-                          context.showSuccessToast('${agent.name}\'s wallet unfrozen.');
-                        } else {
-                          // ref.read(agentProfilesProvider.notifier).freezeWallet(agent.agentId);
-                          context.showErrorToast('${agent.name}\'s wallet frozen.');
+                      onPressed: () async {
+                        final token = ref.read(authProvider).session?.accessToken ?? '';
+                        try {
+                          if (agent.isWalletFrozen) {
+                            await http.post(
+                              Uri.parse(ApiEndpoints.unfreezeWallet(agent.userId)),
+                              headers: {'Authorization': 'Bearer $token'},
+                            );
+                            context.showSuccessToast('${agent.name}\'s wallet unfrozen.');
+                          } else {
+                            await http.post(
+                              Uri.parse(ApiEndpoints.freezeWallet(agent.userId)),
+                              headers: {'Authorization': 'Bearer $token'},
+                            );
+                            context.showErrorToast('${agent.name}\'s wallet frozen.');
+                          }
+                          ref.invalidate(agentProfilesProvider);
+                        } catch (e) {
+                          context.showErrorToast('Failed to update wallet status');
                         }
                       },
                       icon: Icon(agent.isWalletFrozen ? Icons.lock_open : Icons.lock, size: 16, color: Colors.red),

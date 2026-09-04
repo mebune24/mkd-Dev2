@@ -137,6 +137,31 @@ class _AgentOverview extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (agentProfile.isWalletFrozen)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Wallet Frozen', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14)),
+                                  Text('Your wallet has been frozen pending dispute resolution.', style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     // ── Balance Card ─────────────────────────────────────────
                     Container(
                       padding: const EdgeInsets.all(24),
@@ -160,8 +185,18 @@ class _AgentOverview extends ConsumerWidget {
                               const Text('Available Balance', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
-                                child: const Text('🟢 Active Agent', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(colors: agentProfile.tier.gradient),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(agentProfile.tier.icon, color: Colors.white, size: 12),
+                                    const SizedBox(width: 4),
+                                    Text('${agentProfile.tier.label} Agent', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
                               ),
                             ],
                           ),

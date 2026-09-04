@@ -1,3 +1,47 @@
+import 'package:flutter/material.dart';
+
+// ── Agent Tier System ─────────────────────────────────────────────────────────
+enum AgentTier { bronze, silver, gold, platinum }
+
+extension AgentTierExtension on AgentTier {
+  String get label {
+    switch (this) {
+      case AgentTier.platinum: return 'Platinum';
+      case AgentTier.gold:     return 'Gold';
+      case AgentTier.silver:   return 'Silver';
+      case AgentTier.bronze:   return 'Bronze';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case AgentTier.platinum: return const Color(0xFF00D4FF);
+      case AgentTier.gold:     return const Color(0xFFFFD700);
+      case AgentTier.silver:   return const Color(0xFFC0C0C0);
+      case AgentTier.bronze:   return const Color(0xFFCD7F32);
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case AgentTier.platinum: return Icons.workspace_premium;
+      case AgentTier.gold:     return Icons.military_tech;
+      case AgentTier.silver:   return Icons.star_half;
+      case AgentTier.bronze:   return Icons.star_border;
+    }
+  }
+
+  List<Color> get gradient {
+    switch (this) {
+      case AgentTier.platinum: return [const Color(0xFF00D4FF), const Color(0xFF7B2FBE)];
+      case AgentTier.gold:     return [const Color(0xFFFFD700), const Color(0xFFFF8C00)];
+      case AgentTier.silver:   return [const Color(0xFFE0E0E0), const Color(0xFF9E9E9E)];
+      case AgentTier.bronze:   return [const Color(0xFFCD7F32), const Color(0xFF8B4513)];
+    }
+  }
+}
+
+
 class AgentTransaction {
   final String id;
   final String agentId;
@@ -56,6 +100,13 @@ class AgentProfile {
   double rating;
   bool isWalletFrozen;
   String status; // 'active', 'pending', 'suspended'
+
+  AgentTier get tier {
+    if (rating >= 4.8 && propertiesVerified >= 50) return AgentTier.platinum;
+    if (rating >= 4.5 && propertiesVerified >= 20) return AgentTier.gold;
+    if (rating >= 4.0 && propertiesVerified >= 5) return AgentTier.silver;
+    return AgentTier.bronze;
+  }
 
   AgentProfile({
     required this.userId,
