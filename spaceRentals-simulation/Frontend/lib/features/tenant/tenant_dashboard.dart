@@ -192,9 +192,14 @@ class _TenantDrawer extends ConsumerWidget {
     final session = user.session;
     
     // Calculate real balance
-    final transactions = ref.watch(agentTransactionsProvider);
-    final myTx = transactions.where((t) => t.agentId == session?.userId).toList();
-    final balance = myTx.where((t) => t.status == 'Approved' || t.status == 'Available').fold(0.0, (s, t) => s + t.amount);
+    final transactionsAsync = ref.watch(agentTransactionsProvider);
+    final balance = transactionsAsync.maybeWhen(
+      data: (transactions) {
+        final myTx = transactions.where((t) => t.agentId == session?.userId).toList();
+        return myTx.where((t) => t.status == 'Approved' || t.status == 'Available').fold(0.0, (s, t) => s + t.amount);
+      },
+      orElse: () => 0.0,
+    );
     
     return Drawer(
       child: Column(

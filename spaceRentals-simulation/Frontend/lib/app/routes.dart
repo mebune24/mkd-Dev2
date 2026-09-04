@@ -18,7 +18,7 @@ import '../features/tenant/property_search.dart';
 import '../features/tenant/category_properties_screen.dart';
 import '../features/tenant/monetization/tenant_monetization_screen.dart';
 import '../features/tenant/monetization/tenant_gigs_screen.dart';
-import '../features/tenant/messages_screen.dart';
+import '../features/messages/chat_screens.dart';
 import '../features/landlord/landlord_dashboard.dart';
 import '../features/landlord/add_property.dart';
 import '../features/landlord/kyc_screen.dart';
@@ -269,14 +269,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'gigs',
             pageBuilder: (context, state) => _slideRight(context, state, const TenantGigsScreen()),
           ),
-          GoRoute(
-            path: 'chat/:id',
-            pageBuilder: (context, state) {
-              final chatData = state.extra as Map<String, dynamic>? ??
-                  {'id': state.pathParameters['id'], 'name': 'Chat', 'property': '', 'unread': 0};
-              return _slideRight(context, state, ChatDetailScreen(chatData: chatData));
-            },
-          ),
+
           GoRoute(
             path: 'search',
             pageBuilder: (context, state) {
@@ -400,6 +393,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/chatbot',
         pageBuilder: (context, state) => _slideUp(context, state, const ChatbotScreen()),
+      ),
+      GoRoute(
+        path: '/chat/:id',
+        pageBuilder: (context, state) {
+          final chatData = state.extra as Map<String, dynamic>? ??
+              {'id': state.pathParameters['id'], 'name': 'Chat', 'property': '', 'unread': 0};
+          return _slideRight(context, state, ChatDetailScreen(chatData: chatData));
+        },
       ),
     ],
   );

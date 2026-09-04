@@ -44,7 +44,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         if (authState.session!.role == Role.admin) {
           context.go('/admin');
         } else if (authState.session!.role == Role.landlord) {
-          final kycList = ref.read(kycSubmissionsProvider);
+          final kycList = await ref.read(kycSubmissionsProvider.future);
           final userKyc = kycList.where((k) => k.userId == authState.session!.userId);
           final isKycVerified = userKyc.isNotEmpty && (userKyc.first.status == 'verified' || userKyc.first.status == 'premium');
           final isKycPending = userKyc.isNotEmpty && userKyc.first.status == 'pending';

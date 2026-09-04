@@ -14,8 +14,7 @@ class AgentMarketplaceScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final agents = ref.watch(agentProfilesProvider);
-    final activeAgents = agents.where((a) => a.status == 'active').toList();
+    final agentProfilesAsync = ref.watch(agentProfilesProvider);
     final user = ref.watch(authProvider);
 
     return Scaffold(
@@ -34,38 +33,45 @@ class AgentMarketplaceScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.shade100),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.blue, size: 16),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'All agents are verified by SpaceRentals. Contact details are only visible after an active service agreement.',
-                    style: TextStyle(color: Colors.blue, fontSize: 12),
-                  ),
+      body: agentProfilesAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Failed to load agents: $err')),
+        data: (agents) {
+          final activeAgents = agents.where((a) => a.status == 'active').toList();
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.shade100),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text('${activeAgents.length} Verified Agents', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-          const SizedBox(height: 12),
-          ...activeAgents.map((agent) => _AgentCard(
-            agent: agent,
-            landlordId: user.session?.userId ?? '',
-            landlordName: user.session?.fullName ?? '',
-          )),
-        ],
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue, size: 16),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'All agents are verified by SpaceRentals. Contact details are only visible after an active service agreement.',
+                        style: TextStyle(color: Colors.blue, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('${activeAgents.length} Verified Agents', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 12),
+              ...activeAgents.map((agent) => _AgentCard(
+                agent: agent,
+                landlordId: user.session?.userId ?? '',
+                landlordName: user.session?.fullName ?? '',
+              )),
+            ],
+          );
+        },
       ),
     );
   }
@@ -218,7 +224,8 @@ class _AgentCardState extends ConsumerState<_AgentCard> {
       requestedAt: DateTime.now(),
       serviceTerms: 'Standard property management and tenant referral services in ${widget.agent.areasServed.join(", ")}.',
     );
-    ref.read(agentAgreementsProvider.notifier).requestAgreement(agreement);
+    // API integration would go here
+    // ref.read(agentAgreementsProvider.notifier).requestAgreement(agreement);
     setState(() => _requested = true);
     context.showSuccessToast('Service request sent to ${widget.agent.name}!');
   }

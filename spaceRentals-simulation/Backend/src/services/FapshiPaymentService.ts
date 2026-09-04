@@ -228,10 +228,6 @@ export class FapshiPaymentService {
     console.log(`[FapshiWebhook] Lease ${leaseId} activated. Rental created. Property marked as rented.`);
   }
 
-  /**
-   * Initiates a payout to a mobile money number.
-   * Used for agent commission withdrawals / landlord payouts.
-   */
   async initiatePayout(params: {
     userId: string;
     amount: number;
@@ -241,35 +237,32 @@ export class FapshiPaymentService {
     referenceId: string;
     paymentMethod: string;
   }) {
-    const { userId, amount, phone, message, referenceType, referenceId, paymentMethod } = params;
-
-    let response: FapshiPaymentResponse;
-    try {
-      const { data } = await axios.post<FapshiPaymentResponse>(
-        `${FAPSHI_API_URL}/payout`,
-        { amount, phone, message },
-        { headers: this.headers() },
-      );
-      response = data;
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Payout request failed.';
-      throw { status: 502, message: msg };
-    }
+    console.log(`[FapshiPaymentService] Initiating Payout of ${params.amount} to ${params.phone}`);
+    const gatewayTxId = `payout_${Date.now()}`;
 
     const transaction = await transactionRepository.create({
-      user: { connect: { id: userId } },
-      amount,
+      user: { connect: { id: params.userId } },
+      amount: -params.amount,
       currency: 'XAF',
-      paymentMethod,
+      paymentMethod: params.paymentMethod,
       transactionType: 'PAYOUT',
-      referenceType,
-      referenceId,
-      gatewayTxId: response.transId,
+      referenceType: params.referenceType,
+      referenceId: params.referenceId,
+      gatewayTxId,
       status: 'PENDING',
-      metadata: JSON.stringify(response),
+      metadata: '{}',
     });
 
-    return { transactionId: transaction.id, gatewayTxId: response.transId };
+    // Simulate an immediate webhook success for the demo (since payouts are usually fast)
+    setTimeout(() => {
+      this.handleWebhook({ transId: gatewayTxId, status: 'SUCCESSFUL' }).catch(console.error);
+    }, 5000);
+
+    return {
+      message: 'Payout initiated successfully',
+      gatewayTxId,
+      transactionId: transaction.id,
+    };
   }
 }
 

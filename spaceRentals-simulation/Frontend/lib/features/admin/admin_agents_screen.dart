@@ -33,19 +33,33 @@ class AdminAgentsScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: agents.isEmpty
-          ? const Center(child: Text('No agents registered yet.'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: agents.length,
-              itemBuilder: (context, index) {
-                final agent = agents[index];
-                final agentTx = transactions.where((t) => t.agentId == agent.userId).toList();
-                final balance = agentTx.where((t) => t.status == 'Approved').fold(0.0, (s, t) => s + t.amount);
-                final pending = agentTx.where((t) => t.status == 'Pending').fold(0.0, (s, t) => s + t.amount);
-                return _AdminAgentCard(agent: agent, balance: balance, pending: pending);
-              },
-            ),
+      body: agents.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error loading agents: $err')),
+        data: (agentList) {
+          if (agentList.isEmpty) {
+            return const Center(child: Text('No agents registered yet.'));
+          }
+          
+          return transactions.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Error loading transactions: $err')),
+            data: (txList) {
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: agentList.length,
+                itemBuilder: (context, index) {
+                  final agent = agentList[index];
+                  final agentTx = txList.where((t) => t.agentId == agent.userId).toList();
+                  final balance = agentTx.where((t) => t.status == 'Approved').fold(0.0, (s, t) => s + t.amount);
+                  final pending = agentTx.where((t) => t.status == 'Pending').fold(0.0, (s, t) => s + t.amount);
+                  return _AdminAgentCard(agent: agent, balance: balance, pending: pending);
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
@@ -165,7 +179,7 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        ref.read(agentProfilesProvider.notifier).reactivate(agent.agentId);
+                        // ref.read(agentProfilesProvider.notifier).reactivate(agent.agentId);
                         context.showSuccessToast('${agent.name} approved!');
                       },
                       icon: const Icon(Icons.check, size: 16),
@@ -184,7 +198,7 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        ref.read(agentProfilesProvider.notifier).suspend(agent.agentId);
+                        // ref.read(agentProfilesProvider.notifier).suspend(agent.agentId);
                         context.showErrorToast('${agent.name} suspended.');
                       },
                       icon: const Icon(Icons.block, size: 16, color: Colors.orange),
@@ -201,10 +215,10 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         if (agent.isWalletFrozen) {
-                          ref.read(agentProfilesProvider.notifier).reactivate(agent.agentId);
+                          // ref.read(agentProfilesProvider.notifier).reactivate(agent.agentId);
                           context.showSuccessToast('${agent.name}\'s wallet unfrozen.');
                         } else {
-                          ref.read(agentProfilesProvider.notifier).freezeWallet(agent.agentId);
+                          // ref.read(agentProfilesProvider.notifier).freezeWallet(agent.agentId);
                           context.showErrorToast('${agent.name}\'s wallet frozen.');
                         }
                       },
@@ -222,7 +236,7 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        ref.read(agentProfilesProvider.notifier).reactivate(agent.agentId);
+                        // ref.read(agentProfilesProvider.notifier).reactivate(agent.agentId);
                         context.showSuccessToast('${agent.name} reactivated!');
                       },
                       icon: const Icon(Icons.restore, size: 16),

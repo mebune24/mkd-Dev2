@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { userRepository } from '../repositories/UserRepository';
+import { kycVerificationService } from './KycVerificationService';
 import { v4 as uuidv4 } from 'uuid';
 
 export class AgentService {
@@ -20,13 +21,19 @@ export class AgentService {
       throw { status: 409, message: 'Your KYC has already been approved.' };
     }
 
+    // Call external KYC Service (Mocked)
+    const verification = await kycVerificationService.verifyDocument(Buffer.from('mock buffer data'), 'NationalID');
+    const finalStatus = verification.status === 'approved' ? 'approved' : 'rejected';
+    const adminNotes = verification.reason || `Automated check score: ${verification.confidenceScore}`;
+
     if (existing) {
       return prisma.agentVerification.update({
         where: { agentId },
         data: {
           ...data,
           documents: JSON.stringify(data),
-          status: 'pending',
+          status: finalStatus,
+          adminNotes,
         },
       });
     }
@@ -36,7 +43,8 @@ export class AgentService {
         agent: { connect: { id: agentId } },
         ...data,
         documents: JSON.stringify(data),
-        status: 'pending',
+        status: finalStatus,
+        adminNotes,
       },
     });
   }

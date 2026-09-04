@@ -196,50 +196,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              child: Row(
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 2.0),
-                                    child: IconButton(
-                                      icon: const Icon(Icons.menu, color: Colors.white),
-                                      onPressed: () => Scaffold.of(context).openDrawer(),
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
+                                  Text(
+                                    isFr ? 'Bonjour, ${user.session?.fullName.split(' ').first ?? 'Invité'} 👋' : 'Hello, ${user.session?.fullName.split(' ').first ?? 'Guest'} 👋',
+                                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          isFr ? 'Bonjour, ${user.session?.fullName.split(' ').first ?? 'Invité'} 👋' : 'Hello, ${user.session?.fullName.split(' ').first ?? 'Guest'} 👋',
-                                          style: const TextStyle(color: Colors.white70, fontSize: 14),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          isFr ? 'Trouvez votre espace idéal' : 'Find your perfect space',
-                                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    isFr ? 'Trouvez votre espace idéal' : 'Find your perfect space',
+                                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
                             ),
-
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
                         // Search bar
                         GestureDetector(
                           onTap: () {
@@ -272,6 +253,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
+            ),
+            leading: IconButton(
+              icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 28),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              tooltip: isFr ? 'Menu' : 'Menu',
             ),
             actions: [
               IconButton(
@@ -454,7 +440,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.red.shade100),
+          border: Border.all(color: Colors.grey.shade100),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10)],
         ),
         child: Column(
@@ -462,32 +448,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: theme.colorScheme.primary.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.wifi_off_rounded, size: 40, color: Colors.red.shade300),
+              child: Icon(Icons.search_off_rounded, size: 40, color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 14),
             Text(
-              isFr ? 'Connexion impossible' : 'Cannot connect',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              isFr ? 'Aucune propriété' : 'No properties yet',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             const SizedBox(height: 6),
             Text(
-              isFr ? 'Aucune propriété trouvée, réessayez plus tard.' : 'No properties found try later.',
+              isFr ? 'Nous n\'avons pas pu charger les propriétés. Vérifiez votre connexion.' : 'We couldn\'t load properties right now. They will appear here dynamically.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 13, height: 1.5),
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 14, height: 1.5),
             ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
               onPressed: () => ref.invalidate(marketplaceListingsProvider),
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: Text(isFr ? 'Réessayer' : 'Retry'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: theme.colorScheme.primary,
-                side: BorderSide(color: theme.colorScheme.primary),
+              label: Text(isFr ? 'Actualiser' : 'Refresh'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -612,7 +598,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800';
                   return GestureDetector(
                     onTap: () => context.push('/tenant/search'),
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
                       width: MediaQuery.sizeOf(context).width * 0.6,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
@@ -646,87 +634,98 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 final property = properties[index];
                 return GestureDetector(
                   onTap: () => _onPropertyTapped(property),
-                  child: Container(
-                    width: MediaQuery.sizeOf(context).width * 0.7,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 10)],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                          child: Image.network(
-                            property.property.images.isNotEmpty
-                                ? property.property.images.first
-                                : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800',
-                            height: 140,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, progress) {
-                              if (progress == null) return child;
-                              return Container(height: 140, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator(strokeWidth: 2)));
-                            },
-                            errorBuilder: (_, __, ___) => Container(height: 140, width: double.infinity, color: Colors.grey[200], child: Icon(Icons.image_not_supported, color: Colors.grey[400])),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.95, end: 1.0),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOutBack,
+                    builder: (context, scale, child) {
+                      return Transform.scale(
+                        scale: scale,
+                        child: child,
+                      );
+                    },
+                    child: Container(
+                      width: MediaQuery.sizeOf(context).width * 0.7,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4))],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                            child: Image.network(
+                              property.property.images.isNotEmpty
+                                  ? property.property.images.first
+                                  : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800',
+                              height: 140,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+                                return Container(height: 140, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator(strokeWidth: 2)));
+                              },
+                              errorBuilder: (_, __, ___) => Container(height: 140, width: double.infinity, color: Colors.grey[200], child: Icon(Icons.image_not_supported, color: Colors.grey[400])),
+                            ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (property.verification.level.index >= 3)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  margin: const EdgeInsets.only(bottom: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.verified, size: 10, color: Colors.green),
-                                      SizedBox(width: 3),
-                                      Text('Verified', style: TextStyle(fontSize: 9, color: Colors.green, fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                ),
-                              Text(
-                                property.property.title,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 3),
-                              Row(
-                                children: [
-                                  const Icon(Icons.location_on, size: 11, color: Colors.grey),
-                                  Expanded(
-                                    child: Text(
-                                      property.property.location,
-                                      style: const TextStyle(fontSize: 11, color: Colors.grey),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (property.verification.level.index >= 3)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    margin: const EdgeInsets.only(bottom: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.verified, size: 10, color: Colors.green),
+                                        SizedBox(width: 3),
+                                        Text('Verified', style: TextStyle(fontSize: 9, color: Colors.green, fontWeight: FontWeight.bold)),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${CurrencyFormatter.formatCFA(property.property.monthlyRentUnits.toDouble())}/mo',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: theme.colorScheme.primary,
+                                Text(
+                                  property.property.title,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.location_on, size: 12, color: Colors.grey),
+                                    Expanded(
+                                      child: Text(
+                                        property.property.location,
+                                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  '${CurrencyFormatter.formatCFA(property.property.monthlyRentUnits.toDouble())}/mo',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 );

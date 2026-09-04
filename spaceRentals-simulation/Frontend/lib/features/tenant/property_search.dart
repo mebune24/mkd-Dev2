@@ -23,6 +23,10 @@ class _PropertySearchState extends ConsumerState<PropertySearch> {
   String _searchQuery = '';
   String _selectedCategory = 'All';
   String _sortBy = 'Price: Low to High';
+  double _minPrice = 0;
+  double _maxPrice = 500000;
+  int? _bedrooms;
+  bool _isVerifiedOnly = false;
   int _currentPage = 1;
   static const int _pageSize = 6;
 
@@ -59,6 +63,16 @@ class _PropertySearchState extends ConsumerState<PropertySearch> {
     if (_selectedCategory != 'All') {
       result = result.where((p) => p.property.category == _selectedCategory).toList();
     }
+    
+    if (_bedrooms != null) {
+      result = result.where((p) => p.property.bedrooms >= _bedrooms!).toList();
+    }
+    
+    if (_isVerifiedOnly) {
+      result = result.where((p) => p.verification.isVerified).toList();
+    }
+    
+    result = result.where((p) => p.property.monthlyRentUnits >= _minPrice && p.property.monthlyRentUnits <= _maxPrice).toList();
 
     switch (_sortBy) {
       case 'Price: Low to High':
@@ -108,6 +122,10 @@ class _PropertySearchState extends ConsumerState<PropertySearch> {
                       setState(() {
                         _selectedCategory = 'All';
                         _sortBy = 'Price: Low to High';
+                        _minPrice = 0;
+                        _maxPrice = 500000;
+                        _bedrooms = null;
+                        _isVerifiedOnly = false;
                         _currentPage = 1;
                       });
                       Navigator.pop(ctx);
@@ -152,6 +170,95 @@ class _PropertySearchState extends ConsumerState<PropertySearch> {
                     ),
                   );
                 }).toList(),
+              ),
+              const SizedBox(height: 24),
+              Text(isFr ? 'Fourchette de prix (FCFA)' : 'Price Range (FCFA)',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.5)),
+              const SizedBox(height: 10),
+              RangeSlider(
+                values: RangeValues(_minPrice, _maxPrice),
+                min: 0,
+                max: 1000000,
+                divisions: 20,
+                activeColor: Theme.of(context).colorScheme.primary,
+                inactiveColor: Colors.grey[200],
+                labels: RangeLabels(
+                  CurrencyFormatter.formatCFA(_minPrice),
+                  _maxPrice == 1000000 ? '${CurrencyFormatter.formatCFA(_maxPrice)}+' : CurrencyFormatter.formatCFA(_maxPrice),
+                ),
+                onChanged: (RangeValues values) {
+                  setModalState(() {
+                    _minPrice = values.start;
+                    _maxPrice = values.end;
+                  });
+                  setState(() {
+                    _minPrice = values.start;
+                    _maxPrice = values.end;
+                    _currentPage = 1;
+                  });
+                },
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(CurrencyFormatter.formatCFA(_minPrice), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(_maxPrice == 1000000 ? '${CurrencyFormatter.formatCFA(_maxPrice)}+' : CurrencyFormatter.formatCFA(_maxPrice), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(isFr ? 'Chambres (Min)' : 'Bedrooms (Min)',
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.5)),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          children: [null, 1, 2, 3, 4].map((beds) {
+                            final selected = _bedrooms == beds;
+                            return GestureDetector(
+                              onTap: () {
+                                setModalState(() => _bedrooms = beds);
+                                setState(() { _bedrooms = beds; _currentPage = 1; });
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: selected ? Theme.of(context).colorScheme.primary : Colors.grey[100],
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(beds == null ? 'Any' : '$beds+',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                                    color: selected ? Colors.white : Colors.grey[800],
+                                  )),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              SwitchListTile(
+                title: Text(isFr ? 'Propriétés Vérifiées Seulement' : 'Verified Properties Only',
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.5)),
+                subtitle: Text(isFr ? 'Afficher uniquement les biens vérifiés par un agent' : 'Show only properties verified by an agent',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 11)),
+                value: _isVerifiedOnly,
+                activeColor: Theme.of(context).colorScheme.primary,
+                contentPadding: EdgeInsets.zero,
+                onChanged: (val) {
+                  setModalState(() => _isVerifiedOnly = val);
+                  setState(() { _isVerifiedOnly = val; _currentPage = 1; });
+                },
               ),
               const SizedBox(height: 20),
               Text(isFr ? 'Trier par' : 'Sort By',

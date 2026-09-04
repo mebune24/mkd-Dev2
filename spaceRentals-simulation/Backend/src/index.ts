@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import { createUserRateLimiter } from './middleware/rateLimitMiddleware';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
+import http from 'http';
+import { initSocketServer } from './socket';
 
 dotenv.config();
 
@@ -19,48 +21,20 @@ app.use(cors({
 app.use(morgan('[:date[iso]] :method :url :status :response-time ms - :res[content-length]'));
 
 // ── Rate limiting ──────────────────────────────────────────────
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300,
-  message: { message: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use(limiter);
+const globalLimiter = createUserRateLimiter(15 * 60 * 1000, 300, 'rate-limit:global');
+app.use(globalLimiter);
 
 // Auth endpoints get a stricter limiter
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { message: 'Too many authentication attempts, please try again later.' },
-});
+const authLimiter = createUserRateLimiter(15 * 60 * 1000, 20, 'rate-limit:auth');
 
 // Admin routes: moderate limit (protects bulk DB queries)
-const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 60,
-  message: { message: 'Too many admin requests, please slow down.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const adminLimiter = createUserRateLimiter(15 * 60 * 1000, 60, 'rate-limit:admin');
 
 // Payment routes: strict limit to prevent fraud / duplicate charges
-const paymentLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 30,
-  message: { message: 'Too many payment requests, please wait before trying again.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const paymentLimiter = createUserRateLimiter(15 * 60 * 1000, 30, 'rate-limit:payment');
 
 // Agent routes: moderate limit
-const agentLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { message: 'Too many agent requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const agentLimiter = createUserRateLimiter(15 * 60 * 1000, 100, 'rate-limit:agent');
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -134,14 +108,18 @@ app.use(globalErrorHandler);
 
 // ── Start ─────────────────────────────────────────────────────
 const PORT = Number(process.env.PORT || 3000);
-app.listen(PORT, '0.0.0.0', () => {
+const server = http.createServer(app);
+initSocketServer(server);
+
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`[Server] Space Rentals API running on port ${PORT}`);
   startBackgroundWorkers();
   console.log(`📐  Architecture : MVC (Controller → Service → Repository)`);
   console.log(`💳  Payments     : Fapshi (MTN / Orange Money)`);
   console.log(`🗄️   Database     : PostgreSQL (Prisma ORM)`);
   console.log(`🔒  Security     : Helmet + Rate Limiting`);
+  console.log(`🔌  WebSockets   : Enabled for Chat & Notifications`);
   console.log(`📦  Routes       : 15 feature groups registered (incl. storage + audit)\n`);
 });
 
-export { app };
+export { app, server };

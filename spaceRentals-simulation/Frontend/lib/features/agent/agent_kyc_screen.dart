@@ -132,7 +132,8 @@ class _AgentKYCScreenState extends ConsumerState<AgentKYCScreen> {
                     documents: docs,
                   );
                   
-                  ref.read(kycSubmissionsProvider.notifier).submit(submission);
+                  // TODO: Connect this to api_agent_repository method: submitKyc()
+                  // ref.read(kycSubmissionsProvider.notifier).submit(submission);
                 }
                 
                 // TODO: When backend is connected, call API to update KYC status.

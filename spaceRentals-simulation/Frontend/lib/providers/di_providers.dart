@@ -13,6 +13,10 @@ import '../data/api/api_property_repository.dart';
 import '../data/api/api_application_repository.dart';
 import '../data/api/api_lease_repository.dart';
 import '../data/api/api_payment_repository.dart';
+import '../data/api/api_agent_repository.dart';
+import '../data/api/api_dispute_repository.dart';
+import '../data/api/api_notification_repository.dart';
+import '../data/api/api_audit_repository.dart';
 import '../services/session_storage_service.dart';
 
 // ── Session Storage ────────────────────────────────────────────────────────
@@ -69,4 +73,28 @@ final leaseRepositoryProvider = Provider<LeaseRepository>((ref) {
 final paymentRepositoryProvider = Provider<ApiPaymentRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   return ApiPaymentRepository(apiClient);
+});
+
+// ── Agents ─────────────────────────────────────────────────────────────────
+final agentRepositoryProvider = Provider<ApiAgentRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return ApiAgentRepository(apiClient);
+});
+
+// ── Disputes ───────────────────────────────────────────────────────────────
+final disputeRepositoryProvider = Provider<ApiDisputeRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return ApiDisputeRepository(apiClient);
+});
+
+// ── Notifications ──────────────────────────────────────────────────────────
+final notificationRepositoryProvider = Provider<ApiNotificationRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return ApiNotificationRepository(apiClient);
+});
+
+// ── Audit Logs ─────────────────────────────────────────────────────────────
+final auditRepositoryProvider = Provider<ApiAuditRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return ApiAuditRepository(apiClient);
 });

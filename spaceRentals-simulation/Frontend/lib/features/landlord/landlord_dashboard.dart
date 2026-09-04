@@ -11,6 +11,7 @@ import 'landlord_payments_screen.dart';
 import 'my_agents_screen.dart';
 import '../profile/profile_screen.dart';
 import 'monetization/landlord_monetization_screen.dart';
+import '../messages/chat_screens.dart';
 
 class LandlordDashboard extends ConsumerStatefulWidget {
   const LandlordDashboard({super.key});
@@ -28,6 +29,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
     const TenantManagementScreen(),
     const LandlordPaymentsScreen(),
     const MyAgentsScreen(),
+    const MessagesScreen(),
     const ProfileScreen(),
   ];
 
@@ -132,7 +134,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                 _NavItem(icon: Icons.people_outline, activeIcon: Icons.people_rounded, label: 'Tenants', index: 2, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
                 _NavItem(icon: Icons.payments_outlined, activeIcon: Icons.payments_rounded, label: 'Payments', index: 3, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
                 _NavItem(icon: Icons.real_estate_agent_outlined, activeIcon: Icons.real_estate_agent, label: 'Agents', index: 4, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.person_outline, activeIcon: Icons.person_rounded, label: 'Profile', index: 5, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
+                _NavItem(icon: Icons.message_outlined, activeIcon: Icons.message_rounded, label: 'Messages', index: 5, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
+                _NavItem(icon: Icons.person_outline, activeIcon: Icons.person_rounded, label: 'Profile', index: 6, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
               ],
             ),
           ),

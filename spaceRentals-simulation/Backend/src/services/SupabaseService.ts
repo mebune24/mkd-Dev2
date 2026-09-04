@@ -39,6 +39,18 @@ export const supabaseService = {
     return data?.signedUrl;
   },
 
+  async downloadFile(bucket: string, path: string): Promise<Buffer> {
+    const { data, error } = await this.client.storage
+      .from(bucket)
+      .download(path);
+    
+    if (error) {
+      throw { status: 500, message: `Failed to download file from Supabase: ${error.message}` };
+    }
+    const arrayBuffer = await data.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  },
+
   async deleteFile(bucket: string, path: string) {
     const { error } = await this.client.storage
       .from(bucket)

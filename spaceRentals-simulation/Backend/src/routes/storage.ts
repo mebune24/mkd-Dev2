@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { authenticate } from '../middleware/authMiddleware';
 import { supabaseService } from '../services/SupabaseService';
+import { encryptionService } from '../services/encryptionService';
 import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
@@ -34,7 +35,12 @@ router.post('/upload', upload.single('file'), asyncHandler(async (req: Request |
   // Store files inside a user-specific folder for isolation
   const path = `${req.user.userId}/${filename}`;
 
-  await supabaseService.uploadFile(bucket, path, file.buffer, file.mimetype);
+  let uploadBuffer = file.buffer;
+  if (bucket === 'kyc-documents') {
+    uploadBuffer = encryptionService.encryptBuffer(file.buffer);
+  }
+
+  await supabaseService.uploadFile(bucket, path, uploadBuffer, bucket === 'kyc-documents' ? 'application/octet-stream' : file.mimetype);
 
   return res.status(201).json({
     message: 'File uploaded successfully',
@@ -57,13 +63,43 @@ router.get('/signed-url', asyncHandler(async (req: Request | any, res: Response)
   // Check if the user is requesting their own file or is an admin.
   const pathUserId = path.split('/')[0];
   if (pathUserId !== req.user.userId && req.user.role !== 'admin' && req.user.role !== 'agent') {
-    // Note: Landlords might need to see Tenant KYC docs. 
-    // This requires cross-referencing applications in the DB, so for production 
-    // a more robust Object-Level Auth is needed here based on the specific path.
+    return res.status(403).json({ message: 'Forbidden' });
   }
 
   const signedUrl = await supabaseService.getSignedUrl(bucket, path);
   return res.json({ signedUrl });
+}));
+
+// GET /api/storage/download
+// Used for decrypting encrypted files on the fly (e.g. KYC docs)
+router.get('/download', asyncHandler(async (req: Request | any, res: Response) => {
+  const bucket = req.query.bucket as string;
+  const path = req.query.path as string;
+
+  if (!bucket || !path) {
+    throw { status: 400, message: 'Bucket and path query parameters are required' };
+  }
+
+  const pathUserId = path.split('/')[0];
+  if (pathUserId !== req.user.userId && req.user.role !== 'admin' && req.user.role !== 'agent') {
+    return res.status(403).json({ message: 'Forbidden' });
+  }
+
+  const encryptedBuffer = await supabaseService.downloadFile(bucket, path);
+  let finalBuffer = encryptedBuffer;
+
+  if (bucket === 'kyc-documents') {
+    try {
+      finalBuffer = encryptionService.decryptBuffer(encryptedBuffer);
+    } catch (err) {
+      console.error('[Storage] Decryption failed:', err);
+      throw { status: 500, message: 'Failed to decrypt file' };
+    }
+  }
+
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.setHeader('Content-Disposition', `attachment; filename="${path.split('/').pop()}"`);
+  return res.send(finalBuffer);
 }));
 
 export default router;

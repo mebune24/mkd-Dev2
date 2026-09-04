@@ -1,142 +1,80 @@
-# Space Rentals — Property Management & Rental Platform
+# SpaceRentals Application Status & Overview
 
-Space Rentals is a modern peer-to-peer marketplace designed for Cameroon, bridging the gap between tenants, landlords, and field agents using **Mobile Money (MTN/Orange)**, **Fapshi**, and a strict state-machine-driven workflow.
-
----
-
-## Codebase Architecture
-
-The project is split into two primary environments: a **Flutter Mobile Frontend** and a **Node.js/Express/Prisma Backend**.
+Welcome to the SpaceRentals project repository. This document outlines the current state of the application, including fully functional features, missing components, areas for reinforcement, and an analysis of current security risks.
 
 ---
 
-### 1. Backend Architecture (Node.js + Express + Prisma)
+## 🟢 1. Fully Functional Features
 
-The backend is built around a production-grade **MVC** architecture. It uses **PostgreSQL** with **PostGIS** for spatial queries, **Fapshi** for Mobile Money (Momo) payments, and **Redis** for intelligent multi-layer caching.
+The core architecture of SpaceRentals is built on a robust Node.js/Express backend (using Prisma ORM & PostgreSQL) and a Flutter Riverpod frontend. The following systems are completely wired and functional:
 
-#### Key System Design Patterns:
-- **Finite State Machine (FSM):** Strict state transitions for Leases and Payments (`PENDING → SUCCESSFUL`), preventing double-processing.
-- **Distributed Ledger:** Agent commissions are stored in an immutable ledger (`AgentTransaction` table) using double-entry accounting and Prisma `$transaction`.
-- **Multi-Layer Redis Caching:** A Cache-Aside pattern for property search feeds and a `SCAN`-safe key invalidation strategy. See caching strategy below.
-- **Idempotency Webhooks:** Fapshi webhook payloads are protected against duplicate processing via unique `gatewayTxId` tracking and Redis payment locks (`SET NX EX`).
-- **Global Error Handling & Validation:** All incoming payloads are validated via `zod` schemas. Prisma errors (e.g. `P2025` Record Not Found) are automatically mapped to HTTP 404/400 codes.
-- **Object-Level Access Control (OLAC):** Custom Express middlewares (`verifyPropertyOwnership`) ensure users can only modify their own assets.
+### **Authentication & Authorization**
+- **JWT-based Auth**: Secure login and registration with BCrypt password hashing.
+- **Role-Based Access Control (RBAC)**: Distinct roles (`admin`, `landlord`, `tenant`, `agent`) with strict middleware enforcement.
+- **Object-Level Access Control (OLAC)**: Middleware ensures users can only modify their own properties, applications, and leases.
+- **Password Reset Flow**: Secure token generation, expiration tracking, and reset endpoints.
 
-#### Backend Directory Structure:
-```text
-Backend/
-├── prisma/
-│   └── schema.prisma              # PostgreSQL Schema with PostGIS extensions
-├── src/
-│   ├── config/
-│   │   └── redis.ts               # Redis client + clearCacheByPattern() helper
-│   ├── controllers/               # Thin HTTP handlers (Auth, Properties, Payments)
-│   ├── services/                  # Core Business Logic & State Machines
-│   ├── repositories/              # Database Access Layer (Prisma queries)
-│   ├── routes/                    # Express Route Definitions
-│   ├── middleware/                # Auth, Zod Validation, OLAC, Global Errors
-│   ├── utils/                     # Zod Schemas
-│   ├── lib/
-│   │   └── prisma.ts              # Prisma Client with cache-invalidation Extension
-│   ├── workers.ts                 # node-cron background workers (auto-unpublish)
-│   └── index.ts                   # Express App Entrypoint
-├── docker-compose.yml             # PostgreSQL + PostGIS Infrastructure
-└── .env                           # Environment Variables
-```
+### **Property & Lease Management**
+- **Property Lifecycle**: Landlords can create, update, and manage properties.
+- **Application Flow**: Tenants can apply for properties, and landlords can approve/reject them.
+- **Digital Leases**: End-to-end lease generation and electronic signing (SHA-256 hashed timestamps) compliant with local regulations.
 
-#### Redis Caching Strategy
+### **Payments & Financials**
+- **Fapshi Integration**: Real payment gateway integration for MTN and Orange Money.
+- **Webhook Handling**: Automated transaction status updates via Fapshi webhooks.
+- **Rentals Engine**: Tracks active rentals, deposits, and monthly rent schedules.
 
-| Layer / Resource           | Cache Type           | TTL           | Critical Note |
-|---------------------------|----------------------|---------------|---------------|
-| Property Search Feed      | Cache-Aside (Redis)  | 10 minutes    | Key includes city, price, type filters. Auto-invalidated on any Property mutation via Prisma extension. |
-| Geographic Metadata       | Redis String         | 24–48 hours   | Cities, neighborhoods, regions. Manually invalidated on Admin update. |
-| System Parameters         | Redis String         | 24–48 hours   | Subscription cost (5,000 FCFA), application fee (3,000 FCFA). |
-| User Sessions / JWTs      | Redis String         | JWT expiry    | Destroyed immediately on password change or Admin ban. |
-| Agent Ledger Balances     | **Do Not Cache**     | Live query    | Always hits PostgreSQL — prevents commission fraud. |
-| Lease States & Signatures | **Do Not Cache**     | Live query    | PARTIALLY_SIGNED / SIGNED state must always be live. |
-| Active Booking Overlaps   | **Do Not Cache**     | Live query    | Checked inside Prisma interactive transactions at checkout. |
-| Mobile Money Webhook Lock | Redis NX Lock        | 30 seconds    | `SET payment_lock:tx_ref PROCESSING EX 30 NX` — prevents duplicate webhook processing. |
+### **Admin & Agent Portals**
+- **Admin Dashboard**: Real-time metrics, user management, and platform fee tracking.
+- **Agent System**: Agent onboarding, property verification, and commission tracking.
 
-The Prisma Client Extension in `src/lib/prisma.ts` hooks into `create`, `update`, `delete`, `updateMany`, `deleteMany`, and `upsert` on the `Property` model and automatically calls `clearCacheByPattern('search:properties:*')`, so **no controller or service needs to manually invalidate cache**.
+### **Infrastructure**
+- **Rate Limiting**: Strict per-route limiters (e.g., Auth: 20/15m, Payments: 30/15m, Admin: 60/15m) using `express-rate-limit`.
+- **Background Workers**: Automated Cron jobs for expiring password tokens and auto-unpublishing stale properties.
+- **Caching**: Redis middleware implementation for heavy read endpoints.
 
 ---
 
-### 2. Frontend Architecture (Flutter)
+## 🟡 2. Lacking / Missing Features
 
-The frontend is a cross-platform mobile application built with Flutter following **Feature-First Clean Architecture** with **Riverpod** for state management.
+While the core loop is functional, several secondary features are currently mocked or incomplete:
 
-#### Frontend Directory Structure:
-```text
-space_rentals/lib/
-├── features/
-│   ├── admin/                # Admin dashboards and KYC management
-│   ├── auth/                 # Login, Registration, OTP
-│   ├── landlord/             # Landlord dashboard, Property creation
-│   └── tenant/               # Tenant dashboard, Property search, Applications
-├── core/                     # Core app configuration (Themes, Routing)
-├── config/                   # Environment/API config
-├── data/                     # Local data, dummy initializers
-├── models/                   # Dart Data Classes (Property, User, Transaction)
-├── providers/                # Global Riverpod State Providers
-├── repositories/             # API/Network data fetching layer
-├── services/                 # External service integrations
-├── shared/                   # Shared utilities
-├── widgets/                  # Reusable UI components (PropertyCards, Buttons)
-└── main.dart                 # App Entrypoint
-```
+1. **In-App Messaging/Chat**: The frontend UI exists, but there is no real-time WebSocket backend (e.g., Socket.io) to support live chat between tenants and landlords.
+2. **Push Notifications**: Notifications are currently stored in the database and polled. Firebase Cloud Messaging (FCM) needs to be integrated for real-time mobile push notifications.
+3. **Automated Payouts**: While tenant payments *in* are handled via Fapshi, agent commissions and landlord withdrawals *out* require integration with Fapshi's Payout API.
+4. **Third-Party KYC Verification**: KYC document uploads exist, but they are not yet piped into an automated identity verification API (e.g., SmileID or Dojah).
+5. **Deep Linking**: The app does not yet support universal links (opening specific app screens directly from email links).
 
 ---
 
-## Running the Application
+## 🔵 3. Areas to Reinforce
 
-### Prerequisites
-- Docker & Docker Compose
-- Node.js ≥ 18
-- Redis (local or remote — set `REDIS_URL` in `.env`)
-- Flutter SDK ≥ 3.x
-- A connected Android/iOS device or emulator
+To ensure the application scales gracefully and maintains high performance, the following areas should be reinforced:
 
-### Backend (PostgreSQL + Redis + Node.js)
-```bash
-cd Backend
-
-# 1. Start PostgreSQL (PostGIS) via Docker
-docker-compose up -d
-
-# 2. Install dependencies
-npm install
-
-# 3. Apply DB migrations & generate Prisma client
-npx prisma migrate dev
-npx prisma generate
-
-# 4. Start the dev server
-npm run dev
-```
-
-> **Redis**: Make sure Redis is running locally (`redis-server`) or update `REDIS_URL` in `.env` to point to your hosted Redis instance.
-
-### Frontend (Flutter)
-```bash
-cd space_rentals
-
-# 1. Fetch packages
-flutter pub get
-
-# 2. Run on a connected device
-flutter run
-```
+1. **Comprehensive Testing**: The codebase needs a robust suite of Unit Tests (Jest for backend, Flutter Test for frontend) and E2E Tests (Integration testing for critical payment flows).
+2. **Database Optimization**: As the `Property`, `Rental`, and `Transaction` tables grow, composite indexes must be added to Prisma to speed up complex dashboard queries.
+3. **Advanced Caching**: Expand Redis caching to include dashboard metrics and high-traffic search queries, implementing cache invalidation strategies on data mutation.
+4. **Error Tracking & Observability**: Integrate tools like Sentry for real-time crash reporting and Datadog/NewRelic for backend performance monitoring.
+5. **State Management Refinement**: Ensure all Riverpod providers efficiently cache and invalidate state to prevent unnecessary API calls on the frontend.
 
 ---
 
-## Environment Variables (Backend/.env)
+## 🔴 4. Current Security Risks
 
-| Variable         | Description                                 |
-|-----------------|---------------------------------------------|
-| `PORT`           | Express server port (default: 3000)         |
-| `DATABASE_URL`   | PostgreSQL connection string                |
-| `JWT_SECRET`     | Secret key for signing JWTs                 |
-| `REDIS_URL`      | Redis connection URL (default: `redis://localhost:6379`) |
-| `FAPSHI_API_URL` | Fapshi gateway URL                         |
-| `FAPSHI_API_USER`| Fapshi API username                        |
-| `FAPSHI_API_KEY` | Fapshi API key                             |
+The application implements standard security practices (Helmet, CORS, rate limiting), but the following risks must be addressed before a large-scale public launch:
+
+1. **Webhook Forgery**: 
+   - *Risk*: Malicious actors could send fake success payloads to the `/api/payments/webhook` endpoint.
+   - *Mitigation*: Ensure the webhook endpoint cryptographically verifies Fapshi's HMAC signature using the API secret.
+2. **IP-Based Rate Limiting Bypass**:
+   - *Risk*: `express-rate-limit` relies on IP addresses. Attackers using rotating proxies or VPNs can bypass these limits.
+   - *Mitigation*: Implement User-ID based rate limiting for authenticated routes, especially for payments and admin actions.
+3. **KYC Data Privacy (Data at Rest)**:
+   - *Risk*: Sensitive ID cards and personal documents are uploaded to storage. If the storage bucket is compromised, PII is leaked.
+   - *Mitigation*: Implement client-side encryption or strict KMS-managed server-side encryption for all KYC documents. Ensure bucket ACLs are strictly private.
+4. **Email Spoofing (Password Resets)**:
+   - *Risk*: Without strict DNS records, phishing emails pretending to be SpaceRentals password resets could be sent to users.
+   - *Mitigation*: Ensure the production email domain has strict SPF, DKIM, and DMARC policies enforced.
+5. **Idempotency Keys**:
+   - *Risk*: Network timeouts during payment initiation could lead to double-charging a user if they retry.
+   - *Mitigation*: Implement robust idempotency key checking in the `PaymentController` to safely handle duplicate requests.

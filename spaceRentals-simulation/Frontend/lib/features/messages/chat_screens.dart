@@ -120,7 +120,7 @@ class MessagesScreen extends ConsumerWidget {
               ],
             ),
             onTap: () {
-              context.push('/tenant/chat/${chat['id']}', extra: chat);
+              context.push('/chat/${chat['id']}', extra: chat);
             },
           );
         },
