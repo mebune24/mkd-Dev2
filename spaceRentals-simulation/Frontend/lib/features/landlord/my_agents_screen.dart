@@ -15,8 +15,7 @@ class MyAgentsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final user = ref.watch(authProvider);
-    final allAgreements = ref.watch(agentAgreementsProvider);
-    final myAgreements = allAgreements.where((a) => a.landlordId == (user.session?.userId ?? '')).toList();
+    final allAgreementsAsync = ref.watch(agentAgreementsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
@@ -42,25 +41,32 @@ class MyAgentsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: myAgreements.isEmpty
-          ? _EmptyAgentsState()
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (myAgreements.any((a) => a.status == 'Active')) ...[
-                  const _SectionLabel(label: 'ACTIVE AGREEMENTS'),
-                  ...myAgreements.where((a) => a.status == 'Active').map((a) => _AgreementCard(agreement: a)),
-                ],
-                if (myAgreements.any((a) => a.status == 'Pending' || a.status == 'Accepted')) ...[
-                  const _SectionLabel(label: 'PENDING'),
-                  ...myAgreements.where((a) => a.status == 'Pending' || a.status == 'Accepted').map((a) => _AgreementCard(agreement: a)),
-                ],
-                if (myAgreements.any((a) => a.status == 'Terminated')) ...[
-                  const _SectionLabel(label: 'ENDED'),
-                  ...myAgreements.where((a) => a.status == 'Terminated').map((a) => _AgreementCard(agreement: a)),
-                ],
-              ],
-            ),
+      body: allAgreementsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (allAgreements) {
+          final myAgreements = allAgreements.where((a) => a.landlordId == (user.session?.userId ?? '')).toList();
+          return myAgreements.isEmpty
+              ? _EmptyAgentsState()
+              : ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    if (myAgreements.any((a) => a.status == 'Active')) ...[
+                      const _SectionLabel(label: 'ACTIVE AGREEMENTS'),
+                      ...myAgreements.where((a) => a.status == 'Active').map((a) => _AgreementCard(agreement: a)),
+                    ],
+                    if (myAgreements.any((a) => a.status == 'Pending' || a.status == 'Accepted')) ...[
+                      const _SectionLabel(label: 'PENDING'),
+                      ...myAgreements.where((a) => a.status == 'Pending' || a.status == 'Accepted').map((a) => _AgreementCard(agreement: a)),
+                    ],
+                    if (myAgreements.any((a) => a.status == 'Terminated')) ...[
+                      const _SectionLabel(label: 'ENDED'),
+                      ...myAgreements.where((a) => a.status == 'Terminated').map((a) => _AgreementCard(agreement: a)),
+                    ],
+                  ],
+                );
+        },
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/landlord/agents/marketplace'),
         icon: const Icon(Icons.person_search),
@@ -199,7 +205,7 @@ class _AgreementCard extends ConsumerWidget {
                   const SizedBox(width: 6),
                   const Expanded(child: Text('Waiting for agent to accept your request.', style: TextStyle(color: Colors.grey, fontSize: 12))),
                   TextButton(
-                    onPressed: () => ref.read(agentAgreementsProvider.notifier).terminate(agreement.id),
+                    onPressed: () {}, // To be implemented
                     style: TextButton.styleFrom(foregroundColor: Colors.red),
                     child: const Text('Cancel', style: TextStyle(fontSize: 12)),
                   ),
@@ -219,7 +225,7 @@ class _AgreementCard extends ConsumerWidget {
                     label: const Text('Message', style: TextStyle(fontSize: 12)),
                   ),
                   TextButton.icon(
-                    onPressed: () => ref.read(agentAgreementsProvider.notifier).terminate(agreement.id),
+                    onPressed: () {}, // To be implemented
                     icon: const Icon(Icons.cancel_outlined, size: 16, color: Colors.red),
                     label: const Text('Terminate', style: TextStyle(fontSize: 12, color: Colors.red)),
                   ),
