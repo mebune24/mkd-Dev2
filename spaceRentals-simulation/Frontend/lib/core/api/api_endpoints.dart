@@ -119,6 +119,7 @@ class ApiEndpoints {
   static String get adminUsers => '$_base/admin/users';
   static String adminUser(String id) => '$_base/admin/users/$id';
   static String get adminTransactions => '$_base/admin/transactions';
+  static String get adminReportsSummary => '$_base/admin/reports/summary';
   static String get adminProperties => '$_base/admin/properties';
   static String get adminAgents => '$_base/admin/agents';
   static String get agents => '$_base/agents';
@@ -129,9 +130,10 @@ class ApiEndpoints {
   static String get agentWithdrawals => '$_base/agents/wallet/withdrawals';
   static String get agentCommissions => '$_base/agents/commissions';
   static String get agentWithdraw => '$_base/agents/wallet/withdraw';
-    static String get tenantWallet => '$_base/tenant-wallet';
-    static String get tenantWalletApplyToRent => '$_base/tenant-wallet/apply-to-rent';
-    static String get tenantWalletWithdraw => '$_base/tenant-wallet/withdraw';
+  static String get tenantWallet => '$_base/tenant-wallet';
+  static String get tenantWalletApplyToRent =>
+      '$_base/tenant-wallet/apply-to-rent';
+  static String get tenantWalletWithdraw => '$_base/tenant-wallet/withdraw';
   static String get rnlpMe => '$_base/rnlp/me';
   static String rnlpInstalmentPayment(String id) =>
       '$_base/rnlp/instalments/$id/pay';

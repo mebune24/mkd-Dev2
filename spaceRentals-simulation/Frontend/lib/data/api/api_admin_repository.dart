@@ -7,6 +7,16 @@ class ApiAdminRepository {
 
   ApiAdminRepository(this._client);
 
+  Future<AdminReportsSummary> getReportsSummary() async {
+    final response = await _client.get<Map<String, dynamic>>(
+      ApiEndpoints.adminReportsSummary,
+    );
+    if (!response.isSuccess || response.data == null) {
+      throw Exception(response.error?.message ?? 'Failed to load reports');
+    }
+    return AdminReportsSummary.fromJson(response.data!);
+  }
+
   Future<AdminTransactionList> getTransactions({
     int page = 1,
     int limit = 50,

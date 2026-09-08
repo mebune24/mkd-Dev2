@@ -70,6 +70,16 @@ export class AuditLogService {
       });
     } catch { return []; }
   }
+
+  async getAll(limit = 100) {
+    try {
+      return await (prisma as any).auditLog.findMany({
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { id: true, name: true, role: true } } },
+      });
+    } catch { return []; }
+  }
 }
 
 export const auditLogService = new AuditLogService();

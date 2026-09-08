@@ -12,10 +12,15 @@ class ApiAuditRepository {
   }
 
   Future<List<AuditEntry>> getLogs() async {
-    final response = await _client.get('/api/audit-logs');
+    final response = await _client.get(
+      '/api/audit-logs',
+      queryParameters: {'limit': '100'},
+    );
     return _unwrap(response, (data) {
-      final list = (data is Map ? data['data'] : data) as List<dynamic>? ?? [];
-      return list.map((e) => AuditEntry.fromJson(e as Map<String, dynamic>)).toList();
+      final list = data is List ? data : const <dynamic>[];
+      return list
+          .map((e) => AuditEntry.fromJson(e as Map<String, dynamic>))
+          .toList();
     });
   }
 }

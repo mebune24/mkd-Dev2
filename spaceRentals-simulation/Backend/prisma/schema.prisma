@@ -51,6 +51,25 @@ model User {
   tenantWalletEntries TenantWalletEntry[]
   sentMessages        Message[]            @relation("SentMessages")
   receivedMessages    Message[]            @relation("ReceivedMessages")
+  auditLogs           AuditLog[]
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action        String
+  resourceId    String
+  resourceType  String
+  metadata      String?
+  ipAddress     String?
+  userAgent     String?
+  signatureHash String?
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([resourceType, resourceId])
 }
 
 model AgentVerification {

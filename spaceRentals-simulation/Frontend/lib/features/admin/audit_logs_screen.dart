@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/audit_log_provider.dart';
+import '../../providers/domain_providers.dart';
 
 class AuditLogsScreen extends ConsumerWidget {
   const AuditLogsScreen({super.key});
@@ -24,36 +24,43 @@ class AuditLogsScreen extends ConsumerWidget {
         ),
         foregroundColor: Colors.white,
         actions: [
-          Padding(
+          logsAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (logs) => Padding(
             padding: const EdgeInsets.only(right: 12),
             child: Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(12)),
-                child: Text('${logsAsync.length} entries', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                child: Text('${logs.length} entries', style: const TextStyle(color: Colors.white, fontSize: 12)),
               ),
             ),
-          ),
+          )),
         ],
       ),
-      body: logsAsync.isEmpty
+      body: logsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(child: Text('Unable to load audit logs: $error')),
+        data: (logs) => logs.isEmpty
           ? const Center(child: Text('No audit entries yet.'))
           : ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: logsAsync.length,
+              itemCount: logs.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, i) {
-                final log = logsAsync[i];
-                final isLease = log.action == 'LEASE_SIGNED';
-                final isPayment = log.action == 'PAYMENT_PROCESSED';
-                final isApproval = log.action.startsWith('APPLICATION_');
+                final log = logs[i];
+                final action = log.action.toLowerCase();
+                final isLease = action.contains('lease');
+                final isPayment = action.contains('payment');
+                final isApproval = action.contains('application');
 
                 Color color = Colors.blueGrey;
                 IconData icon = Icons.history;
                 if (isLease) { color = Colors.indigo; icon = Icons.description; }
                 if (isPayment) { color = Colors.green; icon = Icons.payments; }
                 if (isApproval) { color = Colors.teal; icon = Icons.how_to_reg; }
-                if (log.action == 'USER_LOGIN') { color = Colors.blue; icon = Icons.login; }
+                if (action.contains('login')) { color = Colors.blue; icon = Icons.login; }
 
                 return Container(
                   decoration: BoxDecoration(
@@ -89,9 +96,9 @@ class AuditLogsScreen extends ConsumerWidget {
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              Text(log.targetDescription, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              Text('${log.resourceType}: ${log.resourceId}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                               const SizedBox(height: 4),
-                              Text('By: ${log.actorName}  ·  ID: ${log.actorId}',
+                              Text('By: ${log.actorName ?? log.userId}  ·  ID: ${log.userId}',
                                   style: const TextStyle(fontSize: 11, color: Colors.grey)),
                               const SizedBox(height: 6),
                               Row(
@@ -124,6 +131,7 @@ class AuditLogsScreen extends ConsumerWidget {
                 );
               },
             ),
+          ),
     );
   }
 }

@@ -95,6 +95,10 @@ final auditLogProvider = FutureProvider<List<AuditEntry>>((ref) async {
   return repo.getLogs();
 });
 
+final adminReportsProvider = FutureProvider<AdminReportsSummary>((ref) async {
+  return ref.watch(adminRepositoryProvider).getReportsSummary();
+});
+
 // --- App Notifications ---
 class AppNotification {
   final String id;

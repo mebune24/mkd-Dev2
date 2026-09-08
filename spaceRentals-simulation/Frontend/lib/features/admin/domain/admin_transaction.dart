@@ -57,6 +57,65 @@ class AdminTransaction {
   }
 }
 
+class AdminReportsSummary {
+  final int totalUsers;
+  final Map<String, int> usersByRole;
+  final int totalProperties;
+  final int totalApplications;
+  final int totalLeases;
+  final int totalRentals;
+  final int totalRevenueXaf;
+  final int activeSubscriptions;
+  final int pendingKyc;
+
+  const AdminReportsSummary({
+    required this.totalUsers,
+    required this.usersByRole,
+    required this.totalProperties,
+    required this.totalApplications,
+    required this.totalLeases,
+    required this.totalRentals,
+    required this.totalRevenueXaf,
+    required this.activeSubscriptions,
+    required this.pendingKyc,
+  });
+
+  factory AdminReportsSummary.fromJson(Map<String, dynamic> json) {
+    final users = json['users'] is Map
+        ? Map<String, dynamic>.from(json['users'] as Map)
+        : const <String, dynamic>{};
+    final roles = <String, int>{};
+    final rawRoles = users['byRole'];
+    if (rawRoles is List) {
+      for (final item in rawRoles) {
+        if (item is! Map) continue;
+        final role = item['role']?.toString() ?? '';
+        final count = item['_count'];
+        if (role.isNotEmpty && count is Map) {
+          roles[role] = (count['id'] as num?)?.toInt() ?? 0;
+        }
+      }
+    }
+
+    int nestedInt(String key, String field) {
+      final value = json[key];
+      return value is Map ? (value[field] as num?)?.toInt() ?? 0 : 0;
+    }
+
+    return AdminReportsSummary(
+      totalUsers: (users['total'] as num?)?.toInt() ?? 0,
+      usersByRole: roles,
+      totalProperties: nestedInt('properties', 'total'),
+      totalApplications: nestedInt('applications', 'total'),
+      totalLeases: nestedInt('leases', 'total'),
+      totalRentals: nestedInt('rentals', 'total'),
+      totalRevenueXaf: nestedInt('revenue', 'totalXAF'),
+      activeSubscriptions: nestedInt('subscriptions', 'active'),
+      pendingKyc: nestedInt('kyc', 'pending'),
+    );
+  }
+}
+
 class AdminTransactionList {
   final List<AdminTransaction> transactions;
   final int total;

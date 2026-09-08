@@ -5,6 +5,12 @@ import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
+// GET /api/audit-logs — admin audit feed
+router.get('/', authenticate, requireAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const limit = Math.min(Number(req.query.limit) || 100, 250);
+  return res.json(await auditLogService.getAll(limit));
+}));
+
 // POST /api/audit-logs — record an event (any authenticated user)
 router.post('/', authenticate, asyncHandler(async (req: AuthRequest, res: Response) => {
   const { action, resourceId, resourceType, metadata, signatureHash } = req.body;
