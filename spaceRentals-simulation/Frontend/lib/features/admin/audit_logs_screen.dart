@@ -8,130 +8,204 @@ class AuditLogsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final logsAsync = ref.watch(auditLogProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Audit Logs'),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0,
         actions: [
           logsAsync.when(
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
             data: (logs) => Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(12)),
-                child: Text('${logs.length} entries', style: const TextStyle(color: Colors.white, fontSize: 12)),
+              padding: const EdgeInsets.only(right: 12),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${logs.length} entries',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
               ),
             ),
-          )),
+          ),
         ],
       ),
       body: logsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Unable to load audit logs: $error')),
+        error: (error, _) =>
+            Center(child: Text('Unable to load audit logs: $error')),
         data: (logs) => logs.isEmpty
-          ? const Center(child: Text('No audit entries yet.'))
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: logs.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, i) {
-                final log = logs[i];
-                final action = log.action.toLowerCase();
-                final isLease = action.contains('lease');
-                final isPayment = action.contains('payment');
-                final isApproval = action.contains('application');
+            ? const Center(child: Text('No audit entries yet.'))
+            : ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: logs.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (context, i) {
+                  final log = logs[i];
+                  final action = log.action.toLowerCase();
+                  final isLease = action.contains('lease');
+                  final isPayment = action.contains('payment');
+                  final isApproval = action.contains('application');
 
-                Color color = Colors.blueGrey;
-                IconData icon = Icons.history;
-                if (isLease) { color = Colors.indigo; icon = Icons.description; }
-                if (isPayment) { color = Colors.green; icon = Icons.payments; }
-                if (isApproval) { color = Colors.teal; icon = Icons.how_to_reg; }
-                if (action.contains('login')) { color = Colors.blue; icon = Icons.login; }
+                  Color color = Colors.blueGrey;
+                  IconData icon = Icons.history;
+                  if (isLease) {
+                    color = Colors.indigo;
+                    icon = Icons.description;
+                  }
+                  if (isPayment) {
+                    color = Colors.green;
+                    icon = Icons.payments;
+                  }
+                  if (isApproval) {
+                    color = Colors.teal;
+                    icon = Icons.how_to_reg;
+                  }
+                  if (action.contains('login')) {
+                    color = Colors.blue;
+                    icon = Icons.login;
+                  }
 
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: color.withValues(alpha: 0.2)),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6)],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: color.withValues(alpha: 0.1),
-                          child: Icon(icon, color: color, size: 20),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: color.withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(log.action, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text('${log.resourceType}: ${log.resourceId}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 4),
-                              Text('By: ${log.actorName ?? log.userId}  ·  ID: ${log.userId}',
-                                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  const Icon(Icons.access_time, size: 12, color: Colors.grey),
-                                  const SizedBox(width: 4),
-                                  Text(log.formattedTimestamp, style: const TextStyle(fontSize: 11, color: Colors.grey, fontFamily: 'monospace')),
-                                ],
-                              ),
-                              if (isLease && log.metadata['signatureHash'] != null) ...[
-                                const SizedBox(height: 6),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.grey.shade200)),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Hash: ${log.metadata['signatureHash']}', style: const TextStyle(fontSize: 10, fontFamily: 'monospace', color: Colors.indigo)),
-                                      Text('Legal: ${log.metadata['legalFramework']}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: color.withValues(alpha: 0.2)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 6,
                         ),
                       ],
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: color.withValues(alpha: 0.1),
+                            child: Icon(icon, color: color, size: 20),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: color.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        log.action,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: color,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '${log.resourceType}: ${log.resourceId}',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'By: ${log.actorName ?? log.userId}  ·  ID: ${log.userId}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.access_time,
+                                      size: 12,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      log.formattedTimestamp,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (isLease &&
+                                    log.metadata['signatureHash'] != null) ...[
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: Colors.grey.shade200,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Hash: ${log.metadata['signatureHash']}',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontFamily: 'monospace',
+                                            color: Colors.indigo,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Legal: ${log.metadata['legalFramework']}',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }

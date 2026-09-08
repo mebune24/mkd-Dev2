@@ -32,6 +32,32 @@ export const getReportsSummary = async (_req: AuthRequest, res: Response) => {
       prisma.agentVerification.count({ where: { status: 'pending' } }),
     ]);
 
+    const [successfulTransactions, activeProperties, signedLeases, auditLogs, unresolvedDisputes] = await Promise.all([
+      prisma.transaction.findMany({
+        where: { status: 'SUCCESSFUL' },
+        select: { amount: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.property.findMany({
+        where: { status: { in: ['available', 'reserved', 'rented'] } },
+        select: { category: true },
+      }),
+      prisma.lease.count({ where: { status: { in: ['signed', 'active'] } } }),
+      (prisma as any).auditLog.count(),
+      prisma.dispute.count({ where: { status: { not: 'resolved' } } }),
+    ]);
+
+    const monthlyRevenue = new Map<string, number>();
+    for (const transaction of successfulTransactions) {
+      const month = transaction.createdAt.toISOString().slice(0, 7);
+      monthlyRevenue.set(month, (monthlyRevenue.get(month) ?? 0) + transaction.amount);
+    }
+
+    const listingsByCategory = new Map<string, number>();
+    for (const property of activeProperties) {
+      listingsByCategory.set(property.category, (listingsByCategory.get(property.category) ?? 0) + 1);
+    }
+
     const usersByRole = await prisma.user.groupBy({
       by: ['role'],
       _count: { id: true },
@@ -40,12 +66,22 @@ export const getReportsSummary = async (_req: AuthRequest, res: Response) => {
     return res.json({
       users: { total: totalUsers, byRole: usersByRole },
       properties: { total: totalProperties },
+      activeListings: { total: activeProperties.length },
       applications: { total: totalApplications },
       leases: { total: totalLeases },
       rentals: { total: totalRentals },
       revenue: { totalXAF: totalRevenue._sum.amount ?? 0 },
       subscriptions: { active: activeSubscriptions },
       kyc: { pending: pendingKyc },
+      monthlyRevenue: Array.from(monthlyRevenue, ([month, amount]) => ({ month, amount })),
+      listingsByCategory: Array.from(listingsByCategory, ([category, count]) => ({ category, count })),
+      compliance: {
+        signedLeases,
+        totalLeases,
+        successfulPayments: successfulTransactions.length,
+        auditLogs,
+        unresolvedDisputes,
+      },
     });
   } catch (err) { return handle(res, err); }
 };

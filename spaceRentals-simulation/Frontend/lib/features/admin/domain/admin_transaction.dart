@@ -61,23 +61,31 @@ class AdminReportsSummary {
   final int totalUsers;
   final Map<String, int> usersByRole;
   final int totalProperties;
+  final int activeListings;
   final int totalApplications;
   final int totalLeases;
   final int totalRentals;
   final int totalRevenueXaf;
   final int activeSubscriptions;
   final int pendingKyc;
+  final List<RevenuePoint> monthlyRevenue;
+  final List<CategoryCount> listingsByCategory;
+  final ReportCompliance compliance;
 
   const AdminReportsSummary({
     required this.totalUsers,
     required this.usersByRole,
     required this.totalProperties,
+    required this.activeListings,
     required this.totalApplications,
     required this.totalLeases,
     required this.totalRentals,
     required this.totalRevenueXaf,
     required this.activeSubscriptions,
     required this.pendingKyc,
+    required this.monthlyRevenue,
+    required this.listingsByCategory,
+    required this.compliance,
   });
 
   factory AdminReportsSummary.fromJson(Map<String, dynamic> json) {
@@ -102,18 +110,93 @@ class AdminReportsSummary {
       return value is Map ? (value[field] as num?)?.toInt() ?? 0 : 0;
     }
 
+    final monthlyRevenue =
+        (json['monthlyRevenue'] is List
+                ? json['monthlyRevenue'] as List
+                : const <dynamic>[])
+            .whereType<Map>()
+            .map(
+              (item) => RevenuePoint.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList();
+    final listingsByCategory =
+        (json['listingsByCategory'] is List
+                ? json['listingsByCategory'] as List
+                : const <dynamic>[])
+            .whereType<Map>()
+            .map(
+              (item) => CategoryCount.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList();
+    final rawCompliance = json['compliance'] is Map
+        ? Map<String, dynamic>.from(json['compliance'] as Map)
+        : const <String, dynamic>{};
+
     return AdminReportsSummary(
       totalUsers: (users['total'] as num?)?.toInt() ?? 0,
       usersByRole: roles,
       totalProperties: nestedInt('properties', 'total'),
+      activeListings: nestedInt('activeListings', 'total'),
       totalApplications: nestedInt('applications', 'total'),
       totalLeases: nestedInt('leases', 'total'),
       totalRentals: nestedInt('rentals', 'total'),
       totalRevenueXaf: nestedInt('revenue', 'totalXAF'),
       activeSubscriptions: nestedInt('subscriptions', 'active'),
       pendingKyc: nestedInt('kyc', 'pending'),
+      monthlyRevenue: monthlyRevenue,
+      listingsByCategory: listingsByCategory,
+      compliance: ReportCompliance.fromJson(rawCompliance),
     );
   }
+}
+
+class RevenuePoint {
+  final String month;
+  final int amount;
+
+  const RevenuePoint({required this.month, required this.amount});
+
+  factory RevenuePoint.fromJson(Map<String, dynamic> json) => RevenuePoint(
+    month: json['month']?.toString() ?? '',
+    amount: (json['amount'] as num?)?.toInt() ?? 0,
+  );
+}
+
+class CategoryCount {
+  final String category;
+  final int count;
+
+  const CategoryCount({required this.category, required this.count});
+
+  factory CategoryCount.fromJson(Map<String, dynamic> json) => CategoryCount(
+    category: json['category']?.toString() ?? 'Unknown',
+    count: (json['count'] as num?)?.toInt() ?? 0,
+  );
+}
+
+class ReportCompliance {
+  final int signedLeases;
+  final int totalLeases;
+  final int successfulPayments;
+  final int auditLogs;
+  final int unresolvedDisputes;
+
+  const ReportCompliance({
+    required this.signedLeases,
+    required this.totalLeases,
+    required this.successfulPayments,
+    required this.auditLogs,
+    required this.unresolvedDisputes,
+  });
+
+  factory ReportCompliance.fromJson(Map<String, dynamic> json) =>
+      ReportCompliance(
+        signedLeases: (json['signedLeases'] as num?)?.toInt() ?? 0,
+        totalLeases: (json['totalLeases'] as num?)?.toInt() ?? 0,
+        successfulPayments: (json['successfulPayments'] as num?)?.toInt() ?? 0,
+        auditLogs: (json['auditLogs'] as num?)?.toInt() ?? 0,
+        unresolvedDisputes: (json['unresolvedDisputes'] as num?)?.toInt() ?? 0,
+      );
 }
 
 class AdminTransactionList {
