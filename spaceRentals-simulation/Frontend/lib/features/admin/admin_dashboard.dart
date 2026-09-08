@@ -458,6 +458,14 @@ class _AdminOverviewScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 10),
                           _ManagementTile(
+                            icon: Icons.build_circle_outlined,
+                            color: Colors.orange,
+                            title: 'Maintenance Operations',
+                            subtitle: 'Acknowledge, resolve, and close requests',
+                            onTap: () => context.push('/admin/maintenance'),
+                          ),
+                          const SizedBox(height: 10),
+                          _ManagementTile(
                             icon: Icons.delete_sweep_rounded,
                             color: Colors.red,
                             title: 'Remove Test Accounts',

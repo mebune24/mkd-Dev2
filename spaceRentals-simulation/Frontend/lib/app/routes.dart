@@ -38,6 +38,7 @@ import '../features/admin/transactions_screen.dart';
 import '../features/admin/reports_screen.dart';
 import '../features/admin/audit_logs_screen.dart';
 import '../features/admin/admin_management_screen.dart';
+import '../features/admin/maintenance_operations_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/agent/agent_onboarding_screen.dart';
 import '../features/agent/agent_dashboard.dart';
@@ -484,6 +485,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'management',
             pageBuilder: (context, state) =>
                 _slideRight(context, state, const AdminManagementScreen()),
+          ),
+          GoRoute(
+            path: 'maintenance',
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AdminMaintenanceOperationsScreen()),
           ),
         ],
       ),
