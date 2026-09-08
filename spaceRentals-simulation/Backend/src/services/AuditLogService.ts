@@ -14,6 +14,8 @@ export type AuditAction =
   | 'payment.failed'
   | 'user.registered'
   | 'user.login'
+  | 'user.suspended'
+  | 'user.activated'
   | 'kyc.submitted'
   | 'kyc.approved'
   | 'kyc.rejected';

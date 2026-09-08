@@ -22,13 +22,13 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
 
 // PATCH /api/users/:id/suspend
 export const suspendUser = async (req: AuthRequest, res: Response) => {
-  try { return res.json(await userService.suspend(String(req.params.id), req.user!.role)); }
+  try { return res.json(await userService.suspend(String(req.params.id), req.user!.userId, req.user!.role)); }
   catch (err) { return handle(res, err); }
 };
 
 // PATCH /api/users/:id/activate
 export const activateUser = async (req: AuthRequest, res: Response) => {
-  try { return res.json(await userService.activate(String(req.params.id), req.user!.role)); }
+  try { return res.json(await userService.activate(String(req.params.id), req.user!.userId, req.user!.role)); }
   catch (err) { return handle(res, err); }
 };
 

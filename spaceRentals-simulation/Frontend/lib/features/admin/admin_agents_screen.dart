@@ -5,6 +5,7 @@ import '../../core/utils/currency_formatter.dart';
 import 'package:space_rentals/providers/domain_providers.dart';
 import 'package:space_rentals/features/agents/domain/agent_models.dart';
 import '../../core/utils/ui_helpers.dart';
+import 'admin_user_profile_screen.dart';
 
 class AdminAgentsScreen extends ConsumerWidget {
   const AdminAgentsScreen({super.key});
@@ -190,6 +191,16 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                       ),
                     ],
                   ],
+                ),
+                IconButton(
+                  tooltip: 'View profile',
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          AdminUserProfileScreen(userId: agent.userId),
+                    ),
+                  ),
+                  icon: const Icon(Icons.person_search, color: Colors.indigo),
                 ),
               ],
             ),

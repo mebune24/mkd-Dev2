@@ -1,4 +1,5 @@
 import { userRepository } from '../repositories/UserRepository';
+import { auditLogService } from './AuditLogService';
 
 export class UserService {
   async getAll(adminId: string, role: string) {
@@ -13,21 +14,52 @@ export class UserService {
     if (targetId !== requestingId && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
     const user = await userRepository.findById(targetId);
     if (!user) throw { status: 404, message: 'User not found.' };
-    return { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status };
+    return {
+      id: user.id,
+      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      bio: user.bio,
+      avatarUrl: user.avatarUrl,
+      role: user.role,
+      status: user.status,
+      twoFactorEnabled: user.twoFactorEnabled,
+      pushNotificationsEnabled: user.pushNotificationsEnabled,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 
-  async suspend(targetId: string, adminRole: string) {
+  async suspend(targetId: string, adminId: string, adminRole: string) {
     if (adminRole !== 'admin') throw { status: 403, message: 'Admin access required.' };
     const user = await userRepository.findById(targetId);
     if (!user) throw { status: 404, message: 'User not found.' };
-    return userRepository.update(targetId, { status: 'suspended' });
+    const updated = await userRepository.update(targetId, { status: 'suspended' });
+    await auditLogService.log({
+      userId: adminId,
+      action: 'user.suspended',
+      resourceId: targetId,
+      resourceType: 'user',
+      metadata: { changedByRole: adminRole },
+    });
+    return updated;
   }
 
-  async activate(targetId: string, adminRole: string) {
+  async activate(targetId: string, adminId: string, adminRole: string) {
     if (adminRole !== 'admin') throw { status: 403, message: 'Admin access required.' };
     const user = await userRepository.findById(targetId);
     if (!user) throw { status: 404, message: 'User not found.' };
-    return userRepository.update(targetId, { status: 'active' });
+    const updated = await userRepository.update(targetId, { status: 'active' });
+    await auditLogService.log({
+      userId: adminId,
+      action: 'user.activated',
+      resourceId: targetId,
+      resourceType: 'user',
+      metadata: { changedByRole: adminRole },
+    });
+    return updated;
   }
 
   async getProfile(userId: string) {

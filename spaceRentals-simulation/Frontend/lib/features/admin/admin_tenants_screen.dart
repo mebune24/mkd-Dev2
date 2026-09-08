@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../shared/models/enums.dart';
 import '../../models/user_model.dart';
-import '../../core/utils/ui_helpers.dart';
 import '../../providers/admin_users_provider.dart';
+import 'admin_user_profile_screen.dart';
 
 class AdminTenantsScreen extends ConsumerWidget {
   const AdminTenantsScreen({super.key});
@@ -13,7 +13,7 @@ class AdminTenantsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final usersAsync = ref.watch(adminUsersProvider);
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9FB),
       appBar: AppBar(
@@ -23,7 +23,14 @@ class AdminTenantsScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Tenants', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 24)),
+        title: const Text(
+          'Tenants',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
+        ),
         centerTitle: false,
       ),
       body: usersAsync.when(
@@ -31,7 +38,7 @@ class AdminTenantsScreen extends ConsumerWidget {
         error: (err, _) => Center(child: Text('Error: $err')),
         data: (users) {
           final tenants = users.where((u) => u.role == Role.tenant).toList();
-          
+
           if (tenants.isEmpty) {
             return const Center(child: Text('No tenants registered yet.'));
           }
@@ -40,7 +47,10 @@ class AdminTenantsScreen extends ConsumerWidget {
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       Expanded(
@@ -48,15 +58,29 @@ class AdminTenantsScreen extends ConsumerWidget {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10)],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 10,
+                              ),
+                            ],
                           ),
                           child: TextField(
                             decoration: InputDecoration(
                               hintText: 'Search tenant',
-                              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                              prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+                              hintStyle: TextStyle(
+                                color: Colors.grey.shade400,
+                                fontSize: 14,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: Colors.grey.shade400,
+                                size: 20,
+                              ),
                               border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
                             ),
                           ),
                         ),
@@ -67,22 +91,38 @@ class AdminTenantsScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10)],
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 10,
+                            ),
+                          ],
                         ),
-                        child: Icon(Icons.tune, color: theme.colorScheme.primary, size: 20),
+                        child: Icon(
+                          Icons.tune,
+                          color: theme.colorScheme.primary,
+                          size: 20,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-              
+
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(20, 24, 20, 12),
-                  child: Text('All Tenants', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  child: Text(
+                    'All Tenants',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                 ),
               ),
-              
+
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 sliver: SliverList(
@@ -92,7 +132,7 @@ class AdminTenantsScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              
+
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
             ],
           );
@@ -114,30 +154,52 @@ class _TenantCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 28,
             backgroundColor: Colors.blue.shade100,
-            child: Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : 'T', style: TextStyle(color: Colors.blue.shade700)),
+            child: Text(
+              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'T',
+              style: TextStyle(color: Colors.blue.shade700),
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(
+                  user.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(user.email, style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
+                Text(
+                  user.email,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
                     Icon(
-                      user.status == 'active' ? Icons.check_circle : Icons.warning,
-                      color: user.status == 'active' ? Colors.green : Colors.orange,
-                      size: 14
+                      user.status == 'active'
+                          ? Icons.check_circle
+                          : Icons.warning,
+                      color: user.status == 'active'
+                          ? Colors.green
+                          : Colors.orange,
+                      size: 14,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -145,8 +207,10 @@ class _TenantCard extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
-                        color: user.status == 'active' ? Colors.green : Colors.orange
-                      )
+                        color: user.status == 'active'
+                            ? Colors.green
+                            : Colors.orange,
+                      ),
                     ),
                   ],
                 ),
@@ -154,18 +218,25 @@ class _TenantCard extends StatelessWidget {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              context.showToast('Profile coming soon');
-            },
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => AdminUserProfileScreen(userId: user.id),
+              ),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue.shade600,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               minimumSize: Size.zero,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
-            child: const Text('View Profile', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'View Profile',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

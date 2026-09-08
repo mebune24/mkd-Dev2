@@ -20,6 +20,9 @@ class ApiEndpoints {
 
   // User Profile
   static String get userProfile => '$_base/users/profile';
+  static String userById(String id) => '$_base/users/$id';
+  static String suspendUser(String id) => '$_base/users/$id/suspend';
+  static String activateUser(String id) => '$_base/users/$id/activate';
 
   // Properties
   static String get properties => '$_base/properties';
