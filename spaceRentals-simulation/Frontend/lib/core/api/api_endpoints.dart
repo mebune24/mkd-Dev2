@@ -123,6 +123,7 @@ class ApiEndpoints {
   static String adminUser(String id) => '$_base/admin/users/$id';
   static String get adminTransactions => '$_base/admin/transactions';
   static String get adminReportsSummary => '$_base/admin/reports/summary';
+  static String get adminOverview => '$_base/admin/overview';
   static String get adminProperties => '$_base/admin/properties';
   static String get adminAgents => '$_base/admin/agents';
   static String get agents => '$_base/agents';

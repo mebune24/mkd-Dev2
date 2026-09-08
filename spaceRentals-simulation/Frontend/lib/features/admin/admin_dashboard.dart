@@ -164,6 +164,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
     final allUsersAsync = ref.watch(allUsersProvider);
     final kycListAsync = ref.watch(kycSubmissionsProvider);
     final disputesAsync = ref.watch(disputesProvider);
+    final overviewAsync = ref.watch(adminOverviewProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
@@ -192,6 +193,16 @@ class _AdminOverviewScreen extends ConsumerWidget {
               final openDisputes = disputes
                   .where((d) => d.status == 'open')
                   .toList();
+              final overview = overviewAsync.maybeWhen(
+                data: (snapshot) => snapshot,
+                orElse: () => null,
+              );
+              final totalUsers = overview?.totalUsers ?? allUsers.length;
+              final tenantCount = overview?.tenants ?? tenants.length;
+              final landlordCount = overview?.landlords ?? landlords.length;
+              final pendingKycCount = overview?.pendingKyc ?? pendingKYC.length;
+              final openDisputeCount =
+                  overview?.openDisputes ?? openDisputes.length;
 
               return CustomScrollView(
                 slivers: [
@@ -245,7 +256,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${allUsers.length} total users · ${pendingKYC.length} pending KYC · ${openDisputes.length} open disputes',
+                                  '$totalUsers total users · $pendingKycCount pending KYC · $openDisputeCount open disputes',
                                   style: const TextStyle(
                                     color: Colors.white60,
                                     fontSize: 12,
@@ -258,6 +269,16 @@ class _AdminOverviewScreen extends ConsumerWidget {
                       ),
                     ),
                     actions: [
+                      IconButton(
+                        tooltip: 'Refresh dashboard',
+                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        onPressed: () {
+                          ref.invalidate(adminOverviewProvider);
+                          ref.invalidate(allUsersProvider);
+                          ref.invalidate(kycSubmissionsProvider);
+                          ref.invalidate(disputesProvider);
+                        },
+                      ),
                       IconButton(
                         icon: const Icon(Icons.logout, color: Colors.white),
                         onPressed: () {
@@ -284,28 +305,28 @@ class _AdminOverviewScreen extends ConsumerWidget {
                             childAspectRatio: 1.6,
                             children: [
                               _StatCard(
-                                value: '${allUsers.length}',
+                                value: '$totalUsers',
                                 label: 'Total Users',
                                 icon: Icons.people_rounded,
                                 color: theme.colorScheme.primary,
                                 onTap: () => context.go('/admin/users'),
                               ),
                               _StatCard(
-                                value: '${tenants.length}',
+                                value: '$tenantCount',
                                 label: 'Tenants',
                                 icon: Icons.home_rounded,
                                 color: Colors.teal,
                                 onTap: () => context.go('/admin/tenants'),
                               ),
                               _StatCard(
-                                value: '${landlords.length}',
+                                value: '$landlordCount',
                                 label: 'Landlords',
                                 icon: Icons.business_rounded,
                                 color: Colors.indigo,
                                 onTap: () => context.go('/admin/landlords'),
                               ),
                               _StatCard(
-                                value: '${pendingKYC.length}',
+                                value: '$pendingKycCount',
                                 label: 'Pending KYC',
                                 icon: Icons.pending_actions_rounded,
                                 color: Colors.orange,
@@ -319,10 +340,10 @@ class _AdminOverviewScreen extends ConsumerWidget {
                           // ── KYC Management ─────────────────────────────────────────
                           _SectionHeader(
                             title: 'KYC Verification',
-                            subtitle: '${pendingKYC.length} awaiting review',
+                            subtitle: '$pendingKycCount awaiting review',
                             icon: Icons.verified_user_rounded,
                             color: Colors.orange,
-                            badge: pendingKYC.length,
+                            badge: pendingKycCount,
                           ),
                           const SizedBox(height: 12),
                           if (pendingKYC.isEmpty)
@@ -359,7 +380,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                           // ── Disputes ────────────────────────────────────────────────
                           _SectionHeader(
                             title: 'Disputes',
-                            subtitle: '${openDisputes.length} open cases',
+                            subtitle: '$openDisputeCount open cases',
                             icon: Icons.gavel_rounded,
                             color: Colors.red,
                             badge: openDisputes.length,
@@ -729,6 +750,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
   ) {
     final emailCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -758,6 +780,15 @@ class _AdminOverviewScreen extends ConsumerWidget {
                 prefixIcon: Icon(Icons.email_outlined),
               ),
             ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: passwordCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Temporary Password (8+ characters)',
+                prefixIcon: Icon(Icons.lock_outline),
+              ),
+            ),
           ],
         ),
         actions: [
@@ -766,27 +797,19 @@ class _AdminOverviewScreen extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               try {
-                final currentAuth = ref.read(authProvider);
-                final newAdmin = UserModel(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  email: emailCtrl.text.trim(),
-                  name: nameCtrl.text.trim(),
-                  role: Role.admin,
-                  status: 'active',
-                  kycStatus: 'verified',
-                );
-                // ref.read(allUsersProvider.notifier).addAdmin(newAdmin);
-                /* ref.read(auditLogProvider.notifier).log(
-                  currentAuth.session?.userId ?? 'admin',
-                  currentAuth.session?.fullName ?? 'Admin',
-                  'Added new admin: ${newAdmin.name}',
-                ); */
-                Navigator.pop(ctx);
-                context.showSuccessToast(
-                  'Admin ${newAdmin.name} added successfully',
-                );
+                await ref
+                    .read(adminRepositoryProvider)
+                    .createAdmin(
+                      name: nameCtrl.text.trim(),
+                      email: emailCtrl.text.trim(),
+                      temporaryPassword: passwordCtrl.text,
+                    );
+                ref.invalidate(allUsersProvider);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted)
+                  context.showSuccessToast('Administrator created');
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -825,7 +848,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
           children: [
             Icon(Icons.delete_sweep_rounded, color: Colors.red),
             SizedBox(width: 10),
-            Text('Remove Test Accounts'),
+            Text('Suspend Matching Test Accounts'),
           ],
         ),
         content: testAccounts.isEmpty
@@ -859,20 +882,24 @@ class _AdminOverviewScreen extends ConsumerWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () {
-                for (final u in testAccounts) {
-                  // ref.read(allUsersProvider.notifier).removeUser(u.id);
-                }
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '${testAccounts.length} test account(s) removed',
-                    ),
-                    backgroundColor: Colors.orange,
-                  ),
-                );
+                () async {
+                  try {
+                    final count = await ref
+                        .read(adminRepositoryProvider)
+                        .bulkSuspendUsers(
+                          testAccounts.map((u) => u.id).toList(),
+                        );
+                    ref.invalidate(allUsersProvider);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (context.mounted)
+                      context.showSuccessToast('$count account(s) suspended');
+                  } catch (error) {
+                    if (context.mounted)
+                      context.showErrorToast(error.toString());
+                  }
+                }();
               },
-              child: const Text('Remove All'),
+              child: const Text('Suspend All'),
             ),
         ],
       ),
@@ -1246,14 +1273,18 @@ class _DisputeCard extends StatelessWidget {
                 if (dispute.status == 'open')
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        final admin = ref.read(authProvider);
-                        // ref.read(disputesProvider.notifier).setUnderReview(
-                        //       dispute.id,
-                        //       adminId: admin.session?.userId ?? 'admin',
-                        //       adminName: admin.session?.fullName ?? 'Admin',
-                        //       subject: dispute.subject,
-                        //     );
+                      onPressed: () async {
+                        try {
+                          await ref
+                              .read(disputeRepositoryProvider)
+                              .reviewDispute(dispute.id);
+                          ref.invalidate(disputesProvider);
+                          if (context.mounted)
+                            context.showSuccessToast('Dispute moved to review');
+                        } catch (error) {
+                          if (context.mounted)
+                            context.showErrorToast(error.toString());
+                        }
                       },
                       icon: const Icon(Icons.search, size: 14),
                       label: const Text(
@@ -1329,17 +1360,21 @@ class _DisputeCard extends StatelessWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            onPressed: () {
-              final admin = ref.read(authProvider);
-              /* ref.read(disputesProvider.notifier).resolve(
-                    d.id,
-                    ctrl.text.trim().isEmpty ? 'Resolved by admin' : ctrl.text.trim(),
-                    adminId: admin.session?.userId ?? 'admin',
-                    adminName: admin.session?.fullName ?? 'Admin',
-                    subject: d.subject,
-                  ); */
-              Navigator.pop(ctx);
-              context.showSuccessToast('Dispute resolved ✅');
+            onPressed: () async {
+              try {
+                final resolution = ctrl.text.trim();
+                if (resolution.isEmpty)
+                  throw Exception('Resolution note is required');
+                await ref
+                    .read(disputeRepositoryProvider)
+                    .resolveDispute(d.id, resolution);
+                ref.invalidate(disputesProvider);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted)
+                  context.showSuccessToast('Dispute resolved');
+              } catch (error) {
+                if (context.mounted) context.showErrorToast(error.toString());
+              }
             },
             child: const Text('Resolve'),
           ),

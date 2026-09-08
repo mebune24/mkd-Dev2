@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma';
+import { auditLogService } from './AuditLogService';
 
 export class DisputeService {
   async getAllDisputes(role: string, userId: string) {
@@ -68,6 +69,11 @@ export class DisputeService {
 
   async resolve(id: string, resolution: string, adminId: string, role: string) {
     if (role !== 'admin') throw { status: 403, message: 'Only admins can resolve disputes' };
+    if (!resolution?.trim()) throw { status: 400, message: 'A resolution note is required.' };
+
+    const existing = await prisma.dispute.findUnique({ where: { id } });
+    if (!existing) throw { status: 404, message: 'Dispute not found' };
+    if (existing.status === 'resolved') throw { status: 409, message: 'Dispute is already resolved.' };
 
     const dispute = await prisma.dispute.update({
       where: { id },
@@ -83,6 +89,30 @@ export class DisputeService {
       data: { status: 'active' }
     });
 
+    await auditLogService.log({
+      userId: adminId,
+      action: 'dispute.resolved',
+      resourceId: dispute.id,
+      resourceType: 'dispute',
+      metadata: { previousStatus: existing.status, resolution },
+    });
+
+    return dispute;
+  }
+
+  async review(id: string, adminId: string, role: string) {
+    if (role !== 'admin') throw { status: 403, message: 'Only admins can review disputes' };
+    const existing = await prisma.dispute.findUnique({ where: { id } });
+    if (!existing) throw { status: 404, message: 'Dispute not found' };
+    if (existing.status !== 'open') throw { status: 409, message: `Dispute is already ${existing.status}.` };
+    const dispute = await prisma.dispute.update({ where: { id }, data: { status: 'under_review' } });
+    await auditLogService.log({
+      userId: adminId,
+      action: 'dispute.review_started',
+      resourceId: dispute.id,
+      resourceType: 'dispute',
+      metadata: { previousStatus: existing.status },
+    });
     return dispute;
   }
 }

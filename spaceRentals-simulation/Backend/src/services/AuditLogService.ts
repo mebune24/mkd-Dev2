@@ -16,6 +16,10 @@ export type AuditAction =
   | 'user.login'
   | 'user.suspended'
   | 'user.activated'
+  | 'dispute.review_started'
+  | 'dispute.resolved'
+  | 'admin.created'
+  | 'users.bulk_suspended'
   | 'kyc.submitted'
   | 'kyc.approved'
   | 'kyc.rejected';
@@ -46,11 +50,9 @@ export class AuditLogService {
           signatureHash: entry.signatureHash,
         },
       });
-    } catch {
-      // AuditLog model may not exist yet — structured console fallback
-      console.log(
-        `[AUDIT] ${new Date().toISOString()} | ${entry.action} | user:${entry.userId} | resource:${entry.resourceType}:${entry.resourceId} | ip:${entry.ipAddress ?? 'unknown'}${entry.signatureHash ? ` | sig:${entry.signatureHash.substring(0, 12)}...` : ''}`
-      );
+    } catch (error) {
+      console.error('[AuditLogService] audit persistence failed:', error);
+      throw { status: 503, message: 'Audit service unavailable; operation was not completed.' };
     }
   }
 
@@ -60,7 +62,11 @@ export class AuditLogService {
         where: { resourceId, resourceType },
         orderBy: { createdAt: 'asc' },
       });
-    } catch { return []; }
+    }
+    catch (error) {
+      console.error('[AuditLogService] resource query failed:', error);
+      throw error;
+    }
   }
 
   async getByUser(userId: string) {
@@ -70,7 +76,11 @@ export class AuditLogService {
         orderBy: { createdAt: 'desc' },
         take: 50,
       });
-    } catch { return []; }
+    }
+    catch (error) {
+      console.error('[AuditLogService] user query failed:', error);
+      throw error;
+    }
   }
 
   async getAll(limit = 100) {
@@ -80,7 +90,11 @@ export class AuditLogService {
         orderBy: { createdAt: 'desc' },
         include: { user: { select: { id: true, name: true, role: true } } },
       });
-    } catch { return []; }
+    }
+    catch (error) {
+      console.error('[AuditLogService] admin query failed:', error);
+      throw error;
+    }
   }
 }
 

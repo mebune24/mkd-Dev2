@@ -150,6 +150,94 @@ class AdminReportsSummary {
   }
 }
 
+class AdminOverviewSnapshot {
+  final DateTime generatedAt;
+  final int totalUsers;
+  final int activeUsers;
+  final int suspendedUsers;
+  final int tenants;
+  final int landlords;
+  final int agents;
+  final int admins;
+  final int pendingKyc;
+  final int openDisputes;
+  final int underReviewDisputes;
+  final Map<String, int> propertyStatuses;
+  final Map<String, int> applicationStatuses;
+  final Map<String, int> leaseStatuses;
+  final Map<String, int> rentalStatuses;
+  final int successfulRevenueXaf;
+  final int pendingPayments;
+  final int openMaintenance;
+  final int activeSubscriptions;
+
+  const AdminOverviewSnapshot({
+    required this.generatedAt,
+    required this.totalUsers,
+    required this.activeUsers,
+    required this.suspendedUsers,
+    required this.tenants,
+    required this.landlords,
+    required this.agents,
+    required this.admins,
+    required this.pendingKyc,
+    required this.openDisputes,
+    required this.underReviewDisputes,
+    required this.propertyStatuses,
+    required this.applicationStatuses,
+    required this.leaseStatuses,
+    required this.rentalStatuses,
+    required this.successfulRevenueXaf,
+    required this.pendingPayments,
+    required this.openMaintenance,
+    required this.activeSubscriptions,
+  });
+
+  factory AdminOverviewSnapshot.fromJson(Map<String, dynamic> json) {
+    final users = Map<String, dynamic>.from(json['users'] as Map? ?? {});
+    final kyc = Map<String, dynamic>.from(json['kyc'] as Map? ?? {});
+    final disputes = Map<String, dynamic>.from(json['disputes'] as Map? ?? {});
+    final finance = Map<String, dynamic>.from(json['finance'] as Map? ?? {});
+    final maintenance = Map<String, dynamic>.from(
+      json['maintenance'] as Map? ?? {},
+    );
+    final subscriptions = Map<String, dynamic>.from(
+      json['subscriptions'] as Map? ?? {},
+    );
+    Map<String, int> counts(String key) =>
+        (json[key] is Map && (json[key] as Map)['byStatus'] is Map)
+        ? Map<String, dynamic>.from(
+            (json[key] as Map)['byStatus'] as Map,
+          ).map((key, value) => MapEntry(key, (value as num).toInt()))
+        : {};
+
+    return AdminOverviewSnapshot(
+      generatedAt:
+          DateTime.tryParse(json['generatedAt']?.toString() ?? '') ??
+          DateTime.now(),
+      totalUsers: (users['total'] as num?)?.toInt() ?? 0,
+      activeUsers: (users['active'] as num?)?.toInt() ?? 0,
+      suspendedUsers: (users['suspended'] as num?)?.toInt() ?? 0,
+      tenants: (users['tenants'] as num?)?.toInt() ?? 0,
+      landlords: (users['landlords'] as num?)?.toInt() ?? 0,
+      agents: (users['agents'] as num?)?.toInt() ?? 0,
+      admins: (users['admins'] as num?)?.toInt() ?? 0,
+      pendingKyc: (kyc['pending'] as num?)?.toInt() ?? 0,
+      openDisputes: (disputes['open'] as num?)?.toInt() ?? 0,
+      underReviewDisputes: (disputes['underReview'] as num?)?.toInt() ?? 0,
+      propertyStatuses: counts('properties'),
+      applicationStatuses: counts('applications'),
+      leaseStatuses: counts('leases'),
+      rentalStatuses: counts('rentals'),
+      successfulRevenueXaf:
+          (finance['successfulRevenueXaf'] as num?)?.toInt() ?? 0,
+      pendingPayments: (finance['pendingPayments'] as num?)?.toInt() ?? 0,
+      openMaintenance: (maintenance['open'] as num?)?.toInt() ?? 0,
+      activeSubscriptions: (subscriptions['active'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 class RevenuePoint {
   final String month;
   final int amount;

@@ -99,6 +99,12 @@ final adminReportsProvider = FutureProvider<AdminReportsSummary>((ref) async {
   return ref.watch(adminRepositoryProvider).getReportsSummary();
 });
 
+final adminOverviewProvider = FutureProvider<AdminOverviewSnapshot>((
+  ref,
+) async {
+  return ref.watch(adminRepositoryProvider).getOverview();
+});
+
 // --- App Notifications ---
 class AppNotification {
   final String id;

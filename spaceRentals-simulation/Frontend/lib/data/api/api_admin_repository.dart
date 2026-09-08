@@ -8,6 +8,48 @@ class ApiAdminRepository {
 
   ApiAdminRepository(this._client);
 
+  Future<AdminOverviewSnapshot> getOverview() async {
+    final response = await _client.get<Map<String, dynamic>>(
+      ApiEndpoints.adminOverview,
+    );
+    if (!response.isSuccess || response.data == null) {
+      throw Exception(
+        response.error?.message ?? 'Failed to load admin overview',
+      );
+    }
+    return AdminOverviewSnapshot.fromJson(response.data!);
+  }
+
+  Future<void> createAdmin({
+    required String name,
+    required String email,
+    required String temporaryPassword,
+  }) async {
+    final response = await _client.post(
+      ApiEndpoints.adminUsers,
+      data: {
+        'name': name,
+        'email': email,
+        'temporaryPassword': temporaryPassword,
+      },
+    );
+    if (!response.isSuccess)
+      throw Exception(
+        response.error?.message ?? 'Failed to create administrator',
+      );
+  }
+
+  Future<int> bulkSuspendUsers(List<String> userIds) async {
+    final response = await _client.post<Map<String, dynamic>>(
+      '${ApiEndpoints.adminUsers}/bulk-suspend',
+      data: {'userIds': userIds},
+    );
+    if (!response.isSuccess || response.data == null) {
+      throw Exception(response.error?.message ?? 'Failed to suspend users');
+    }
+    return (response.data!['updatedCount'] as num?)?.toInt() ?? 0;
+  }
+
   Future<AdminUserProfile> getUserProfile(String userId) async {
     final response = await _client.get<Map<String, dynamic>>(
       ApiEndpoints.userById(userId),

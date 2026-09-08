@@ -35,3 +35,9 @@ export const resolveDispute = async (req: AuthRequest, res: Response) => {
     return res.json(await disputeService.resolve(String(req.params.id), resolution, req.user!.userId, req.user!.role));
   } catch (err) { return handle(res, err); }
 };
+
+export const reviewDispute = async (req: AuthRequest, res: Response) => {
+  try {
+    return res.json(await disputeService.review(String(req.params.id), req.user!.userId, req.user!.role));
+  } catch (err) { return handle(res, err); }
+};

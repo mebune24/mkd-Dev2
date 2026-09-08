@@ -30,4 +30,13 @@ class ApiDisputeRepository {
       throw Exception(response.error?.message ?? 'Could not resolve dispute');
     }
   }
+
+  Future<void> reviewDispute(String id) async {
+    final response = await _client.patch('/api/disputes/$id/review');
+    if (!response.isSuccess) {
+      throw Exception(
+        response.error?.message ?? 'Could not start dispute review',
+      );
+    }
+  }
 }
