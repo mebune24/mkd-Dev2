@@ -200,7 +200,14 @@ export const bulkSuspendUsers = async (req: AuthRequest, res: Response) => {
   try {
     const ids = Array.isArray(req.body.userIds) ? req.body.userIds.map(String) : [];
     if (ids.length === 0 || ids.length > 100) return res.status(400).json({ message: 'userIds must contain between 1 and 100 users.' });
-    const result = await prisma.user.updateMany({ where: { id: { in: ids }, status: { not: 'suspended' } }, data: { status: 'suspended' } });
+    const result = await prisma.user.updateMany({
+      where: {
+        id: { in: ids, not: req.user!.userId },
+        role: { not: 'admin' },
+        status: { not: 'suspended' },
+      },
+      data: { status: 'suspended' },
+    });
     await auditLogService.log({
       userId: req.user!.userId,
       action: 'users.bulk_suspended',
