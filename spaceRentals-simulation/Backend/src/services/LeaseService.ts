@@ -10,6 +10,9 @@ export class LeaseService {
   async getById(id: string, userId: string, role: string) {
     const lease = await leaseRepository.findById(id);
     if (!lease) throw { status: 404, message: 'Lease not found.' };
+    if (lease.application.status !== 'approved') {
+      throw { status: 409, message: 'Only approved applications can be signed.' };
+    }
     const isParty = lease.tenantId === userId || lease.landlordId === userId;
     if (!isParty && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
     return lease;
@@ -58,7 +61,7 @@ export class LeaseService {
    *   generated → (landlord signs) → pending_tenant
    *   pending_landlord → (landlord signs) → signed
    *   pending_tenant → (tenant signs) → signed
-   *   signed → auto-creates Rental + sets property status to "rented"
+  *   signed → awaits the initial deposit and first-rent payment
    */
   async sign(leaseId: string, userId: string, role: string, signatureHash?: string, signedIp?: string) {
     const lease = await leaseRepository.findById(leaseId);
@@ -105,7 +108,17 @@ export class LeaseService {
       updateData.status = 'pending_tenant';
     }
 
-    const updated = await leaseRepository.update(leaseId, updateData);
+    const updated = await prisma.$transaction(async (tx) => {
+      const updatedLease = await tx.lease.update({
+        where: { id: leaseId },
+        data: {
+          ...updateData,
+        },
+        include: { property: true, tenant: true, landlord: true },
+      });
+
+      return updatedLease;
+    });
 
     // Immutable audit trail — OHADA-aligned e-signature record
     await auditLogService.log({
@@ -116,26 +129,6 @@ export class LeaseService {
       metadata: { role, isTenant, isLandlord, newStatus: updateData.status },
       signatureHash,
     });
-
-    // If fully signed → create Rental and mark property rented
-    if (tenantSigned && landlordSigned) {
-      const existingRental = await prisma.rental.findUnique({ where: { leaseId } });
-      if (!existingRental) {
-        await prisma.rental.create({
-          data: {
-            lease: { connect: { id: leaseId } },
-            property: { connect: { id: lease.propertyId } },
-            tenant: { connect: { id: lease.tenantId! } },
-            landlord: { connect: { id: lease.landlordId! } },
-            monthlyRent: lease.property.monthlyRent,
-            status: 'active',
-            activatedAt: now,
-          },
-        });
-        await prisma.lease.update({ where: { id: leaseId }, data: { status: 'active' } });
-        await prisma.property.update({ where: { id: lease.propertyId }, data: { status: 'rented' } });
-      }
-    }
 
     return updated;
   }

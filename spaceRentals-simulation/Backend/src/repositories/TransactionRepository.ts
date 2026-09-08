@@ -28,6 +28,20 @@ export class TransactionRepository {
     });
   }
 
+  async findByLandlordId(landlordId: string) {
+    const leases = await prisma.lease.findMany({
+      where: { landlordId },
+      select: { id: true },
+    });
+    const leaseIds = leases.map((lease) => lease.id);
+    if (leaseIds.length === 0) return [];
+
+    return prisma.transaction.findMany({
+      where: { referenceType: 'LEASE', referenceId: { in: leaseIds } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async updateByGatewayTxId(
     gatewayTxId: string,
     data: Prisma.TransactionUpdateInput,

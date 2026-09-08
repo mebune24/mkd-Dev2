@@ -2,8 +2,17 @@ import { Server, Socket } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import jwt from 'jsonwebtoken';
 import { UserRole } from './middleware/authMiddleware';
+import { messageService } from './services/MessageService';
 
 export let io: Server;
+
+export function emitPropertyFeedUpdated(propertyId: string) {
+  if (io) io.emit('property_feed_updated', { propertyId });
+}
+
+export function emitPropertyEngagementUpdated(payload: { propertyId: string; likes?: number; comments?: number; reshares?: number; likedByMe?: boolean; resharedByMe?: boolean }) {
+  if (io) io.emit('property_engagement_updated', payload);
+}
 
 interface SocketUser {
   userId: string;
@@ -53,23 +62,26 @@ export function initSocketServer(server: HttpServer) {
     });
 
     // Send a message
-    socket.on('send_message', (data: { roomId: string; message: string; receiverId: string }) => {
-      const payload = {
-        roomId: data.roomId,
-        senderId: user.userId,
-        message: data.message,
-        timestamp: new Date().toISOString(),
-      };
-      
-      // Broadcast to room
-      io.to(`room:${data.roomId}`).emit('new_message', payload);
-      
-      // If we want to notify the receiver if they are not in the room
-      io.to(`user:${data.receiverId}`).emit('notification', {
-        type: 'chat',
-        title: 'New Message',
-        body: data.message,
-      });
+    socket.on('send_message', async (data: { roomId?: string; message: string; receiverId: string; propertyId?: string }) => {
+      try {
+        const saved = await messageService.send(user.userId, data.receiverId, data.message, data.propertyId);
+        const payload = {
+          id: saved.id,
+          roomId: saved.roomId,
+          senderId: saved.senderId,
+          receiverId: saved.receiverId,
+          message: saved.body,
+          timestamp: saved.createdAt.toISOString(),
+        };
+        io.to(`room:${saved.roomId}`).emit('new_message', payload);
+        io.to(`user:${data.receiverId}`).emit('notification', {
+          type: 'chat',
+          title: 'New Message',
+          body: saved.body,
+        });
+      } catch (error: any) {
+        socket.emit('message_error', { message: error?.message ?? 'Message could not be sent.' });
+      }
     });
 
     socket.on('disconnect', () => {

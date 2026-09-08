@@ -58,13 +58,18 @@ import auditLogRoutes      from './routes/auditLogs';
 import notificationRoutes  from './routes/notifications';
 import maintenanceRoutes   from './routes/maintenance';
 import reviewRoutes        from './routes/reviews';
+import messageRoutes       from './routes/messages';
+import rnlpRoutes          from './routes/rnlp';
 import { globalErrorHandler } from './middleware/errorMiddleware';
 import { startBackgroundWorkers } from './workers';
+import tenantWalletRoutes from './routes/tenantWallet';
 
 const BASE = '/api';
 
 app.use(`${BASE}/auth`,          authLimiter, authRoutes);
 app.use(`${BASE}/users`,         userRoutes);
+// Backward-compatible alias for older mobile builds using /api/user/profile.
+app.use(`${BASE}/user`,           userRoutes);
 app.use(`${BASE}/properties`,    propertyRoutes);
 app.use(`${BASE}/applications`,  applicationRoutes);
 app.use(`${BASE}/payments`,      paymentLimiter, paymentRoutes);
@@ -82,6 +87,9 @@ app.use(`${BASE}/audit-logs`,    auditLogRoutes);
 app.use(`${BASE}/notifications`, notificationRoutes);
 app.use(`${BASE}/maintenance`,   maintenanceRoutes);
 app.use(`${BASE}/reviews`,       reviewRoutes);
+app.use(`${BASE}/messages`,      messageRoutes);
+app.use(`${BASE}/rnlp`,          rnlpRoutes);
+app.use(`${BASE}/tenant-wallet`, tenantWalletRoutes);
 
 // ── Health ────────────────────────────────────────────────────
 app.get(`${BASE}/health`, (_req, res) => {
@@ -94,7 +102,7 @@ app.get(`${BASE}/health`, (_req, res) => {
     routes: [
       'auth', 'users', 'properties', 'applications', 'payments',
       'leases', 'rentals', 'agents', 'subscriptions', 'commissions',
-      'platform-fees', 'admin', 'notifications', 'maintenance', 'reviews',
+      'platform-fees', 'admin', 'notifications', 'maintenance', 'reviews', 'rnlp', 'messages',
     ],
   });
 });

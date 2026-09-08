@@ -5,11 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
-import 'package:space_rentals/providers/domain_providers.dart';
 import 'package:space_rentals/features/landlord/domain/kyc_submission.dart';
-import 'package:space_rentals/features/rentals/domain/dispute_record.dart';
-import 'package:space_rentals/features/agents/domain/agent_models.dart';
-import 'package:space_rentals/core/domain/audit_entry.dart';
 import '../../widgets/animated_loading_button.dart';
 
 class LandlordKYCScreen extends ConsumerStatefulWidget {
@@ -168,33 +164,31 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
                 await Future.delayed(const Duration(seconds: 1));
                 
                 final user = ref.read(authProvider);
-                if (user != null) {
-                  Map<String, String> docs = {};
-                  if (_selectedTier == 'basic') {
-                    docs['ID Card'] = _uploadedDocs['id_card']!;
-                    docs['Land Property Document'] = _uploadedDocs['land_doc']!;
-                  } else {
-                    docs['Land Title'] = _uploadedDocs['land_title']!;
-                    docs['Site Plan'] = _uploadedDocs['site_plan']!;
-                    docs['National ID Card (CNI)'] = _uploadedDocs['cni']!;
-                    if (_uploadedDocs['tax_card'] != null) {
-                      docs['Taxpayer Card'] = _uploadedDocs['tax_card']!;
-                    }
+                Map<String, String> docs = {};
+                if (_selectedTier == 'basic') {
+                  docs['ID Card'] = _uploadedDocs['id_card']!;
+                  docs['Land Property Document'] = _uploadedDocs['land_doc']!;
+                } else {
+                  docs['Land Title'] = _uploadedDocs['land_title']!;
+                  docs['Site Plan'] = _uploadedDocs['site_plan']!;
+                  docs['National ID Card (CNI)'] = _uploadedDocs['cni']!;
+                  if (_uploadedDocs['tax_card'] != null) {
+                    docs['Taxpayer Card'] = _uploadedDocs['tax_card']!;
                   }
-                  
-                  final submission = KYCSubmission(
-                    userId: user.session?.userId ?? 'unknown',
-                    userName: user.session?.fullName ?? 'Unknown',
-                    userEmail: user.session?.email ?? '',
-                    isPremium: _selectedTier == 'premium',
-                    status: 'pending',
-                    submittedAt: DateTime.now(),
-                    documents: docs,
-                  );
-                  
-                  // ref.read(kycSubmissionsProvider.notifier).submit(submission);
                 }
                 
+                final submission = KYCSubmission(
+                  userId: user.session?.userId ?? 'unknown',
+                  userName: user.session?.fullName ?? 'Unknown',
+                  userEmail: user.session?.email ?? '',
+                  isPremium: _selectedTier == 'premium',
+                  status: 'pending',
+                  submittedAt: DateTime.now(),
+                  documents: docs,
+                );
+                
+                // ref.read(kycSubmissionsProvider.notifier).submit(submission);
+                              
                 if (mounted) context.go('/landlord/pending');
               } : () async {},
               style: ElevatedButton.styleFrom(

@@ -14,6 +14,19 @@ export const getTenantApplications = async (req: AuthRequest, res: Response) => 
   catch (err) { return handle(res, err); }
 };
 
+// GET /api/applications/:id
+export const getApplicationById = async (req: AuthRequest, res: Response) => {
+  try {
+    return res.json(
+      await applicationService.getById(
+        String(req.params.id),
+        req.user!.userId,
+        req.user!.role,
+      ),
+    );
+  } catch (err) { return handle(res, err); }
+};
+
 // GET /api/applications/landlord
 export const getLandlordApplications = async (req: AuthRequest, res: Response) => {
   try { return res.json(await applicationService.getLandlordApplications(req.user!.userId)); }
@@ -24,7 +37,7 @@ export const getLandlordApplications = async (req: AuthRequest, res: Response) =
 export const submitApplication = async (req: AuthRequest, res: Response) => {
   try {
     const { propertyId, coverLetter, nationalIdUrl, proofOfIncomeUrl } = req.body;
-    const result = await applicationService.submit(propertyId, req.user!.userId, coverLetter, nationalIdUrl, proofOfIncomeUrl);
+    const result = await applicationService.submit(propertyId, req.user!.userId, req.user!.role, coverLetter, nationalIdUrl, proofOfIncomeUrl);
     return res.status(201).json(result);
   } catch (err) { return handle(res, err); }
 };

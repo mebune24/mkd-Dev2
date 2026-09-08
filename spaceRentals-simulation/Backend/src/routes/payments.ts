@@ -5,6 +5,7 @@ import {
   initiatePayout,
   getPaymentStatus,
   getMyTransactions,
+  getLandlordTransactions,
   fapshiWebhook,
 } from '../controllers/paymentController';
 import { validateRequest } from '../middleware/validateMiddleware';
@@ -22,5 +23,6 @@ router.post('/initiate', requireRole(['tenant', 'landlord', 'agent', 'admin']), 
 router.post('/payout', requireRole(['landlord', 'agent', 'admin']), initiatePayout);
 router.get('/status/:gatewayTxId', getPaymentStatus);
 router.get('/transactions', getMyTransactions);
+router.get('/landlord-transactions', getLandlordTransactions);
 
 export default router;

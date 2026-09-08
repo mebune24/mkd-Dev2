@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../core/api/api_endpoints.dart';
 
 /// A singleton Socket.io service that manages the real-time connection.
 /// The frontend connects using the JWT token so the backend can identify the user.
@@ -18,7 +18,7 @@ class SocketService {
   void connect(String token) {
     if (_isConnected) return;
 
-    final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://192.168.1.194:3000';
+    final baseUrl = ApiEndpoints.baseUrl;
 
     _socket = io.io(
       baseUrl,
@@ -60,14 +60,16 @@ class SocketService {
 
   /// Send a message in a room.
   void sendMessage({
-    required String roomId,
+    String? roomId,
     required String message,
     required String receiverId,
+    String? propertyId,
   }) {
     _socket?.emit('send_message', {
-      'roomId': roomId,
+      if (roomId != null) 'roomId': roomId,
       'message': message,
       'receiverId': receiverId,
+      if (propertyId != null) 'propertyId': propertyId,
     });
   }
 

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { prisma } from '../lib/prisma';
 
 export type UserRole = 'admin' | 'landlord' | 'tenant' | 'agent';
 
@@ -13,7 +14,7 @@ export interface AuthRequest extends Request {
 // ──────────────────────────────────────────────
 // AUTHENTICATION
 // ──────────────────────────────────────────────
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
@@ -27,11 +28,34 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
       userId: string;
       role: UserRole;
     };
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId }, select: { role: true, status: true } });
+    if (!user || user.status === 'suspended' || user.role !== decoded.role) {
+      return res.status(401).json({ message: 'Account is inactive or credentials are stale' });
+    }
     req.user = { userId: decoded.userId, role: decoded.role };
     next();
   } catch {
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
+};
+
+export const optionalAuthenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (jwtSecret) {
+      const decoded = jwt.verify(token, jwtSecret) as { userId: string; role: UserRole };
+      req.user = { userId: decoded.userId, role: decoded.role };
+    }
+  } catch {
+    // Ignore invalid tokens for optional auth
+  }
+  next();
 };
 
 // ──────────────────────────────────────────────

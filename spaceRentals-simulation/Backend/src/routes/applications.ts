@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/authMiddleware';
 import {
   getTenantApplications,
+  getApplicationById,
   getLandlordApplications,
   submitApplication,
   approveApplication,
@@ -15,6 +16,7 @@ router.use(authenticate);
 
 router.get('/tenant', getTenantApplications);
 router.get('/landlord', getLandlordApplications);
+router.get('/:id', getApplicationById);
 router.post('/', submitApplication);
 router.patch('/:id/approve', approveApplication);
 router.patch('/:id/reject', rejectApplication);

@@ -2,6 +2,8 @@ import axios from 'axios';
 import { transactionRepository } from '../repositories/TransactionRepository';
 import { redisClient } from '../config/redis';
 import { prisma } from '../lib/prisma';
+import crypto from 'crypto';
+import { rnlpService } from './RnlpService';
 
 const FAPSHI_API_URL = process.env.FAPSHI_API_URL || 'https://live.fapshi.com';
 const FAPSHI_API_USER = process.env.FAPSHI_API_USER || '';
@@ -99,6 +101,18 @@ export class FapshiPaymentService {
       status: 'PENDING',
       metadata: JSON.stringify(response),
     });
+    if (referenceType === 'LEASE') {
+      await prisma.payment.create({
+        data: {
+          leaseId: referenceId,
+          type: 'deposit_and_first_rent',
+          amount,
+          status: 'pending',
+          idempotencyKey: crypto.randomUUID(),
+          providerTxId: response.transId,
+        },
+      });
+    }
 
     return {
       transactionId: transaction.id,
@@ -162,11 +176,17 @@ export class FapshiPaymentService {
       status: mappedStatus,
       metadata: JSON.stringify(payload),
     });
+    await prisma.payment.updateMany({
+      where: { providerTxId: transId },
+      data: { status: mappedStatus === 'SUCCESSFUL' ? 'successful' : 'failed' },
+    });
 
     // Execute business logic on successful payment
     if (mappedStatus === 'SUCCESSFUL') {
       if (existing.referenceType === 'LEASE') {
-        await this.handleLeasePaymentSuccess(existing.referenceId);
+        await this.handleLeasePaymentSuccess(existing.referenceId, existing.amount);
+      } else if (existing.referenceType === 'RNLP_INSTALMENT') {
+        await rnlpService.markInstalmentPaid(existing.referenceId, transId, existing.amount);
       }
     }
 
@@ -177,7 +197,7 @@ export class FapshiPaymentService {
    * Called when a lease payment (deposit + first month) is successfully completed.
    * Activates the lease, creates the Rental record, and marks the property as rented.
    */
-  private async handleLeasePaymentSuccess(leaseId: string) {
+  private async handleLeasePaymentSuccess(leaseId: string, paidAmount: number) {
     const lease = await prisma.lease.findUnique({
       where: { id: leaseId },
       include: { property: true },
@@ -190,6 +210,10 @@ export class FapshiPaymentService {
 
     if (lease.status === 'active') {
       return; // Already active
+    }
+    if (lease.status !== 'signed' || !lease.tenantSignedAt || !lease.landlordSignedAt || paidAmount !== lease.property.deposit + lease.property.monthlyRent) {
+      console.warn(`[FapshiWebhook] Lease ${leaseId} is not eligible for activation.`);
+      return;
     }
 
     await prisma.$transaction(async (tx) => {
@@ -253,13 +277,8 @@ export class FapshiPaymentService {
       metadata: '{}',
     });
 
-    // Simulate an immediate webhook success for the demo (since payouts are usually fast)
-    setTimeout(() => {
-      this.handleWebhook({ transId: gatewayTxId, status: 'SUCCESSFUL' }).catch(console.error);
-    }, 5000);
-
     return {
-      message: 'Payout initiated successfully',
+      message: 'Payout is pending provider confirmation',
       gatewayTxId,
       transactionId: transaction.id,
     };

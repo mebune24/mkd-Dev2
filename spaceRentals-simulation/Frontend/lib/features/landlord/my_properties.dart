@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/property_provider.dart';
 import '../../widgets/property_card.dart';
 import '../../providers/di_providers.dart';
-import '../../features/properties/domain/property.dart';
 import '../../core/utils/ui_helpers.dart';
 
 class MyProperties extends ConsumerWidget {

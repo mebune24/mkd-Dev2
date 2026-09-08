@@ -1,32 +1,62 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/payment_model.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'di_providers.dart';
 import '../data/api/api_payment_repository.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 /// Fetches all transactions for the current user
-final myTransactionsProvider = FutureProvider<List<TransactionRecord>>((ref) async {
+final myTransactionsProvider = FutureProvider<List<TransactionRecord>>((
+  ref,
+) async {
   final repo = ref.watch(paymentRepositoryProvider);
   return repo.getMyTransactions();
 });
 
 /// Landlord transactions
-final landlordTransactionsProvider = FutureProvider<List<TransactionRecord>>((ref) async {
-  final all = await ref.watch(myTransactionsProvider.future);
-  // Ideally, landlord specific filtering if backend doesn't filter, but getMyTransactions filters by user anyway
-  return all; 
+final landlordTransactionsProvider = FutureProvider<List<TransactionRecord>>((
+  ref,
+) async {
+  return ref.watch(paymentRepositoryProvider).getLandlordTransactions();
+});
+
+final landlordPendingTransactionsProvider =
+    FutureProvider<List<TransactionRecord>>((ref) async {
+      final all = await ref.watch(landlordTransactionsProvider.future);
+      return all
+          .where((transaction) => transaction.status == 'PENDING')
+          .toList();
+    });
+
+final landlordSuccessfulTransactionsProvider =
+    FutureProvider<List<TransactionRecord>>((ref) async {
+      final all = await ref.watch(landlordTransactionsProvider.future);
+      return all
+          .where((transaction) => transaction.status == 'SUCCESSFUL')
+          .toList();
+    });
+
+final landlordTotalRevenueProvider = FutureProvider<double>((ref) async {
+  final successful = await ref.watch(
+    landlordSuccessfulTransactionsProvider.future,
+  );
+  return successful.fold<double>(
+    0,
+    (sum, transaction) => sum + transaction.amount,
+  );
 });
 
 /// Pending transactions
-final pendingTransactionsProvider = FutureProvider<List<TransactionRecord>>((ref) async {
+final pendingTransactionsProvider = FutureProvider<List<TransactionRecord>>((
+  ref,
+) async {
   final all = await ref.watch(myTransactionsProvider.future);
   return all.where((p) => p.status == 'PENDING').toList();
 });
 
 /// Successful transactions
-final successfulTransactionsProvider = FutureProvider<List<TransactionRecord>>((ref) async {
+final successfulTransactionsProvider = FutureProvider<List<TransactionRecord>>((
+  ref,
+) async {
   final all = await ref.watch(myTransactionsProvider.future);
   return all.where((p) => p.status == 'SUCCESSFUL').toList();
 });
@@ -40,4 +70,3 @@ final totalRevenueProvider = FutureProvider<double>((ref) async {
   }
   return sum;
 });
-

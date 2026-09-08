@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import { Property } from '@prisma/client';
 import { cacheGet, cacheSet, clearCacheByPattern } from '../config/redis';
 import { latLngToCell, gridDisk } from 'h3-js';
+import { emitPropertyFeedUpdated } from '../socket';
 
 const H3_RESOLUTION = 7; // Approx 5km area hexagon
 
@@ -15,6 +16,7 @@ export class PropertyService {
 
     const [data, total] = await Promise.all([
       prisma.property.findMany({
+        where: { status: { in: ['available', 'rented'] } },
         skip, take: limit,
         include: { landlord: { select: { id: true, name: true } }, propertyVerification: { select: { status: true, level: true } } },
         orderBy: [
@@ -66,7 +68,7 @@ export class PropertyService {
     landlordId: string,
     data: Record<string, unknown>,
   ) {
-    const { title, description, location, monthlyRent, deposit, amenities, images,
+    const { title, description, location, monthlyRent, deposit, amenities, images, videoUrls,
       bedrooms, bathrooms, areaSqM, furnished, parkingSpaces, hasWater, hasElectricity,
       isFenced, closeToRoad, securityMeans, category, latitude, longitude,
       acquisitionSource, acquisitionAgentId } = data as any;
@@ -82,6 +84,7 @@ export class PropertyService {
       deposit: Number(deposit),
       amenities: JSON.stringify(amenities ?? []),
       images: JSON.stringify(images ?? []),
+      videoUrls: JSON.stringify(videoUrls ?? []),
       status: 'draft',
       bedrooms: bedrooms ? Number(bedrooms) : 0,
       bathrooms: bathrooms ? Number(bathrooms) : 0,
@@ -101,6 +104,7 @@ export class PropertyService {
       acquisitionAgentId: acquisitionAgentId ? String(acquisitionAgentId) : undefined,
     });
     await clearCacheByPattern('properties:*');
+    emitPropertyFeedUpdated(result.id);
     return result;
   }
 
@@ -116,7 +120,7 @@ export class PropertyService {
       throw { status: 403, message: 'Forbidden: You do not own this property.' };
     }
     const updateData: Record<string, unknown> = {};
-    const { title, description, location, monthlyRent, deposit, amenities, images, status, latitude, longitude } = data as any;
+    const { title, description, location, monthlyRent, deposit, amenities, images, videoUrls, status, latitude, longitude } = data as any;
     if (title) updateData.title = title as string;
     if (description) updateData.description = description as string;
     if (location) updateData.location = String(location);
@@ -124,7 +128,18 @@ export class PropertyService {
     if (deposit) updateData.deposit = Number(deposit);
     if (amenities) updateData.amenities = JSON.stringify(amenities);
     if (images) updateData.images = JSON.stringify(images);
-    if (status) updateData.status = String(status);
+    if (videoUrls) updateData.videoUrls = JSON.stringify(videoUrls);
+    if (status && ['draft', 'available', 'auto_unpublished'].includes(String(status))) {
+      updateData.status = String(status);
+    } else if (status) {
+      throw { status: 400, message: 'Invalid property status.' };
+    }
+    if (monthlyRent !== undefined && (!Number.isInteger(Number(monthlyRent)) || Number(monthlyRent) <= 0)) {
+      throw { status: 400, message: 'monthlyRent must be a positive integer.' };
+    }
+    if (deposit !== undefined && (!Number.isInteger(Number(deposit)) || Number(deposit) < 0)) {
+      throw { status: 400, message: 'deposit must be a non-negative integer.' };
+    }
     if (latitude !== undefined) updateData.latitude = Number(latitude);
     if (longitude !== undefined) updateData.longitude = Number(longitude);
 
@@ -137,6 +152,7 @@ export class PropertyService {
     
     const result = await propertyRepository.update(id, updateData);
     await clearCacheByPattern('properties:*');
+    emitPropertyFeedUpdated(id);
     return result;
   }
 
@@ -155,8 +171,12 @@ export class PropertyService {
     const property = await propertyRepository.findById(id);
     if (!property) throw { status: 404, message: 'Property not found.' };
     if (property.landlordId !== userId && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
+    if (property.status === 'rented' || property.status === 'reserved') {
+      throw { status: 409, message: 'This property is not available for publishing.' };
+    }
     const result = await propertyRepository.update(id, { status: 'available', lastConfirmedAvailableAt: new Date() });
     await clearCacheByPattern('properties:*');
+    emitPropertyFeedUpdated(id);
     return result;
   }
 
@@ -166,6 +186,7 @@ export class PropertyService {
     if (property.landlordId !== userId && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
     const result = await propertyRepository.update(id, { status: 'draft' });
     await clearCacheByPattern('properties:*');
+    emitPropertyFeedUpdated(id);
     return result;
   }
 

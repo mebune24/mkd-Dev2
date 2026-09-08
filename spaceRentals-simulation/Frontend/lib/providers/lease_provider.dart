@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'di_providers.dart';
 import '../features/leases/domain/lease.dart';
-import '../shared/models/enums.dart';
 
 // --- Tenant Leases --- //
 

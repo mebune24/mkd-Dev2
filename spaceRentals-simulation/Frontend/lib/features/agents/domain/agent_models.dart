@@ -6,48 +6,65 @@ enum AgentTier { bronze, silver, gold, platinum }
 extension AgentTierExtension on AgentTier {
   String get label {
     switch (this) {
-      case AgentTier.platinum: return 'Platinum';
-      case AgentTier.gold:     return 'Gold';
-      case AgentTier.silver:   return 'Silver';
-      case AgentTier.bronze:   return 'Bronze';
+      case AgentTier.platinum:
+        return 'Platinum';
+      case AgentTier.gold:
+        return 'Gold';
+      case AgentTier.silver:
+        return 'Silver';
+      case AgentTier.bronze:
+        return 'Bronze';
     }
   }
 
   Color get color {
     switch (this) {
-      case AgentTier.platinum: return const Color(0xFF00D4FF);
-      case AgentTier.gold:     return const Color(0xFFFFD700);
-      case AgentTier.silver:   return const Color(0xFFC0C0C0);
-      case AgentTier.bronze:   return const Color(0xFFCD7F32);
+      case AgentTier.platinum:
+        return const Color(0xFF00D4FF);
+      case AgentTier.gold:
+        return const Color(0xFFFFD700);
+      case AgentTier.silver:
+        return const Color(0xFFC0C0C0);
+      case AgentTier.bronze:
+        return const Color(0xFFCD7F32);
     }
   }
 
   IconData get icon {
     switch (this) {
-      case AgentTier.platinum: return Icons.workspace_premium;
-      case AgentTier.gold:     return Icons.military_tech;
-      case AgentTier.silver:   return Icons.star_half;
-      case AgentTier.bronze:   return Icons.star_border;
+      case AgentTier.platinum:
+        return Icons.workspace_premium;
+      case AgentTier.gold:
+        return Icons.military_tech;
+      case AgentTier.silver:
+        return Icons.star_half;
+      case AgentTier.bronze:
+        return Icons.star_border;
     }
   }
 
   List<Color> get gradient {
     switch (this) {
-      case AgentTier.platinum: return [const Color(0xFF00D4FF), const Color(0xFF7B2FBE)];
-      case AgentTier.gold:     return [const Color(0xFFFFD700), const Color(0xFFFF8C00)];
-      case AgentTier.silver:   return [const Color(0xFFE0E0E0), const Color(0xFF9E9E9E)];
-      case AgentTier.bronze:   return [const Color(0xFFCD7F32), const Color(0xFF8B4513)];
+      case AgentTier.platinum:
+        return [const Color(0xFF00D4FF), const Color(0xFF7B2FBE)];
+      case AgentTier.gold:
+        return [const Color(0xFFFFD700), const Color(0xFFFF8C00)];
+      case AgentTier.silver:
+        return [const Color(0xFFE0E0E0), const Color(0xFF9E9E9E)];
+      case AgentTier.bronze:
+        return [const Color(0xFFCD7F32), const Color(0xFF8B4513)];
     }
   }
 }
-
 
 class AgentTransaction {
   final String id;
   final String agentId;
   final double amount;
-  final String type; // 'Property Verification', 'Tenant Referral', 'Mobile Withdrawal'
-  String status;     // 'Pending', 'Available', 'Processing', 'Approved', 'Withdrawn', 'Reversed', 'Rejected', 'Paid'
+  final String
+  type; // 'Property Verification', 'Tenant Referral', 'Mobile Withdrawal'
+  String
+  status; // 'Pending', 'Available', 'Processing', 'Approved', 'Withdrawn', 'Reversed', 'Rejected', 'Paid'
   final String? referenceId;
   final String? sourceEvent; // e.g. 'LEASE_SIGNED', 'WITHDRAWAL_REQUESTED'
   final DateTime createdAt;
@@ -71,11 +88,66 @@ class AgentTransaction {
       agentId: json['agentId'] as String? ?? '',
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       type: json['type'] as String? ?? '',
-      status: json['status'] as String? ?? '',
+      status: (json['status'] as String? ?? '').toLowerCase(),
       referenceId: json['referenceId'] as String?,
       sourceEvent: json['sourceEvent'] as String?,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : null,
+    );
+  }
+
+  String get displayType {
+    final event = sourceEvent?.toLowerCase() ?? '';
+    if (type == 'withdrawal') return 'Mobile Withdrawal';
+    if (event.contains('property')) return 'Property Commission';
+    if (event.contains('tenant')) return 'Tenant Referral';
+    return 'Commission';
+  }
+
+  bool get isWithdrawal => type == 'withdrawal' || amount < 0;
+}
+
+class AgentWallet {
+  final String agentId;
+  final int pendingBalance;
+  final int eligibleBalance;
+  final int availableBalance;
+  final int withdrawnBalance;
+  final String walletStatus;
+  final List<AgentTransaction> recentWithdrawals;
+
+  const AgentWallet({
+    required this.agentId,
+    required this.pendingBalance,
+    required this.eligibleBalance,
+    required this.availableBalance,
+    required this.withdrawnBalance,
+    required this.walletStatus,
+    required this.recentWithdrawals,
+  });
+
+  factory AgentWallet.fromJson(Map<String, dynamic> json) {
+    final withdrawals = json['recentWithdrawals'] is List
+        ? json['recentWithdrawals'] as List
+        : const <dynamic>[];
+    return AgentWallet(
+      agentId: json['agentId']?.toString() ?? '',
+      pendingBalance: (json['pendingBalance'] as num?)?.toInt() ?? 0,
+      eligibleBalance: (json['eligibleBalance'] as num?)?.toInt() ?? 0,
+      availableBalance: (json['availableBalance'] as num?)?.toInt() ?? 0,
+      withdrawnBalance: (json['withdrawnBalance'] as num?)?.toInt() ?? 0,
+      walletStatus: json['walletStatus']?.toString() ?? 'active',
+      recentWithdrawals: withdrawals
+          .map(
+            (item) => AgentTransaction.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(),
     );
   }
 }
@@ -132,14 +204,22 @@ class AgentProfile {
 
   factory AgentProfile.fromJson(Map<String, dynamic> json) {
     return AgentProfile(
-      userId: json['userId'] as String? ?? '',
-      agentId: json['agentId'] as String? ?? '',
+      userId: json['userId'] as String? ?? json['id'] as String? ?? '',
+      agentId: json['agentId'] as String? ?? json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String? ?? '',
       location: json['location'] as String? ?? '',
-      categories: (json['categories'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-      areasServed: (json['areasServed'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      categories:
+          (json['categories'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      areasServed:
+          (json['areasServed'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       referralCode: json['referralCode'] as String? ?? '',
       propertiesSubmitted: json['propertiesSubmitted'] as int? ?? 0,
       propertiesVerified: json['propertiesVerified'] as int? ?? 0,
@@ -149,8 +229,11 @@ class AgentProfile {
       landlordRelationships: json['landlordRelationships'] as int? ?? 0,
       pendingLandlordRequests: json['pendingLandlordRequests'] as int? ?? 0,
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      isWalletFrozen: json['isWalletFrozen'] as bool? ?? false,
-      status: json['status'] as String? ?? '',
+      isWalletFrozen:
+          json['isWalletFrozen'] as bool? ?? json['walletStatus'] == 'frozen',
+      status:
+          json['status'] as String? ??
+          (json['isKycVerified'] == true ? 'active' : 'pending'),
     );
   }
 }
@@ -186,8 +269,12 @@ class AgentServiceAgreement {
       agentId: json['agentId'] as String? ?? '',
       agentName: json['agentName'] as String? ?? '',
       status: json['status'] as String? ?? '',
-      requestedAt: json['requestedAt'] != null ? DateTime.parse(json['requestedAt']) : DateTime.now(),
-      acceptedAt: json['acceptedAt'] != null ? DateTime.parse(json['acceptedAt']) : null,
+      requestedAt: json['requestedAt'] != null
+          ? DateTime.parse(json['requestedAt'])
+          : DateTime.now(),
+      acceptedAt: json['acceptedAt'] != null
+          ? DateTime.parse(json['acceptedAt'])
+          : null,
       serviceTerms: json['serviceTerms'] as String? ?? '',
     );
   }

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/domain_providers.dart';
 import '../../providers/di_providers.dart';
 
 class AgentKycPendingScreen extends ConsumerStatefulWidget {
@@ -213,11 +212,11 @@ class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
                     // Progress indicator
                     Row(
                       children: [
-                        _StepDot(label: 'Submitted', isComplete: true, color: Colors.green),
+                        const _StepDot(label: 'Submitted', isComplete: true, color: Colors.green),
                         Expanded(child: Container(height: 2, color: Colors.orange.shade200)),
-                        _StepDot(label: 'In Review', isComplete: false, color: Colors.orange, isActive: true),
+                        const _StepDot(label: 'In Review', isComplete: false, color: Colors.orange, isActive: true),
                         Expanded(child: Container(height: 2, color: Colors.grey.shade200)),
-                        _StepDot(label: 'Approved', isComplete: false, color: Colors.grey),
+                        const _StepDot(label: 'Approved', isComplete: false, color: Colors.grey),
                       ],
                     ),
                   ],

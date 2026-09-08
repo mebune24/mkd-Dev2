@@ -18,6 +18,7 @@ class ApiAuthRepository implements AuthRepository {
   UserSession? _cachedSession;
 
   ApiAuthRepository(this._apiClient);
+  @override
   Future<UserSession?> getCurrentSession() async {
     // 1. Return in-memory cache if valid
     if (_cachedSession != null && !_cachedSession!.isExpired) {
@@ -39,11 +40,13 @@ class ApiAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    final response = await http.post(
-      Uri.parse(ApiEndpoints.signIn),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'email': email, 'password': password}),
-    ).timeout(const Duration(seconds: 10));
+    final response = await http
+        .post(
+          Uri.parse(ApiEndpoints.signIn),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({'email': email, 'password': password}),
+        )
+        .timeout(const Duration(seconds: 10));
 
     final body = json.decode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
@@ -66,23 +69,29 @@ class ApiAuthRepository implements AuthRepository {
     String? referralCode,
   }) async {
     final name = '$firstName $lastName'.trim();
-    final response = await http.post(
-      Uri.parse(ApiEndpoints.signUp),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'name': name,
-        'email': email,
-        'password': password,
-        'role': role.toLowerCase(),
-      }),
-    ).timeout(const Duration(seconds: 10));
+    final response = await http
+        .post(
+          Uri.parse(ApiEndpoints.signUp),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({
+            'name': name,
+            'email': email,
+            'password': password,
+            'role': role.toLowerCase(),
+          }),
+        )
+        .timeout(const Duration(seconds: 10));
 
     final body = json.decode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 201) {
       throw body['message'] ?? 'Registration failed. Please try again.';
     }
 
-    final session = _sessionFromResponse(body, firstName: firstName, lastName: lastName);
+    final session = _sessionFromResponse(
+      body,
+      firstName: firstName,
+      lastName: lastName,
+    );
     await SessionStorageService.instance.saveSession(session);
     _cachedSession = session;
     return session;
@@ -110,10 +119,12 @@ class ApiAuthRepository implements AuthRepository {
     final token = await SessionStorageService.instance.getAccessToken();
     if (token == null) throw Exception('No token — user must sign in again.');
 
-    final response = await http.get(
-      Uri.parse(ApiEndpoints.me),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await http
+        .get(
+          Uri.parse(ApiEndpoints.me),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 12));
 
     if (response.statusCode != 200) {
       await SessionStorageService.instance.clearSession();
@@ -129,23 +140,30 @@ class ApiAuthRepository implements AuthRepository {
       firstName: nameParts.isNotEmpty ? nameParts.first : '',
       lastName: nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
       role: _parseRole(body['role']),
-      isKycVerified: body['isKycVerified'] == true || body['kycVerified'] == true,
+      isKycVerified:
+          body['isKycVerified'] == true || body['kycVerified'] == true,
       accessToken: token,
-      expiresAt: DateTime.now().add(const Duration(days: 7)),
+      expiresAt: DateTime.now().add(const Duration(days: 30)),
     );
 
-    await SessionStorageService.instance.updateToken(token, refreshed.expiresAt, refreshed.userId);
+    await SessionStorageService.instance.updateToken(
+      token,
+      refreshed.expiresAt,
+      refreshed.userId,
+    );
     _cachedSession = refreshed;
     return refreshed;
   }
 
   @override
   Future<void> requestPasswordReset({required String email}) async {
-    await http.post(
-      Uri.parse(ApiEndpoints.passwordReset),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'email': email}),
-    );
+    await http
+        .post(
+          Uri.parse(ApiEndpoints.passwordReset),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({'email': email}),
+        )
+        .timeout(const Duration(seconds: 12));
   }
 
   @override
@@ -153,10 +171,12 @@ class ApiAuthRepository implements AuthRepository {
     final session = await getCurrentSession();
     if (session == null) throw Exception('Not authenticated');
 
-    final response = await http.get(
-      Uri.parse(ApiEndpoints.userProfile),
-      headers: {'Authorization': 'Bearer ${session.accessToken}'},
-    );
+    final response = await http
+        .get(
+          Uri.parse(ApiEndpoints.userProfile),
+          headers: {'Authorization': 'Bearer ${session.accessToken}'},
+        )
+        .timeout(const Duration(seconds: 12));
 
     if (response.statusCode != 200) throw Exception('Failed to load profile');
     final body = json.decode(response.body) as Map<String, dynamic>;
@@ -170,6 +190,9 @@ class ApiAuthRepository implements AuthRepository {
       avatarUrl: body['avatarUrl'],
       role: _parseRole(body['role']),
       isActive: body['isActive'] ?? true,
+      twoFactorEnabled: body['twoFactorEnabled'] ?? session.twoFactorEnabled,
+      pushNotificationsEnabled:
+          body['pushNotificationsEnabled'] ?? session.pushNotificationsEnabled,
       createdAt: DateTime.tryParse(body['createdAt'] ?? '') ?? DateTime.now(),
     );
   }
@@ -196,7 +219,8 @@ class ApiAuthRepository implements AuthRepository {
         if (phone != null) 'phone': phone,
         if (avatarUrl != null) 'avatarUrl': avatarUrl,
         if (twoFactorEnabled != null) 'twoFactorEnabled': twoFactorEnabled,
-        if (pushNotificationsEnabled != null) 'pushNotificationsEnabled': pushNotificationsEnabled,
+        if (pushNotificationsEnabled != null)
+          'pushNotificationsEnabled': pushNotificationsEnabled,
       }),
     );
 
@@ -207,7 +231,10 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> changePassword(String currentPassword, String newPassword) async {
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
     final token = await SessionStorageService.instance.getAccessToken();
     final response = await http.patch(
       Uri.parse(ApiEndpoints.changePassword),
@@ -245,9 +272,12 @@ class ApiAuthRepository implements AuthRepository {
       userId: user['id'] ?? '',
       email: user['email'] ?? '',
       firstName: firstName ?? (nameParts.isNotEmpty ? nameParts.first : ''),
-      lastName: lastName ?? (nameParts.length > 1 ? nameParts.sublist(1).join(' ') : ''),
+      lastName:
+          lastName ??
+          (nameParts.length > 1 ? nameParts.sublist(1).join(' ') : ''),
       role: _parseRole(user['role']),
-      isKycVerified: user['isKycVerified'] == true || user['kycVerified'] == true,
+      isKycVerified:
+          user['isKycVerified'] == true || user['kycVerified'] == true,
       accessToken: token,
       expiresAt: expiresAt,
     );

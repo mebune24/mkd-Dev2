@@ -15,7 +15,19 @@ class ApiDisputeRepository {
     final response = await _client.get('/api/disputes');
     return _unwrap(response, (data) {
       final list = (data is Map ? data['data'] : data) as List<dynamic>? ?? [];
-      return list.map((e) => DisputeRecord.fromJson(e as Map<String, dynamic>)).toList();
+      return list
+          .map((e) => DisputeRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
     });
+  }
+
+  Future<void> resolveDispute(String id, String resolution) async {
+    final response = await _client.patch(
+      '/api/disputes/$id/resolve',
+      data: {'resolution': resolution},
+    );
+    if (!response.isSuccess) {
+      throw Exception(response.error?.message ?? 'Could not resolve dispute');
+    }
   }
 }

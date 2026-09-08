@@ -1,6 +1,5 @@
 import { prisma } from '../lib/prisma';
 import { userRepository } from '../repositories/UserRepository';
-import { kycVerificationService } from './KycVerificationService';
 import { v4 as uuidv4 } from 'uuid';
 
 export class AgentService {
@@ -21,19 +20,14 @@ export class AgentService {
       throw { status: 409, message: 'Your KYC has already been approved.' };
     }
 
-    // Call external KYC Service (Mocked)
-    const verification = await kycVerificationService.verifyDocument(Buffer.from('mock buffer data'), 'NationalID');
-    const finalStatus = verification.status === 'approved' ? 'approved' : 'rejected';
-    const adminNotes = verification.reason || `Automated check score: ${verification.confidenceScore}`;
-
     if (existing) {
       return prisma.agentVerification.update({
         where: { agentId },
         data: {
           ...data,
           documents: JSON.stringify(data),
-          status: finalStatus,
-          adminNotes,
+          status: 'pending',
+          adminNotes: 'Submitted for manual review.',
         },
       });
     }
@@ -43,8 +37,8 @@ export class AgentService {
         agent: { connect: { id: agentId } },
         ...data,
         documents: JSON.stringify(data),
-        status: finalStatus,
-        adminNotes,
+        status: 'pending',
+        adminNotes: 'Submitted for manual review.',
       },
     });
   }
@@ -139,22 +133,69 @@ export class AgentService {
 
   async requestWithdrawal(agentId: string, params: { amount: number; phoneNumber: string; paymentMethod: string }) {
     const { amount, phoneNumber, paymentMethod } = params;
+    if (!Number.isInteger(amount) || amount <= 0) {
+      throw { status: 400, message: 'amount must be a positive integer.' };
+    }
+    if (!phoneNumber || !['MTN_MOMO', 'ORANGE_MONEY'].includes(paymentMethod)) {
+      throw { status: 400, message: 'A valid phone number and payment method are required.' };
+    }
+    const user = await userRepository.findById(agentId);
+    if (!user || user.role !== 'agent') throw { status: 403, message: 'Only agents can withdraw commissions.' };
+    const kyc = await prisma.agentVerification.findUnique({ where: { agentId } });
+    if (kyc?.status !== 'approved') throw { status: 403, message: 'Approved KYC is required before withdrawing.' };
     const stats = await this.getWalletStats(agentId);
     if (amount > stats.availableBalance) {
       throw { status: 400, message: `Insufficient balance. Available: ${stats.availableBalance} FCFA.` };
     }
     const idempotencyKey = `withdrawal_${agentId}_${Date.now()}_${uuidv4()}`;
-    const tx = await prisma.agentTransaction.create({
-      data: {
-        agentId,
-        type: 'withdrawal',
-        amount: -amount,
-        status: 'processing',
-        sourceEvent: 'withdrawal_request',
-        referenceType: 'WALLET',
-        referenceId: agentId,
-        idempotencyKey,
-      },
+    const tx = await prisma.$transaction(async (db) => {
+      const withdrawal = await db.agentTransaction.create({
+        data: {
+          agentId,
+          type: 'withdrawal',
+          amount: -amount,
+          status: 'processing',
+          sourceEvent: 'withdrawal_request',
+          referenceType: 'WALLET',
+          referenceId: agentId,
+          idempotencyKey,
+        },
+      });
+      const available = await db.agentTransaction.findMany({
+        where: { agentId, type: 'commission', status: 'available', amount: { gt: 0 } },
+        orderBy: { createdAt: 'asc' },
+      });
+      let remaining = amount;
+      for (const commission of available) {
+        if (remaining <= 0) break;
+        const reserved = Math.min(commission.amount, remaining);
+        if (reserved === commission.amount) {
+          await db.agentTransaction.update({
+            where: { id: commission.id },
+            data: { status: 'processing', referenceId: withdrawal.id },
+          });
+        } else {
+          await db.agentTransaction.update({
+            where: { id: commission.id },
+            data: { amount: commission.amount - reserved },
+          });
+          await db.agentTransaction.create({
+            data: {
+              agentId,
+              type: 'commission',
+              amount: reserved,
+              status: 'processing',
+              sourceEvent: commission.sourceEvent,
+              referenceType: commission.referenceType,
+              referenceId: withdrawal.id,
+              idempotencyKey: `commission-reservation-${withdrawal.id}-${commission.id}`,
+            },
+          });
+        }
+        remaining -= reserved;
+      }
+      if (remaining > 0) throw { status: 400, message: 'Insufficient balance.' };
+      return withdrawal;
     });
     return { message: 'Withdrawal initiated.', transaction: tx };
   }

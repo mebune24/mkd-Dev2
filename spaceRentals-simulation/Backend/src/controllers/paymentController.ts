@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { fapshiPaymentService } from '../services/FapshiPaymentService';
 import { transactionRepository } from '../repositories/TransactionRepository';
 import { redisClient } from '../config/redis';
+import { prisma } from '../lib/prisma';
 
 const handle = (res: Response, err: any) => {
   const status = err?.status || 500;
@@ -26,9 +27,44 @@ export const initiatePayment = async (req: AuthRequest, res: Response) => {
     if (!amount || !email || !message || !referenceType || !referenceId || !paymentMethod) {
       return res.status(400).json({ message: 'amount, email, message, referenceType, referenceId and paymentMethod are required.' });
     }
+    const numericAmount = Number(amount);
+    if (!Number.isInteger(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ message: 'amount must be a positive integer.' });
+    }
+    if (referenceType === 'LEASE') {
+      const lease = await prisma.lease.findUnique({ where: { id: referenceId }, include: { property: true } });
+      if (!lease || (lease.tenantId !== req.user!.userId && lease.landlordId !== req.user!.userId)) {
+        return res.status(403).json({ message: 'You are not a party to this lease.' });
+      }
+      if (lease.status !== 'signed' || !lease.tenantSignedAt || !lease.landlordSignedAt) {
+        return res.status(409).json({ message: 'Lease must be fully signed before payment.' });
+      }
+      if (numericAmount !== lease.property.deposit + lease.property.monthlyRent) {
+        return res.status(400).json({ message: 'Payment amount does not match the lease terms.' });
+      }
+    } else if (referenceType === 'RNLP_INSTALMENT') {
+      const instalment = await prisma.rnlpInstalment.findUnique({
+        where: { id: referenceId },
+        include: { contract: true },
+      });
+      if (!instalment || instalment.contract.tenantId !== req.user!.userId) {
+        return res.status(403).json({ message: 'You cannot pay this RNLP instalment.' });
+      }
+      if (instalment.status !== 'pending' || numericAmount !== instalment.amount) {
+        return res.status(409).json({ message: 'RNLP instalment is invalid or already processed.' });
+      }
+    } else {
+      const fee = await prisma.platformFee.findUnique({ where: { id: referenceId } });
+      if (!fee || (fee.landlordId !== req.user!.userId && req.user!.role !== 'admin')) {
+        return res.status(403).json({ message: 'You cannot pay this platform fee.' });
+      }
+      if (fee.status !== 'due' || numericAmount !== fee.amount) {
+        return res.status(409).json({ message: 'Platform fee is invalid or already processed.' });
+      }
+    }
     const result = await fapshiPaymentService.initiatePayment({
       userId: req.user!.userId,
-      amount: Number(amount),
+      amount: numericAmount,
       email,
       phoneNumber,
       message,
@@ -92,6 +128,16 @@ export const getMyTransactions = async (req: AuthRequest, res: Response) => {
   try {
     const transactions = await transactionRepository.findByUserId(req.user!.userId);
     return res.json(transactions);
+  } catch (err) { return handle(res, err); }
+};
+
+// GET /api/payments/landlord-transactions
+export const getLandlordTransactions = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user!.role !== 'landlord' && req.user!.role !== 'admin') {
+      return res.status(403).json({ message: 'Only landlords can view landlord payments.' });
+    }
+    return res.json(await transactionRepository.findByLandlordId(req.user!.userId));
   } catch (err) { return handle(res, err); }
 };
 

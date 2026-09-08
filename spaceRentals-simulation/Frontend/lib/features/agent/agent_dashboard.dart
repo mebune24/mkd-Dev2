@@ -3,11 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/currency_formatter.dart';
 import 'package:space_rentals/providers/domain_providers.dart';
-import 'package:space_rentals/features/landlord/domain/kyc_submission.dart';
-import 'package:space_rentals/features/rentals/domain/dispute_record.dart';
 import 'package:space_rentals/features/agents/domain/agent_models.dart';
-import 'package:space_rentals/core/domain/audit_entry.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/di_providers.dart';
 import 'agent_properties_screen.dart';
 import 'agent_clients_screen.dart';
 import '../profile/profile_screen.dart';
@@ -46,11 +44,31 @@ class _AgentDashboardState extends ConsumerState<AgentDashboard> {
         showUnselectedLabels: true,
         elevation: 8,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard), label: 'Overview'),
-          BottomNavigationBarItem(icon: Icon(Icons.home_work_outlined), activeIcon: Icon(Icons.home_work), label: 'Properties'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Clients'),
-          BottomNavigationBarItem(icon: Icon(Icons.message_outlined), activeIcon: Icon(Icons.message), label: 'Messages'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'Overview',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_work_outlined),
+            activeIcon: Icon(Icons.home_work),
+            label: 'Properties',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people_outline),
+            activeIcon: Icon(Icons.people),
+            label: 'Clients',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.message_outlined),
+            activeIcon: Icon(Icons.message),
+            label: 'Messages',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
       ),
     );
@@ -70,7 +88,8 @@ class _AgentOverview extends ConsumerWidget {
         : 'AGT-UNKNOWN';
 
     final transactionsAsync = ref.watch(agentTransactionsProvider);
-    final agentsAsync = ref.watch(agentProfilesProvider);
+    final agentProfileAsync = ref.watch(currentAgentProfileProvider);
+    final walletAsync = ref.watch(agentWalletProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
@@ -78,8 +97,17 @@ class _AgentOverview extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Agent Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            Text('ID: $agentDisplayId', style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.75))),
+            const Text(
+              'Agent Dashboard',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            Text(
+              'ID: $agentDisplayId',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white.withValues(alpha: 0.75),
+              ),
+            ),
           ],
         ),
         flexibleSpace: Container(
@@ -101,36 +129,45 @@ class _AgentOverview extends ConsumerWidget {
           ),
         ],
       ),
-      body: agentsAsync.when(
+      body: agentProfileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error loading agent: $err')),
-        data: (agents) {
+        data: (agentProfile) {
           return transactionsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) => Center(child: Text('Error loading transactions: $err')),
+            error: (err, stack) =>
+                Center(child: Text('Error loading transactions: $err')),
             data: (transactions) {
-              final myTx = transactions.where((t) => t.agentId == currentAgentId).toList();
-              final agentProfile = agents.firstWhere(
-                (a) => a.userId == currentAgentId,
-                orElse: () => AgentProfile(
-                  userId: currentAgentId,
-                  name: session?.fullName ?? 'Agent',
-                  email: session?.email ?? '',
-                  status: 'active',
-                  isWalletFrozen: false,
-                  referralCode: agentDisplayId,
-                  categories: [],
-                  areasServed: [],
-                  location: 'Unknown',
-                  phone: 'Unknown'
-                ),
+              final myTx = transactions
+                  .where((t) => t.agentId == currentAgentId)
+                  .toList();
+              final balance = walletAsync.maybeWhen(
+                data: (wallet) => wallet.availableBalance.toDouble(),
+                orElse: () => 0.0,
               );
-
-              final balance = myTx.where((t) => t.status == 'Approved').fold(0.0, (s, t) => s + t.amount);
-              final pending = myTx.where((t) => t.status == 'Pending').fold(0.0, (s, t) => s + t.amount);
-              final totalEarned = myTx.fold(0.0, (s, t) => s + t.amount);
-              final propertyCommission = myTx.where((t) => t.type == 'Property Verification' && t.status == 'Approved').fold(0.0, (s, t) => s + t.amount);
-              final tenantCommission = myTx.where((t) => t.type == 'Tenant Referral' && t.status == 'Approved').fold(0.0, (s, t) => s + t.amount);
+              final pending = walletAsync.maybeWhen(
+                data: (wallet) => wallet.pendingBalance.toDouble(),
+                orElse: () => 0.0,
+              );
+              final totalEarned = myTx
+                  .where((t) => t.type == 'commission' && t.amount > 0)
+                  .fold(0.0, (sum, transaction) => sum + transaction.amount);
+              final propertyCommission = myTx
+                  .where(
+                    (t) =>
+                        t.sourceEvent?.toLowerCase().contains('property') ==
+                            true &&
+                        t.status == 'available',
+                  )
+                  .fold(0.0, (s, t) => s + t.amount);
+              final tenantCommission = myTx
+                  .where(
+                    (t) =>
+                        t.sourceEvent?.toLowerCase().contains('tenant') ==
+                            true &&
+                        t.status == 'available',
+                  )
+                  .fold(0.0, (s, t) => s + t.amount);
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -142,20 +179,39 @@ class _AgentOverview extends ConsumerWidget {
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
-                          border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          color: Colors.red.withValues(alpha: 0.1),
+                          border: Border.all(
+                            color: Colors.red.withValues(alpha: 0.3),
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.red,
+                              size: 24,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Wallet Frozen', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14)),
-                                  Text('Your wallet has been frozen pending dispute resolution.', style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+                                  const Text(
+                                    'Wallet Frozen',
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Your wallet has been frozen pending dispute resolution.',
+                                    style: TextStyle(
+                                      color: Colors.red.shade700,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -167,13 +223,22 @@ class _AgentOverview extends ConsumerWidget {
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
+                          colors: [
+                            theme.colorScheme.primary,
+                            const Color(0xFF5D3F6A),
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
-                          BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.3,
+                            ),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
                         ],
                       ),
                       child: Column(
@@ -182,48 +247,111 @@ class _AgentOverview extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Available Balance', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                              const Text(
+                                'Available Balance',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(colors: agentProfile.tier.gradient),
+                                  gradient: LinearGradient(
+                                    colors: agentProfile.tier.gradient,
+                                  ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(agentProfile.tier.icon, color: Colors.white, size: 12),
+                                    Icon(
+                                      agentProfile.tier.icon,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
                                     const SizedBox(width: 4),
-                                    Text('${agentProfile.tier.label} Agent', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                    Text(
+                                      '${agentProfile.tier.label} Agent',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 6),
-                          Text(CurrencyFormatter.formatCFA(balance), style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold)),
+                          Text(
+                            CurrencyFormatter.formatCFA(balance),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 34,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 16),
                           Row(
                             children: [
-                              Expanded(child: _BalanceStat(label: 'Pending (Lease)', value: CurrencyFormatter.formatCFA(pending), icon: Icons.hourglass_empty, iconColor: Colors.orangeAccent)),
-                              Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.2)),
-                              Expanded(child: _BalanceStat(label: 'Total Earned', value: CurrencyFormatter.formatCFA(totalEarned), icon: Icons.trending_up, iconColor: Colors.greenAccent)),
+                              Expanded(
+                                child: _BalanceStat(
+                                  label: 'Pending (Lease)',
+                                  value: CurrencyFormatter.formatCFA(pending),
+                                  icon: Icons.hourglass_empty,
+                                  iconColor: Colors.orangeAccent,
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 40,
+                                color: Colors.white.withValues(alpha: 0.2),
+                              ),
+                              Expanded(
+                                child: _BalanceStat(
+                                  label: 'Total Earned',
+                                  value: CurrencyFormatter.formatCFA(
+                                    totalEarned,
+                                  ),
+                                  icon: Icons.trending_up,
+                                  iconColor: Colors.greenAccent,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 20),
                           ElevatedButton.icon(
                             onPressed: agentProfile.isWalletFrozen
                                 ? () {
-                                    context.showErrorToast('Withdrawals are temporarily disabled for your account. Contact Admin.');
+                                    context.showErrorToast(
+                                      'Withdrawals are temporarily disabled for your account. Contact Admin.',
+                                    );
                                   }
                                 : () => _showWithdrawalSheet(context),
-                            icon: Icon(agentProfile.isWalletFrozen ? Icons.lock : Icons.account_balance_wallet, size: 18),
-                            label: Text(agentProfile.isWalletFrozen ? 'Wallet Frozen' : 'Withdraw via Mobile Money'),
+                            icon: Icon(
+                              agentProfile.isWalletFrozen
+                                  ? Icons.lock
+                                  : Icons.account_balance_wallet,
+                              size: 18,
+                            ),
+                            label: Text(
+                              agentProfile.isWalletFrozen
+                                  ? 'Wallet Frozen'
+                                  : 'Withdraw via Mobile Money',
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: theme.colorScheme.primary,
                               minimumSize: const Size(double.infinity, 48),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                               elevation: 0,
                             ),
                           ),
@@ -238,9 +366,21 @@ class _AgentOverview extends ConsumerWidget {
                       icon: Icons.group_add,
                       color: Colors.orange,
                       children: [
-                        _StatRow(label: 'Tenants Referred', value: '${agentProfile.tenantsReferred}'),
-                        _StatRow(label: 'Qualified Tenants', value: '${agentProfile.propertiesVerified}', valueColor: Colors.green),
-                        _StatRow(label: 'Tenant Commission', value: CurrencyFormatter.formatCFA(tenantCommission), valueColor: Colors.green, isBold: true),
+                        _StatRow(
+                          label: 'Tenants Referred',
+                          value: '${agentProfile.tenantsReferred}',
+                        ),
+                        _StatRow(
+                          label: 'Qualified Tenants',
+                          value: '${agentProfile.propertiesVerified}',
+                          valueColor: Colors.green,
+                        ),
+                        _StatRow(
+                          label: 'Tenant Commission',
+                          value: CurrencyFormatter.formatCFA(tenantCommission),
+                          valueColor: Colors.green,
+                          isBold: true,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -253,14 +393,45 @@ class _AgentOverview extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            Expanded(child: _MiniStat(label: 'Submitted', value: '${agentProfile.propertiesVerified}', color: Colors.blue)),
-                            Expanded(child: _MiniStat(label: 'Verified', value: '${agentProfile.propertiesVerified}', color: Colors.green)),
-                            Expanded(child: _MiniStat(label: 'Rejected', value: '${agentProfile.propertiesVerified}', color: Colors.red)),
-                            Expanded(child: _MiniStat(label: 'Pending', value: '${agentProfile.propertiesVerified}', color: Colors.orange)),
+                            Expanded(
+                              child: _MiniStat(
+                                label: 'Submitted',
+                                value: '${agentProfile.propertiesVerified}',
+                                color: Colors.blue,
+                              ),
+                            ),
+                            Expanded(
+                              child: _MiniStat(
+                                label: 'Verified',
+                                value: '${agentProfile.propertiesVerified}',
+                                color: Colors.green,
+                              ),
+                            ),
+                            Expanded(
+                              child: _MiniStat(
+                                label: 'Rejected',
+                                value: '${agentProfile.propertiesVerified}',
+                                color: Colors.red,
+                              ),
+                            ),
+                            Expanded(
+                              child: _MiniStat(
+                                label: 'Pending',
+                                value: '${agentProfile.propertiesVerified}',
+                                color: Colors.orange,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _StatRow(label: 'Property Commission', value: CurrencyFormatter.formatCFA(propertyCommission), valueColor: Colors.green, isBold: true),
+                        _StatRow(
+                          label: 'Property Commission',
+                          value: CurrencyFormatter.formatCFA(
+                            propertyCommission,
+                          ),
+                          valueColor: Colors.green,
+                          isBold: true,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -269,8 +440,17 @@ class _AgentOverview extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Recent Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        TextButton(onPressed: () {}, child: const Text('See All')),
+                        const Text(
+                          'Recent Transactions',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('See All'),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -285,7 +465,7 @@ class _AgentOverview extends ConsumerWidget {
       ),
     );
   }
-  
+
   void _showWithdrawalSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -302,7 +482,12 @@ class _BalanceStat extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
 
-  const _BalanceStat({required this.label, required this.value, required this.icon, required this.iconColor});
+  const _BalanceStat({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.iconColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -315,11 +500,22 @@ class _BalanceStat extends StatelessWidget {
             children: [
               Icon(icon, color: iconColor, size: 14),
               const SizedBox(width: 4),
-              Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white70, fontSize: 11),
+              ),
             ],
           ),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -332,7 +528,12 @@ class _SectionCard extends StatelessWidget {
   final Color color;
   final List<Widget> children;
 
-  const _SectionCard({required this.title, required this.icon, required this.color, required this.children});
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -341,7 +542,12 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,11 +556,20 @@ class _SectionCard extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: Icon(icon, color: color, size: 18),
               ),
               const SizedBox(width: 12),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -371,7 +586,12 @@ class _StatRow extends StatelessWidget {
   final Color? valueColor;
   final bool isBold;
 
-  const _StatRow({required this.label, required this.value, this.valueColor, this.isBold = false});
+  const _StatRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.isBold = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -381,7 +601,14 @@ class _StatRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-          Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.w600, fontSize: 14, color: valueColor ?? Colors.black87)),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+              fontSize: 14,
+              color: valueColor ?? Colors.black87,
+            ),
+          ),
         ],
       ),
     );
@@ -393,15 +620,30 @@ class _MiniStat extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _MiniStat({required this.label, required this.value, required this.color});
+  const _MiniStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: color)),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: color,
+          ),
+        ),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10), textAlign: TextAlign.center),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.grey, fontSize: 10),
+          textAlign: TextAlign.center,
+        ),
       ],
     );
   }
@@ -413,12 +655,17 @@ class _TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = tx.status == 'Approved' ? Colors.green
-        : tx.status == 'Paid' ? Colors.blue
-        : tx.status == 'Rejected' ? Colors.red
+    final statusColor = tx.status == 'available'
+        ? Colors.green
+        : tx.status == 'paid'
+        ? Colors.blue
+        : tx.status == 'failed'
+        ? Colors.red
         : Colors.orange;
-    final icon = tx.type == 'Property Verification' ? Icons.home_work
-        : tx.type == 'Tenant Referral' ? Icons.person_add
+    final icon = tx.displayType == 'Property Commission'
+        ? Icons.home_work
+        : tx.displayType == 'Tenant Referral'
+        ? Icons.person_add
         : Icons.account_balance_wallet;
 
     return Container(
@@ -433,7 +680,10 @@ class _TransactionTile extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Icon(icon, color: statusColor, size: 20),
           ),
           const SizedBox(width: 12),
@@ -441,8 +691,23 @@ class _TransactionTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tx.type, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(tx.status, style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold)),
+                Text(
+                  tx.displayType,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  tx.status.toUpperCase(),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),
@@ -450,10 +715,19 @@ class _TransactionTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                tx.type == 'Mobile Withdrawal' ? '- ${CurrencyFormatter.formatCFA(tx.amount)}' : '+ ${CurrencyFormatter.formatCFA(tx.amount)}',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: tx.type == 'Mobile Withdrawal' ? Colors.red : Colors.green),
+                tx.isWithdrawal
+                    ? '- ${CurrencyFormatter.formatCFA(tx.amount)}'
+                    : '+ ${CurrencyFormatter.formatCFA(tx.amount)}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: tx.isWithdrawal ? Colors.red : Colors.green,
+                ),
               ),
-              Text('${tx.createdAt.day}/${tx.createdAt.month}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+              Text(
+                '${tx.createdAt.day}/${tx.createdAt.month}',
+                style: const TextStyle(color: Colors.grey, fontSize: 11),
+              ),
             ],
           ),
         ],
@@ -462,17 +736,18 @@ class _TransactionTile extends StatelessWidget {
   }
 }
 
-class _WithdrawalSheet extends StatefulWidget {
+class _WithdrawalSheet extends ConsumerStatefulWidget {
   const _WithdrawalSheet();
 
   @override
-  State<_WithdrawalSheet> createState() => _WithdrawalSheetState();
+  ConsumerState<_WithdrawalSheet> createState() => _WithdrawalSheetState();
 }
 
-class _WithdrawalSheetState extends State<_WithdrawalSheet> {
+class _WithdrawalSheetState extends ConsumerState<_WithdrawalSheet> {
   String _selectedProvider = 'MTN MoMo';
   final _amountController = TextEditingController();
   final _phoneController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -485,7 +760,12 @@ class _WithdrawalSheetState extends State<_WithdrawalSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -495,13 +775,31 @@ class _WithdrawalSheetState extends State<_WithdrawalSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             const SizedBox(height: 20),
-            const Text('Withdraw Earnings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text(
+              'Withdraw Earnings',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 6),
-            const Text('Funds will be sent within 24 hours.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+            const Text(
+              'Funds will be sent within 24 hours.',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
             const SizedBox(height: 24),
-            const Text('Select Provider', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text(
+              'Select Provider',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 12),
             Row(
               children: ['MTN MoMo', 'Orange Money'].map((provider) {
@@ -513,11 +811,27 @@ class _WithdrawalSheetState extends State<_WithdrawalSheet> {
                       margin: const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        border: Border.all(color: isSelected ? theme.colorScheme.primary : Colors.grey.shade200, width: 2),
+                        border: Border.all(
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : Colors.grey.shade200,
+                          width: 2,
+                        ),
                         borderRadius: BorderRadius.circular(12),
-                        color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.05) : Colors.white,
+                        color: isSelected
+                            ? theme.colorScheme.primary.withValues(alpha: 0.05)
+                            : Colors.white,
                       ),
-                      child: Text(provider, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? theme.colorScheme.primary : Colors.grey)),
+                      child: Text(
+                        provider,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : Colors.grey,
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -531,7 +845,9 @@ class _WithdrawalSheetState extends State<_WithdrawalSheet> {
                 labelText: 'Phone Number',
                 hintText: '+237 6XX XXX XXX',
                 prefixIcon: const Icon(Icons.phone),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -542,22 +858,79 @@ class _WithdrawalSheetState extends State<_WithdrawalSheet> {
                 labelText: 'Amount (FCFA)',
                 hintText: 'Min. 1,000 FCFA',
                 prefixIcon: const Icon(Icons.payments),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.showSuccessToast('Withdrawal request submitted! Funds arrive within 24h.');
-              },
+              onPressed: _isSubmitting
+                  ? null
+                  : () async {
+                      final amount = int.tryParse(
+                        _amountController.text.trim(),
+                      );
+                      final phone = _phoneController.text.trim();
+                      if (amount == null || amount <= 0 || phone.isEmpty) {
+                        context.showErrorToast(
+                          'Enter a valid amount and phone number.',
+                        );
+                        return;
+                      }
+                      final navigator = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(context);
+                      setState(() => _isSubmitting = true);
+                      try {
+                        await ref
+                            .read(agentRepositoryProvider)
+                            .requestWithdrawal(
+                              amount: amount,
+                              phoneNumber: phone,
+                              paymentMethod: _selectedProvider == 'MTN MoMo'
+                                  ? 'MTN_MOMO'
+                                  : 'ORANGE_MONEY',
+                            );
+                        if (!mounted) return;
+                        ref.invalidate(agentTransactionsProvider);
+                        ref.invalidate(currentAgentProfileProvider);
+                        ref.invalidate(agentWalletProvider);
+                        navigator.pop();
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Withdrawal request submitted.'),
+                          ),
+                        );
+                      } catch (error) {
+                        if (mounted) {
+                          setState(() => _isSubmitting = false);
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(error.toString())),
+                          );
+                        }
+                      }
+                    },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 52),
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-              child: const Text('Confirm Withdrawal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text(
+                      'Confirm Withdrawal',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ],
         ),

@@ -14,7 +14,8 @@ class ApiEndpoints {
   static String get refreshToken => '$_base/auth/refresh';
   static String get me => '$_base/auth/me';
   static String get passwordReset => '$_base/auth/password-reset';
-  static String get passwordResetConfirm => '$_base/auth/password-reset/confirm';
+  static String get passwordResetConfirm =>
+      '$_base/auth/password-reset/confirm';
   static String get changePassword => '$_base/auth/change-password';
 
   // User Profile
@@ -22,16 +23,25 @@ class ApiEndpoints {
 
   // Properties
   static String get properties => '$_base/properties';
+  static String get videoFeed => '$_base/properties/feed/video';
   static String property(String id) => '$_base/properties/$id';
-  static String propertyVerification(String id) => '$_base/properties/$id/verification';
-  static String confirmAvailability(String id) => '$_base/properties/$id/confirm-availability';
+  static String propertyLike(String id) => '$_base/properties/$id/like';
+  static String propertyReshare(String id) => '$_base/properties/$id/reshare';
+  static String propertyComments(String id) => '$_base/properties/$id/comments';
+  static String propertyVerification(String id) =>
+      '$_base/properties/$id/verification';
+  static String confirmAvailability(String id) =>
+      '$_base/properties/$id/confirm-availability';
 
   // Applications
   static String get applications => '$_base/applications';
   static String application(String id) => '$_base/applications/$id';
-  static String approveApplication(String id) => '$_base/applications/$id/approve';
-  static String rejectApplication(String id) => '$_base/applications/$id/reject';
-  static String withdrawApplication(String id) => '$_base/applications/$id/withdraw';
+  static String approveApplication(String id) =>
+      '$_base/applications/$id/approve';
+  static String rejectApplication(String id) =>
+      '$_base/applications/$id/reject';
+  static String withdrawApplication(String id) =>
+      '$_base/applications/$id/withdraw';
 
   // Leases
   static String get leases => '$_base/leases';
@@ -52,16 +62,22 @@ class ApiEndpoints {
   static String get payments => '$_base/payments';
   static String payment(String id) => '$_base/payments/$id';
   static String paymentStatus(String id) => '$_base/payments/$id/status';
+  static String get landlordTransactions =>
+      '$_base/payments/landlord-transactions';
 
   // Subscriptions
   static String get subscriptions => '$_base/subscriptions';
   static String subscription(String id) => '$_base/subscriptions/$id';
-  static String subscriptionStats(String id) => '$_base/subscriptions/$id/stats';
+  static String subscriptionStats(String id) =>
+      '$_base/subscriptions/$id/stats';
   static String get subscriptionPlans => '$_base/subscriptions/plans';
   static String get mySubscription => '$_base/subscriptions/me';
 
   // Notifications
   static String get notifications => '$_base/notifications';
+  static String get messageConversations => '$_base/messages/conversations';
+  static String messagesRoom(String roomId) => '$_base/messages/$roomId';
+  static String messagesRead(String roomId) => '$_base/messages/$roomId/read';
   static String notification(String id) => '$_base/notifications/$id';
   static String get notificationsReadAll => '$_base/notifications/read-all';
   static String notificationRead(String id) => '$_base/notifications/$id/read';
@@ -72,15 +88,19 @@ class ApiEndpoints {
 
   // Reviews
   static String get reviews => '$_base/reviews';
-  static String propertyReviews(String propertyId) => '$_base/reviews/property/$propertyId';
-  static String landlordReviews(String landlordId) => '$_base/reviews/landlord/$landlordId';
+  static String propertyReviews(String propertyId) =>
+      '$_base/reviews/property/$propertyId';
+  static String landlordReviews(String landlordId) =>
+      '$_base/reviews/landlord/$landlordId';
 
   // Agents
   static String get agentApplications => '$_base/agent-applications';
   static String get myAgentApplication => '$_base/agent-applications/me';
   static String agentApplication(String id) => '$_base/agent-applications/$id';
-  static String approveAgent(String id) => '$_base/agent-applications/$id/approve';
-  static String rejectAgent(String id) => '$_base/agent-applications/$id/reject';
+  static String approveAgent(String id) =>
+      '$_base/agent-applications/$id/approve';
+  static String rejectAgent(String id) =>
+      '$_base/agent-applications/$id/reject';
 
   // Commissions
   static String get commissions => '$_base/commissions';
@@ -90,12 +110,29 @@ class ApiEndpoints {
   static String get wallet => '$_base/wallet';
   static String get withdrawals => '$_base/wallet/withdrawals';
   static String withdrawal(String id) => '$_base/wallet/withdrawals/$id';
-  static String freezeWallet(String agentId) => '$_base/admin/agents/$agentId/wallet/freeze';
-  static String unfreezeWallet(String agentId) => '$_base/admin/agents/$agentId/wallet/unfreeze';
+  static String freezeWallet(String agentId) =>
+      '$_base/admin/agents/$agentId/wallet/freeze';
+  static String unfreezeWallet(String agentId) =>
+      '$_base/admin/agents/$agentId/wallet/unfreeze';
 
   // Admin
   static String get adminUsers => '$_base/admin/users';
   static String adminUser(String id) => '$_base/admin/users/$id';
+  static String get adminTransactions => '$_base/admin/transactions';
   static String get adminProperties => '$_base/admin/properties';
   static String get adminAgents => '$_base/admin/agents';
+  static String get agents => '$_base/agents';
+  static String get agentProfile => '$_base/agents/profile';
+  static String get agentKyc => '$_base/agents/kyc';
+  static String get agentMyKyc => '$_base/agents/kyc/me';
+  static String get agentWallet => '$_base/agents/wallet';
+  static String get agentWithdrawals => '$_base/agents/wallet/withdrawals';
+  static String get agentCommissions => '$_base/agents/commissions';
+  static String get agentWithdraw => '$_base/agents/wallet/withdraw';
+    static String get tenantWallet => '$_base/tenant-wallet';
+    static String get tenantWalletApplyToRent => '$_base/tenant-wallet/apply-to-rent';
+    static String get tenantWalletWithdraw => '$_base/tenant-wallet/withdraw';
+  static String get rnlpMe => '$_base/rnlp/me';
+  static String rnlpInstalmentPayment(String id) =>
+      '$_base/rnlp/instalments/$id/pay';
 }

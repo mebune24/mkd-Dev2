@@ -1,11 +1,21 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { propertyService } from '../services/PropertyService';
+import { propertyFeedService } from '../services/PropertyFeedService';
 
 const handle = (res: Response, err: any) => {
   const status = err?.status || 500;
   console.error('[PropertyController]', err);
   return res.status(status).json({ message: err?.message || 'Internal server error' });
+};
+
+// GET /api/properties/feed/video
+export const getVideoFeed = async (req: AuthRequest, res: Response) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    return res.json(await propertyFeedService.getVideoFeed(page, limit, req.user?.userId));
+  } catch (err) { return handle(res, err); }
 };
 
 // GET /api/properties

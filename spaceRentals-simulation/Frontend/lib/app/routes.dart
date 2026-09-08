@@ -32,6 +32,12 @@ import '../features/admin/admin_tenants_screen.dart';
 import '../features/admin/users_screen.dart';
 import '../features/admin/kyc_management_screen.dart';
 import '../features/admin/admin_agents_screen.dart';
+import '../features/admin/disputes_screen.dart';
+import '../features/admin/listings_screen.dart';
+import '../features/admin/transactions_screen.dart';
+import '../features/admin/reports_screen.dart';
+import '../features/admin/audit_logs_screen.dart';
+import '../features/admin/admin_management_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/agent/agent_onboarding_screen.dart';
 import '../features/agent/agent_dashboard.dart';
@@ -46,7 +52,11 @@ import '../features/landlord/landlord_maintenance_screen.dart';
 // ── Reusable transition builders ──────────────────────────────────────────────
 
 /// Slide up from bottom — used for full-screen detail pages & modals
-CustomTransitionPage<void> _slideUp(BuildContext context, GoRouterState state, Widget child) {
+CustomTransitionPage<void> _slideUp(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
@@ -54,10 +64,10 @@ CustomTransitionPage<void> _slideUp(BuildContext context, GoRouterState state, W
     reverseTransitionDuration: const Duration(milliseconds: 300),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.08),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+        position: Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero)
+            .animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
         child: FadeTransition(opacity: animation, child: child),
       );
     },
@@ -65,7 +75,11 @@ CustomTransitionPage<void> _slideUp(BuildContext context, GoRouterState state, W
 }
 
 /// Slide in from right — standard horizontal navigation push
-CustomTransitionPage<void> _slideRight(BuildContext context, GoRouterState state, Widget child) {
+CustomTransitionPage<void> _slideRight(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
@@ -73,13 +87,16 @@ CustomTransitionPage<void> _slideRight(BuildContext context, GoRouterState state
     reverseTransitionDuration: const Duration(milliseconds: 260),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0.12, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+        position: Tween<Offset>(begin: const Offset(0.12, 0), end: Offset.zero)
+            .animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
         child: FadeTransition(
           opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-            CurvedAnimation(parent: animation, curve: const Interval(0.0, 0.7, curve: Curves.easeOut)),
+            CurvedAnimation(
+              parent: animation,
+              curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+            ),
           ),
           child: child,
         ),
@@ -89,7 +106,11 @@ CustomTransitionPage<void> _slideRight(BuildContext context, GoRouterState state
 }
 
 /// Fade transition — used for dashboard swaps (login → home)
-CustomTransitionPage<void> _fade(BuildContext context, GoRouterState state, Widget child) {
+CustomTransitionPage<void> _fade(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
@@ -116,10 +137,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     // Deep linking: uses path URL strategy so links look like /tenant/property/123
     redirect: (context, state) {
       final authState = ref.read(authProvider);
-      
+
       if (authState.isLoading) return null; // wait
 
-      final hasAccess = authState.hasAccess;   // true for guests AND signed-in users
+      final hasAccess =
+          authState.hasAccess; // true for guests AND signed-in users
       final isGuest = authState.isGuest;
 
       final isGoingToSplash = state.matchedLocation == '/splash';
@@ -127,7 +149,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGoingToRegister = state.matchedLocation == '/register';
       final isGoingToForgot = state.matchedLocation == '/forgot-password';
 
-      final isAuthRoute = isGoingToLogin || isGoingToRegister || isGoingToForgot;
+      final isAuthRoute =
+          isGoingToLogin || isGoingToRegister || isGoingToForgot;
 
       // Not signed in and not a guest → force to login
       if (!hasAccess) {
@@ -145,7 +168,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         if (loc.startsWith('/tenant')) return null;
         if (loc == '/chatbot') return null;
         if (loc == '/agent/onboarding') return null;
-        if (loc == '/notifications') return null;
         return '/tenant';
       }
 
@@ -153,9 +175,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final session = authState.session!;
       if (isAuthRoute || isGoingToSplash) {
         switch (session.role) {
-          case Role.tenant: return '/tenant';
-          case Role.landlord: return '/landlord';
-          case Role.admin: return '/admin';
+          case Role.tenant:
+            return '/tenant';
+          case Role.landlord:
+            return '/landlord';
+          case Role.admin:
+            return '/admin';
           case Role.agent:
             // Route agents based on their KYC status
             if (session.isKycVerified) return '/agent/dashboard';
@@ -170,7 +195,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         if (loc.startsWith('/agent/kyc')) return null;
         if (loc.startsWith('/tenant')) return null;
         if (loc == '/chatbot') return null;
-        if (loc == '/notifications') return null;
         return '/agent/pending'; // block everything else
       }
 
@@ -179,7 +203,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (loc.startsWith('/tenant') && session.role != Role.tenant) {
         if (session.role == Role.landlord) return '/landlord';
         if (session.role == Role.admin) return '/admin';
-        if (session.role == Role.agent && session.isKycVerified) return '/agent/dashboard';
+        if (session.role == Role.agent && session.isKycVerified) {
+          return '/agent/dashboard';
+        }
       }
       if (loc.startsWith('/landlord') && session.role != Role.landlord) {
         if (session.role == Role.tenant) return '/tenant';
@@ -195,65 +221,95 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/onboarding',
-        pageBuilder: (context, state) => _fade(context, state, const OnboardingScreen()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const OnboardingScreen()),
       ),
       GoRoute(
         path: '/splash',
-        pageBuilder: (context, state) => _fade(context, state, const SplashScreen()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const SplashScreen()),
       ),
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => _fade(context, state, const LoginScreen()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const LoginScreen()),
       ),
       GoRoute(
         path: '/register',
-        pageBuilder: (context, state) => _slideRight(context, state, const RegisterScreen()),
+        pageBuilder: (context, state) =>
+            _slideRight(context, state, const RegisterScreen()),
       ),
       GoRoute(
         path: '/forgot-password',
-        pageBuilder: (context, state) => _slideRight(context, state, const ForgotPasswordScreen()),
+        pageBuilder: (context, state) =>
+            _slideRight(context, state, const ForgotPasswordScreen()),
       ),
 
       // ── Tenant ──────────────────────────────────────────────────────────────
       GoRoute(
         path: '/tenant',
-        pageBuilder: (context, state) => _fade(context, state, const TenantDashboard()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const TenantDashboard()),
         routes: [
           GoRoute(
             path: 'property/:id',
             pageBuilder: (context, state) {
               final property = state.extra as PropertyWithListing?;
-              if (property == null) return _fade(context, state, const TenantDashboard());
-              return _slideUp(context, state, PropertyDetails(property: property));
+              if (property == null) {
+                return _fade(context, state, const TenantDashboard());
+              }
+              return _slideUp(
+                context,
+                state,
+                PropertyDetails(property: property),
+              );
             },
           ),
           GoRoute(
             path: 'apply',
             pageBuilder: (context, state) {
               final property = state.extra as PropertyWithListing?;
-              if (property == null) return _fade(context, state, const TenantDashboard());
-              return _slideUp(context, state, RentalApplication(property: property));
+              if (property == null) {
+                return _fade(context, state, const TenantDashboard());
+              }
+              return _slideUp(
+                context,
+                state,
+                RentalApplication(property: property),
+              );
             },
           ),
           GoRoute(
             path: 'agreement',
             pageBuilder: (context, state) {
               final tenantId = state.extra as String? ?? 'guest';
-              return _slideRight(context, state, RentalAgreementScreen(tenantId: tenantId));
+              return _slideRight(
+                context,
+                state,
+                RentalAgreementScreen(tenantId: tenantId),
+              );
             },
           ),
           GoRoute(
             path: 'payments',
             pageBuilder: (context, state) {
               final tenantId = state.extra as String? ?? 'guest';
-              return _slideRight(context, state, PaymentsScreen(tenantId: tenantId));
+              return _slideRight(
+                context,
+                state,
+                PaymentsScreen(tenantId: tenantId),
+              );
             },
           ),
           GoRoute(
             path: 'rnlp',
             pageBuilder: (context, state) {
               final tenantId = state.extra as String? ?? 'guest';
-              return _slideRight(context, state, RnlpScreen(tenantId: tenantId));
+              return _slideRight(
+                context,
+                state,
+                RnlpScreen(tenantId: tenantId),
+              );
             },
           ),
           GoRoute(
@@ -263,11 +319,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'monetization',
-            pageBuilder: (context, state) => _slideRight(context, state, const TenantMonetizationScreen()),
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const TenantMonetizationScreen()),
           ),
           GoRoute(
             path: 'gigs',
-            pageBuilder: (context, state) => _slideRight(context, state, const TenantGigsScreen()),
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const TenantGigsScreen()),
           ),
 
           GoRoute(
@@ -275,7 +333,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) {
               final extra = state.extra as Map<String, dynamic>?;
               final showMap = extra?['showMap'] as bool? ?? false;
-              return _slideRight(context, state, PropertySearch(showMap: showMap));
+              return _slideRight(
+                context,
+                state,
+                PropertySearch(showMap: showMap),
+              );
             },
           ),
           GoRoute(
@@ -283,14 +345,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) {
               final categoryName = state.pathParameters['name'] ?? 'Category';
               final extra = state.extra as List<String>?;
-              return _slideRight(context, state, CategoryPropertiesScreen(categoryName: categoryName, propertyIds: extra));
+              return _slideRight(
+                context,
+                state,
+                CategoryPropertiesScreen(
+                  categoryName: categoryName,
+                  propertyIds: extra,
+                ),
+              );
             },
           ),
           GoRoute(
             path: 'lease/:id',
             pageBuilder: (context, state) {
               final applicationId = state.pathParameters['id'] ?? '';
-              return _slideUp(context, state, LeaseSigningScreen(applicationId: applicationId));
+              return _slideUp(
+                context,
+                state,
+                LeaseSigningScreen(applicationId: applicationId),
+              );
             },
           ),
         ],
@@ -299,41 +372,53 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // ── Landlord ─────────────────────────────────────────────────────────────
       GoRoute(
         path: '/landlord/kyc',
-        pageBuilder: (context, state) => _fade(context, state, const LandlordKYCScreen()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const LandlordKYCScreen()),
       ),
       GoRoute(
         path: '/landlord/pending',
-        pageBuilder: (context, state) => _fade(context, state, const LandlordPendingScreen()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const LandlordPendingScreen()),
       ),
       GoRoute(
         path: '/landlord',
-        pageBuilder: (context, state) => _fade(context, state, const LandlordDashboard()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const LandlordDashboard()),
         routes: [
           GoRoute(
             path: 'add-property',
-            pageBuilder: (context, state) => _slideUp(context, state, const AddProperty()),
+            pageBuilder: (context, state) =>
+                _slideUp(context, state, const AddProperty()),
           ),
           GoRoute(
             path: 'monetization',
-            pageBuilder: (context, state) => _slideRight(context, state, const LandlordMonetizationScreen()),
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const LandlordMonetizationScreen()),
           ),
           GoRoute(
             path: 'post-gig',
-            pageBuilder: (context, state) => _slideUp(context, state, const PostPropertyGigForm()),
+            pageBuilder: (context, state) =>
+                _slideUp(context, state, const PostPropertyGigForm()),
           ),
           GoRoute(
             path: 'agents/marketplace',
-            pageBuilder: (context, state) => _slideRight(context, state, const AgentMarketplaceScreen()),
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AgentMarketplaceScreen()),
           ),
           GoRoute(
             path: 'maintenance',
-            pageBuilder: (context, state) => _slideRight(context, state, const LandlordMaintenanceScreen()),
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const LandlordMaintenanceScreen()),
           ),
           GoRoute(
             path: 'lease/:id',
             pageBuilder: (context, state) {
               final applicationId = state.pathParameters['id'] ?? '';
-              return _slideUp(context, state, LeaseSigningScreen(applicationId: applicationId));
+              return _slideUp(
+                context,
+                state,
+                LeaseSigningScreen(applicationId: applicationId),
+              );
             },
           ),
         ],
@@ -342,27 +427,63 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // ── Admin ────────────────────────────────────────────────────────────────
       GoRoute(
         path: '/admin',
-        pageBuilder: (context, state) => _fade(context, state, const AdminDashboard()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const AdminDashboard()),
         routes: [
           GoRoute(
             path: 'landlords',
-            pageBuilder: (context, state) => _slideRight(context, state, const AdminLandlordsScreen()),
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AdminLandlordsScreen()),
           ),
           GoRoute(
             path: 'tenants',
-            pageBuilder: (context, state) => _slideRight(context, state, const AdminTenantsScreen()),
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AdminTenantsScreen()),
           ),
           GoRoute(
             path: 'agents',
-            pageBuilder: (context, state) => _slideRight(context, state, const AdminAgentsScreen()),
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AdminAgentsScreen()),
           ),
           GoRoute(
             path: 'users',
-            pageBuilder: (context, state) => _slideRight(context, state, const UsersScreen()),
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const UsersScreen()),
           ),
           GoRoute(
             path: 'kyc',
-            pageBuilder: (context, state) => _slideRight(context, state, const AdminKYCManagementScreen()),
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AdminKYCManagementScreen()),
+          ),
+          GoRoute(
+            path: 'disputes',
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const DisputesScreen()),
+          ),
+          GoRoute(
+            path: 'listings',
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AdminListingsScreen()),
+          ),
+          GoRoute(
+            path: 'transactions',
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const TransactionsScreen()),
+          ),
+          GoRoute(
+            path: 'reports',
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const ReportsScreen()),
+          ),
+          GoRoute(
+            path: 'audit-logs',
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AuditLogsScreen()),
+          ),
+          GoRoute(
+            path: 'management',
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AdminManagementScreen()),
           ),
         ],
       ),
@@ -370,36 +491,52 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // ── Agent ────────────────────────────────────────────────────────────────
       GoRoute(
         path: '/agent/onboarding',
-        pageBuilder: (context, state) => _slideUp(context, state, const AgentOnboardingScreen()),
+        pageBuilder: (context, state) =>
+            _slideUp(context, state, const AgentOnboardingScreen()),
       ),
       GoRoute(
         path: '/agent/kyc',
-        pageBuilder: (context, state) => _fade(context, state, const AgentKYCScreen()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const AgentKYCScreen()),
       ),
       GoRoute(
         path: '/agent/pending',
-        pageBuilder: (context, state) => _fade(context, state, const AgentKycPendingScreen()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const AgentKycPendingScreen()),
       ),
       GoRoute(
         path: '/agent/dashboard',
-        pageBuilder: (context, state) => _fade(context, state, const AgentDashboard()),
+        pageBuilder: (context, state) =>
+            _fade(context, state, const AgentDashboard()),
       ),
 
       // ── Shared ───────────────────────────────────────────────────────────────
       GoRoute(
         path: '/notifications',
-        pageBuilder: (context, state) => _slideRight(context, state, const NotificationsScreen()),
+        pageBuilder: (context, state) =>
+            _slideRight(context, state, const NotificationsScreen()),
       ),
       GoRoute(
         path: '/chatbot',
-        pageBuilder: (context, state) => _slideUp(context, state, const ChatbotScreen()),
+        pageBuilder: (context, state) =>
+            _slideUp(context, state, const ChatbotScreen()),
       ),
       GoRoute(
         path: '/chat/:id',
         pageBuilder: (context, state) {
-          final chatData = state.extra as Map<String, dynamic>? ??
-              {'id': state.pathParameters['id'], 'name': 'Chat', 'property': '', 'unread': 0};
-          return _slideRight(context, state, ChatDetailScreen(chatData: chatData));
+          final chatData =
+              state.extra as Map<String, dynamic>? ??
+              {
+                'id': state.pathParameters['id'],
+                'name': 'Chat',
+                'property': '',
+                'unread': 0,
+              };
+          return _slideRight(
+            context,
+            state,
+            ChatDetailScreen(chatData: chatData),
+          );
         },
       ),
     ],

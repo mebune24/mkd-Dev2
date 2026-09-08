@@ -9,6 +9,8 @@ class UserProfile {
   final String lastName;
   final Role role;
   final bool isActive;
+  final bool twoFactorEnabled;
+  final bool pushNotificationsEnabled;
   final DateTime createdAt;
 
   const UserProfile({
@@ -20,10 +22,12 @@ class UserProfile {
     required this.lastName,
     required this.role,
     required this.isActive,
+    this.twoFactorEnabled = false,
+    this.pushNotificationsEnabled = true,
     required this.createdAt,
   });
 
-  String get fullName => '$firstName $lastName';
+  String get fullName => '$firstName $lastName'.trim();
 }
 
 class TenantProfile {

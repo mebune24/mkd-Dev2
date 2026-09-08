@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/domain_providers.dart';
+import '../../../providers/di_providers.dart';
 import '../../../features/landlord/domain/kyc_submission.dart';
 import '../../../core/utils/ui_helpers.dart';
 
@@ -13,19 +14,29 @@ class AdminKYCManagementScreen extends ConsumerWidget {
     final submissionsAsync = ref.watch(kycSubmissionsProvider);
 
     return submissionsAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (err, stack) => Scaffold(body: Center(child: Text('Error loading KYC: $err'))),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, stack) =>
+          Scaffold(body: Center(child: Text('Error loading KYC: $err'))),
       data: (submissions) {
-        final pending = submissions.where((s) => s.status == 'pending').toList();
-        final approved = submissions.where((s) => s.status == 'approved' || s.status == 'verified').toList();
-        final rejected = submissions.where((s) => s.status == 'rejected').toList();
+        final pending = submissions
+            .where((s) => s.status == 'pending')
+            .toList();
+        final approved = submissions
+            .where((s) => s.status == 'approved' || s.status == 'verified')
+            .toList();
+        final rejected = submissions
+            .where((s) => s.status == 'rejected')
+            .toList();
 
         return DefaultTabController(
           length: 3,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('KYC Management',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+              title: const Text(
+                'KYC Management',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              ),
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: Colors.white,
               centerTitle: true,
@@ -105,37 +116,21 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
     setState(() => _isLoading = true);
     try {
       if (approve) {
-        // 1. Update KYC status in the provider
-        // ref.read(kycSubmissionsProvider.notifier).verifySubmission(widget.submission.userId);
-        // 2. Log the audit
-        // ref.read(auditLogProvider.notifier).addAudit(
-        //   'admin',
-        //   'admin',
-        //   'Approved KYC for ${widget.submission.userName} (${widget.submission.userEmail})',
-        // );
-        // 3. Add a notification for the agent
-        // ref.read(appNotificationsProvider.notifier).addNotification(
-        //   userId: widget.submission.userId,
-        //   title: '🎉 Agent Account Activated!',
-        //   body: 'Your KYC documents have been approved. You can now access your Agent Dashboard and start earning.',
-        //   type: 'kyc_approved',
-        // );
-        if (mounted) context.showSuccessToast('✅ ${widget.submission.userName} has been approved!');
+        await ref
+            .read(agentRepositoryProvider)
+            .approveKyc(widget.submission.id);
+        if (mounted) {
+          context.showSuccessToast(
+            '✅ ${widget.submission.userName} has been approved!',
+          );
+        }
       } else {
-        // ref.read(kycSubmissionsProvider.notifier).rejectSubmission(widget.submission.userId);
-        // ref.read(auditLogProvider.notifier).addAudit(
-        //   'admin',
-        //   'admin',
-        //   'Rejected KYC for ${widget.submission.userName} (${widget.submission.userEmail})',
-        // );
-        // ref.read(appNotificationsProvider.notifier).addNotification(
-        //   userId: widget.submission.userId,
-        //   title: '❌ KYC Application Rejected',
-        //   body: 'Your documents were not approved. Please resubmit with clear, valid documents.',
-        //   type: 'kyc_rejected',
-        // );
-        if (mounted) context.showErrorToast('❌ ${widget.submission.userName} rejected.');
+        await ref.read(agentRepositoryProvider).rejectKyc(widget.submission.id);
+        if (mounted) {
+          context.showErrorToast('❌ ${widget.submission.userName} rejected.');
+        }
       }
+      ref.invalidate(kycSubmissionsProvider);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -148,8 +143,8 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
     final statusColor = sub.status == 'pending'
         ? Colors.orange
         : (sub.status == 'approved' || sub.status == 'verified')
-            ? Colors.green
-            : Colors.red;
+        ? Colors.green
+        : Colors.red;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -164,9 +159,13 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  backgroundColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.1,
+                  ),
                   child: Text(
-                    sub.userName.isNotEmpty ? sub.userName[0].toUpperCase() : '?',
+                    sub.userName.isNotEmpty
+                        ? sub.userName[0].toUpperCase()
+                        : '?',
                     style: TextStyle(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
@@ -178,16 +177,28 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(sub.userName,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text(sub.userEmail,
-                          style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(
+                        sub.userName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        sub.userEmail,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -195,9 +206,10 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
                   child: Text(
                     sub.status.toUpperCase(),
                     style: TextStyle(
-                        color: statusColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11),
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
               ],
@@ -211,20 +223,30 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
             // Documents
             if (sub.documents.isNotEmpty) ...[
               const SizedBox(height: 12),
-              const Text('Documents:',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text(
+                'Documents:',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 6,
                 children: sub.documents.entries
-                    .map((e) => Chip(
-                          label: Text(e.key, style: const TextStyle(fontSize: 12)),
-                          backgroundColor: Colors.grey.shade100,
-                          avatar: const Icon(Icons.check_circle,
-                              color: Colors.green, size: 16),
-                          padding: const EdgeInsets.all(4),
-                        ))
+                    .map(
+                      (e) => Chip(
+                        label: Text(
+                          e.key,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        backgroundColor: Colors.grey.shade100,
+                        avatar: const Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                          size: 16,
+                        ),
+                        padding: const EdgeInsets.all(4),
+                      ),
+                    )
                     .toList(),
               ),
             ],
@@ -242,10 +264,12 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
                             icon: const Icon(Icons.close_rounded, size: 18),
                             label: const Text('Reject'),
                             style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                side: const BorderSide(color: Colors.red),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10))),
+                              foregroundColor: Colors.red,
+                              side: const BorderSide(color: Colors.red),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -255,10 +279,12 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
                             icon: const Icon(Icons.check_rounded, size: 18),
                             label: const Text('Approve'),
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10))),
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                           ),
                         ),
                       ],

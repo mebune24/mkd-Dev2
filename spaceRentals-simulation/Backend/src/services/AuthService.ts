@@ -16,7 +16,7 @@ export class AuthService {
     }
     const existing = await userRepository.findByEmail(email);
     if (existing) {
-      throw { status: 409, message: 'An account with this email already exists.' };
+      throw { status: 409, message: 'email already in use' };
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await userRepository.create({ name, email, passwordHash, role });

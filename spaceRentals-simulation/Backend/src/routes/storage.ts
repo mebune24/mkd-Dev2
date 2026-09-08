@@ -62,7 +62,7 @@ router.get('/signed-url', asyncHandler(async (req: Request | any, res: Response)
   // Basic authorization: path format is usually "userId/filename".
   // Check if the user is requesting their own file or is an admin.
   const pathUserId = path.split('/')[0];
-  if (pathUserId !== req.user.userId && req.user.role !== 'admin' && req.user.role !== 'agent') {
+  if (pathUserId !== req.user.userId && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Forbidden' });
   }
 
@@ -81,7 +81,7 @@ router.get('/download', asyncHandler(async (req: Request | any, res: Response) =
   }
 
   const pathUserId = path.split('/')[0];
-  if (pathUserId !== req.user.userId && req.user.role !== 'admin' && req.user.role !== 'agent') {
+  if (pathUserId !== req.user.userId && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Forbidden' });
   }
 

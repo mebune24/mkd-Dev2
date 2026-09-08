@@ -4,11 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared/models/enums.dart';
-import '../../models/user_model.dart';
 import '../../providers/locale_provider.dart';
 import '../../widgets/animated_loading_button.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import '../../core/utils/ui_helpers.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -30,7 +28,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   void initState() {
     super.initState();
     _animController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900));
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
     _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
     _animController.forward();
   }
@@ -45,10 +45,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   Future<void> _handleLogin() async {
     final isFr = ref.read(localeProvider).languageCode == 'fr';
-    
-    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty) {
       Fluttertoast.showToast(
-        msg: isFr ? 'Veuillez remplir tous les champs' : 'Please fill all input fields',
+        msg: isFr
+            ? 'Veuillez remplir tous les champs'
+            : 'Please fill all input fields',
         backgroundColor: Colors.orange,
       );
       return;
@@ -56,35 +59,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     if (!_formKey.currentState!.validate()) {
       Fluttertoast.showToast(
-        msg: isFr ? 'Veuillez corriger les erreurs de formulaire' : 'Please fix the form errors',
+        msg: isFr
+            ? 'Veuillez corriger les erreurs de formulaire'
+            : 'Please fix the form errors',
         backgroundColor: Colors.red,
       );
       return;
     }
-    
+
     try {
-      final success = await ref.read(authProvider.notifier).signIn(
-            _emailController.text.trim(),
-            _passwordController.text,
-          );
+      final success = await ref
+          .read(authProvider.notifier)
+          .signIn(_emailController.text.trim(), _passwordController.text);
       if (!mounted) return;
-      
+
       final authState = ref.read(authProvider);
       if (success && authState.session != null) {
         final user = authState.session!;
-        if (user.role == Role.tenant) { 
-          context.go('/tenant'); 
-        } else if (user.role == Role.landlord) { 
+        if (user.role == Role.tenant) {
+          context.go('/tenant');
+        } else if (user.role == Role.landlord) {
           // We don't have KYC status in UserSession anymore, that's in UserModel,
           // but for routing purposes, just route to landlord dashboard for now.
           context.go('/landlord');
-        } else if (user.role == Role.admin) { 
-          context.go('/admin'); 
+        } else if (user.role == Role.admin) {
+          context.go('/admin');
         } else if (user.role == Role.agent) {
-          context.go('/agent'); // Or wherever agents go
+          context.go('/agent/pending');
         }
       } else if (authState.error != null) {
-        Fluttertoast.showToast(msg: authState.error!, backgroundColor: Colors.red);
+        Fluttertoast.showToast(
+          msg: authState.error!,
+          backgroundColor: Colors.red,
+        );
       }
     } catch (e) {
       Fluttertoast.showToast(msg: e.toString(), backgroundColor: Colors.red);
@@ -162,25 +169,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       onTap: () => ref.read(localeProvider.notifier).toggle(),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3)),
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(isFr ? '🇫🇷' : '🇨🇲',
-                                style: const TextStyle(fontSize: 18)),
+                            Text(
+                              isFr ? '🇫🇷' : '🇨🇲',
+                              style: const TextStyle(fontSize: 18),
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               isFr ? 'FR' : 'EN',
                               style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12),
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -207,7 +220,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               width: 48,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.apartment_rounded, size: 48, color: Colors.white),
+                                  const Icon(
+                                    Icons.apartment_rounded,
+                                    size: 48,
+                                    color: Colors.white,
+                                  ),
                             ),
                           ),
                         ),
@@ -250,17 +267,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       Text(
                         isFr ? 'Connexion' : 'Welcome back',
                         style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5),
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         isFr
                             ? 'Connectez-vous à votre compte'
                             : 'Sign in to your account',
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 13),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: 24),
 
@@ -271,13 +291,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         icon: Icons.email_outlined,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return isFr ? 'L\'email est requis' : 'Email is required';
+                            return isFr
+                                ? 'L\'email est requis'
+                                : 'Email is required';
                           }
                           if (!value.contains('@')) {
-                            return isFr ? 'Email invalide' : 'Invalid email format';
+                            return isFr
+                                ? 'Email invalide'
+                                : 'Invalid email format';
                           }
                           return null;
-                        }
+                        },
                       ),
                       const SizedBox(height: 14),
 
@@ -289,10 +313,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         isPassword: true,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return isFr ? 'Le mot de passe est requis' : 'Password is required';
+                            return isFr
+                                ? 'Le mot de passe est requis'
+                                : 'Password is required';
                           }
                           return null;
-                        }
+                        },
                       ),
 
                       Align(
@@ -300,14 +326,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         child: TextButton(
                           onPressed: () => context.push('/forgot-password'),
                           style: TextButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4)),
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                          ),
                           child: Text(
                             isFr ? 'Mot de passe oublié?' : 'Forgot password?',
                             style: TextStyle(
-                                color: theme.colorScheme.primary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600),
+                              color: theme.colorScheme.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -319,14 +346,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           elevation: 0,
                         ),
                         child: Text(
                           isFr ? 'Se connecter' : 'Sign In',
                           style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold),
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
 
@@ -345,10 +374,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(48),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           side: BorderSide(
-                              color: theme.colorScheme.primary.withValues(
-                                  alpha: 0.4)),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.4,
+                            ),
+                          ),
                           foregroundColor: theme.colorScheme.primary,
                         ),
                       ),
@@ -364,7 +396,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             child: Text(
                               isFr ? 'ou se connecter avec' : 'or sign in with',
                               style: const TextStyle(
-                                  color: Colors.grey, fontSize: 11),
+                                color: Colors.grey,
+                                fontSize: 11,
+                              ),
                             ),
                           ),
                           const Expanded(child: Divider()),
@@ -381,22 +415,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             onTap: () => _socialSnack('Google'),
                             bgColor: Colors.white,
                             borderColor: Colors.grey.shade200,
-                            child: const FaIcon(FontAwesomeIcons.google, color: Color(0xFFDB4437), size: 24),
+                            child: const FaIcon(
+                              FontAwesomeIcons.google,
+                              color: Color(0xFFDB4437),
+                              size: 24,
+                            ),
                           ),
                           const SizedBox(width: 20),
                           _socialLogo(
                             onTap: () => _socialSnack('Facebook'),
                             bgColor: const Color(0xFF1877F2),
-                            child: const FaIcon(FontAwesomeIcons.facebookF,
-                                color: Colors.white, size: 24),
+                            child: const FaIcon(
+                              FontAwesomeIcons.facebookF,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
                           const SizedBox(width: 20),
                           _socialLogo(
                             onTap: () => _socialSnack('Instagram'),
                             bgColor: Colors.transparent,
                             isGradient: true,
-                            child: const FaIcon(FontAwesomeIcons.instagram,
-                                color: Colors.white, size: 28),
+                            child: const FaIcon(
+                              FontAwesomeIcons.instagram,
+                              color: Colors.white,
+                              size: 28,
+                            ),
                           ),
                         ],
                       ),
@@ -412,7 +456,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 ? "Pas encore de compte? "
                                 : "Don't have an account? ",
                             style: const TextStyle(
-                                color: Colors.grey, fontSize: 13),
+                              color: Colors.grey,
+                              fontSize: 13,
+                            ),
                           ),
                           GestureDetector(
                             onTap: () => context.go('/register'),
@@ -429,14 +475,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       ),
                       const SizedBox(height: 12),
 
-                      
                       // Admin Login link
                       Center(
                         child: TextButton.icon(
                           onPressed: () => _showAdminLoginModal(context, isFr),
-                          icon: const Icon(Icons.admin_panel_settings, size: 16),
+                          icon: const Icon(
+                            Icons.admin_panel_settings,
+                            size: 16,
+                          ),
                           label: Text(
-                            isFr ? 'Je suis un administrateur' : 'I am an Administrator',
+                            isFr
+                                ? 'Je suis un administrateur'
+                                : 'I am an Administrator',
                             style: const TextStyle(fontSize: 12),
                           ),
                           style: TextButton.styleFrom(
@@ -469,7 +519,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) {
           return Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            ),
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: const BoxDecoration(
@@ -485,11 +537,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.admin_panel_settings, color: Theme.of(context).colorScheme.primary, size: 28),
+                          Icon(
+                            Icons.admin_panel_settings,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 28,
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             isFr ? 'Accès Administrateur' : 'Admin Access',
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
@@ -501,8 +560,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    isFr 
-                        ? 'Connectez-vous pour accéder au tableau de bord administrateur.' 
+                    isFr
+                        ? 'Connectez-vous pour accéder au tableau de bord administrateur.'
                         : 'Sign in to access the admin dashboard.',
                     style: const TextStyle(color: Colors.grey, fontSize: 13),
                   ),
@@ -517,7 +576,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: TextFormField(
                       controller: adminPasswordController,
@@ -525,59 +590,91 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       decoration: InputDecoration(
                         labelText: isFr ? 'Mot de passe' : 'Password',
                         labelStyle: const TextStyle(fontSize: 13),
-                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey, size: 20),
+                        prefixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            adminObscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                            color: Colors.grey, size: 20,
+                            adminObscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            color: Colors.grey,
+                            size: 20,
                           ),
-                          onPressed: () => setState(() => adminObscurePassword = !adminObscurePassword),
+                          onPressed: () => setState(
+                            () => adminObscurePassword = !adminObscurePassword,
+                          ),
                         ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
                         filled: true,
                         fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: isLoading ? null : () async {
-                      setState(() => isLoading = true);
-                      try {
-                        final success = await ref.read(authProvider.notifier).signIn(
-                          adminEmailController.text,
-                          adminPasswordController.text,
-                        );
-                        if (!ctx.mounted) return;
-                        if (success) {
-                          Navigator.pop(ctx);
-                          router.go('/admin');
-                        } else {
-                          setState(() => isLoading = false);
-                          final error = ref.read(authProvider).error ?? 'Login failed';
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(content: Text(error)),
-                          );
-                        }
-                      } catch (e) {
-                        setState(() => isLoading = false);
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(content: Text('Error: $e')),
-                        );
-                      }
-                    },
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            setState(() => isLoading = true);
+                            try {
+                              final success = await ref
+                                  .read(authProvider.notifier)
+                                  .signIn(
+                                    adminEmailController.text,
+                                    adminPasswordController.text,
+                                  );
+                              if (!ctx.mounted) return;
+                              if (success) {
+                                Navigator.pop(ctx);
+                                router.go('/admin');
+                              } else {
+                                setState(() => isLoading = false);
+                                final error =
+                                    ref.read(authProvider).error ??
+                                    'Login failed';
+                                ScaffoldMessenger.of(
+                                  ctx,
+                                ).showSnackBar(SnackBar(content: Text(error)));
+                              }
+                            } catch (e) {
+                              setState(() => isLoading = false);
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     child: isLoading
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
-                        : Text(isFr ? 'Connexion Admin' : 'Admin Login', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                        : Text(
+                            isFr ? 'Connexion Admin' : 'Admin Login',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -656,7 +753,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 3),
-          )
+          ),
         ],
       ),
       child: TextFormField(
@@ -681,12 +778,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 )
               : null,
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
         keyboardType: isPassword
             ? TextInputType.visiblePassword

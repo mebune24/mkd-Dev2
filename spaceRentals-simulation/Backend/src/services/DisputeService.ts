@@ -42,6 +42,7 @@ export class DisputeService {
   async create(rentalId: string, title: string, description: string, userId: string) {
     const rental = await prisma.rental.findUnique({ where: { id: rentalId } });
     if (!rental) throw { status: 404, message: 'Rental not found' };
+    if (rental.status !== 'active') throw { status: 409, message: 'Only active rentals can be disputed.' };
 
     const isParty = rental.tenantId === userId || rental.landlordId === userId;
     if (!isParty) throw { status: 403, message: 'You are not a party to this rental' };

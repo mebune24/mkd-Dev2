@@ -3,12 +3,8 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../providers/auth_provider.dart';
-import 'package:space_rentals/providers/domain_providers.dart';
-import 'package:space_rentals/features/landlord/domain/kyc_submission.dart';
-import 'package:space_rentals/features/rentals/domain/dispute_record.dart';
-import 'package:space_rentals/features/agents/domain/agent_models.dart';
-import 'package:space_rentals/core/domain/audit_entry.dart';
+import '../../core/api/storage_service.dart';
+import '../../providers/di_providers.dart';
 import '../../widgets/animated_loading_button.dart';
 
 class AgentKYCScreen extends ConsumerStatefulWidget {
@@ -19,8 +15,6 @@ class AgentKYCScreen extends ConsumerStatefulWidget {
 }
 
 class _AgentKYCScreenState extends ConsumerState<AgentKYCScreen> {
-  bool _isLoading = false;
-
   final Map<String, String?> _uploadedDocs = {
     'id_card': null,
     'agency_license': null,
@@ -29,8 +23,11 @@ class _AgentKYCScreenState extends ConsumerState<AgentKYCScreen> {
 
   Future<void> _pickImage(String docKey) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
     if (pickedFile != null) {
       setState(() {
         _uploadedDocs[docKey] = pickedFile.path;
@@ -48,16 +45,19 @@ class _AgentKYCScreenState extends ConsumerState<AgentKYCScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agent Verification', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Agent Verification',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.close),
             onPressed: () {
-              context.go('/home'); // Send them back home if they cancel
+              context.go('/agent/pending');
             },
-          )
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -86,7 +86,10 @@ class _AgentKYCScreenState extends ConsumerState<AgentKYCScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            const Text('Required Documents', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              'Required Documents',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 16),
 
             _uploadTile(
@@ -107,47 +110,55 @@ class _AgentKYCScreenState extends ConsumerState<AgentKYCScreen> {
 
             const SizedBox(height: 40),
             AnimatedLoadingButton(
-              onPressed: _canSubmit() ? () async {
-                setState(() => _isLoading = true);
-                await Future.delayed(const Duration(seconds: 1));
-                
-                final user = ref.read(authProvider);
-                if (user != null) {
-                  Map<String, String> docs = {};
-                  docs['ID Card'] = _uploadedDocs['id_card']!;
-                  if (_uploadedDocs['agency_license'] != null) {
-                    docs['Agency License'] = _uploadedDocs['agency_license']!;
-                  }
-                  if (_uploadedDocs['tax_card'] != null) {
-                    docs['Taxpayer Card'] = _uploadedDocs['tax_card']!;
-                  }
-                  
-                  final submission = KYCSubmission(
-                    userId: user.session?.userId ?? 'unknown',
-                    userName: user.session?.fullName ?? 'Unknown',
-                    userEmail: user.session?.email ?? '',
-                    isPremium: false,
-                    status: 'pending',
-                    submittedAt: DateTime.now(),
-                    documents: docs,
-                  );
-                  
-                  // TODO: Connect this to api_agent_repository method: submitKyc()
-                  // ref.read(kycSubmissionsProvider.notifier).submit(submission);
-                }
-                
-                // TODO: When backend is connected, call API to update KYC status.
-                // For now, navigate to the pending screen directly.
-                if (mounted) context.go('/agent/pending');
-              } : () async {},
+              onPressed: _canSubmit()
+                  ? () async {
+                      final router = GoRouter.of(context);
+                      final messenger = ScaffoldMessenger.of(context);
+                      try {
+                        final idPath = await StorageService.instance.uploadFile(
+                          XFile(_uploadedDocs['id_card']!),
+                          'kyc-documents',
+                        );
+                        final businessPath =
+                            _uploadedDocs['agency_license'] == null
+                            ? null
+                            : await StorageService.instance.uploadFile(
+                                XFile(_uploadedDocs['agency_license']!),
+                                'kyc-documents',
+                              );
+                        await ref
+                            .read(agentRepositoryProvider)
+                            .submitKyc(
+                              nationalIdUrl: idPath,
+                              businessDocUrl: businessPath,
+                            );
+                        if (!mounted) return;
+                        router.go('/agent/pending');
+                      } catch (error) {
+                        if (mounted) {
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(error.toString())),
+                          );
+                        }
+                      }
+                    }
+                  : () async {},
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
-                backgroundColor: _canSubmit() ? theme.colorScheme.primary : Colors.grey,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                backgroundColor: _canSubmit()
+                    ? theme.colorScheme.primary
+                    : Colors.grey,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text(
                 'Submit for Verification',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -156,10 +167,14 @@ class _AgentKYCScreenState extends ConsumerState<AgentKYCScreen> {
     );
   }
 
-  Widget _uploadTile({required String title, required String docKey, required bool isOptional}) {
+  Widget _uploadTile({
+    required String title,
+    required String docKey,
+    required bool isOptional,
+  }) {
     final imagePath = _uploadedDocs[docKey];
     final isUploaded = imagePath != null;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -185,10 +200,7 @@ class _AgentKYCScreenState extends ConsumerState<AgentKYCScreen> {
             ),
             child: isUploaded
                 ? null
-                : const Icon(
-                    Icons.upload_file,
-                    color: Colors.grey,
-                  ),
+                : const Icon(Icons.upload_file, color: Colors.grey),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -198,19 +210,40 @@ class _AgentKYCScreenState extends ConsumerState<AgentKYCScreen> {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                     if (isOptional)
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0),
-                        child: Text('(Optional)', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                        child: Text(
+                          '(Optional)',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                       ),
                   ],
                 ),
                 if (!isUploaded)
-                  Text('Tap to upload document', style: TextStyle(color: Colors.grey.shade500, fontSize: 12))
+                  Text(
+                    'Tap to upload document',
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  )
                 else
-                  Text('Uploaded successfully', style: TextStyle(color: Colors.green.shade600, fontSize: 12)),
+                  Text(
+                    'Uploaded successfully',
+                    style: TextStyle(
+                      color: Colors.green.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
               ],
             ),
           ),

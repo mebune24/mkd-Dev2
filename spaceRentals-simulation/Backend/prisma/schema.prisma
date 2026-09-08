@@ -1,47 +1,56 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  name         String
+  id                       String   @id @default(uuid())
+  email                    String   @unique
+  passwordHash             String
+  name                     String
   firstName                String?
   lastName                 String?
   phone                    String?
-  avatarUrl                String?  // Base64 or external URL
+  bio                      String?
+  avatarUrl                String? // Base64 or external URL
   twoFactorEnabled         Boolean  @default(false)
   pushNotificationsEnabled Boolean  @default(true)
   role                     String // "admin", "landlord", "tenant", "agent"
-  status       String   @default("active") // "active", "suspended"
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
+  status                   String   @default("active") // "active", "suspended"
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @default(now()) @updatedAt
 
-  properties        Property[]         @relation("LandlordProperties")
-  applications      Application[]      @relation("TenantApplications")
-  agentVerification AgentVerification?
-  agentTransactions AgentTransaction[] @relation("AgentLedger")
-  platformFees      PlatformFee[]      @relation("LandlordFees")
-  transactions      Transaction[]      @relation("UserTransactions")
-  tenantLeases      Lease[]            @relation("TenantLeases")
-  landlordLeases    Lease[]            @relation("LandlordLeases")
-  tenantRentals     Rental[]           @relation("TenantRentals")
-  landlordRentals   Rental[]           @relation("LandlordRentals")
-  subscriptions     Subscription[]
-  openedDisputes    Dispute[]          @relation("OpenedDisputes")
-  passwordResetToken PasswordResetToken?
-  notifications     Notification[]
+  properties          Property[]           @relation("LandlordProperties")
+  applications        Application[]        @relation("TenantApplications")
+  agentVerification   AgentVerification?
+  agentTransactions   AgentTransaction[]   @relation("AgentLedger")
+  platformFees        PlatformFee[]        @relation("LandlordFees")
+  transactions        Transaction[]        @relation("UserTransactions")
+  tenantLeases        Lease[]              @relation("TenantLeases")
+  landlordLeases      Lease[]              @relation("LandlordLeases")
+  tenantRentals       Rental[]             @relation("TenantRentals")
+  rnlpContracts       RnlpContract[]       @relation("TenantRnlpContracts")
+  landlordRentals     Rental[]             @relation("LandlordRentals")
+  subscriptions       Subscription[]
+  openedDisputes      Dispute[]            @relation("OpenedDisputes")
+  passwordResetToken  PasswordResetToken?
+  notifications       Notification[]
   maintenanceRequests MaintenanceRequest[] @relation("TenantMaintenanceRequests")
-  reviewsGiven      Review[]           @relation("TenantReviews")
-  reviewsReceived   Review[]           @relation("LandlordReviews")
-  followers         Follow[]           @relation("UserFollowing")
-  following         Follow[]           @relation("UserFollowers")
+  reviewsGiven        Review[]             @relation("TenantReviews")
+  reviewsReceived     Review[]             @relation("LandlordReviews")
+  followers           Follow[]             @relation("UserFollowing")
+  following           Follow[]             @relation("UserFollowers")
+  comments            Comment[]            @relation("UserComments")
+  propertyLikes       PropertyLike[]
+  propertyReshares    PropertyReshare[]
+  tenantWallet        TenantWallet?
+  tenantWalletEntries TenantWalletEntry[]
+  sentMessages        Message[]            @relation("SentMessages")
+  receivedMessages    Message[]            @relation("ReceivedMessages")
 }
 
 model AgentVerification {
@@ -59,46 +68,50 @@ model AgentVerification {
 }
 
 model Property {
-  id                       String   @id @default(uuid())
+  id                       String    @id @default(uuid())
   landlordId               String
-  landlord                 User     @relation("LandlordProperties", fields: [landlordId], references: [id])
+  landlord                 User      @relation("LandlordProperties", fields: [landlordId], references: [id])
   title                    String
   description              String
   location                 String
   monthlyRent              Int
   deposit                  Int
-  status                   String   @default("available") // "draft", "available", "rented", "auto_unpublished"
+  status                   String    @default("available") // "draft", "available", "reserved", "rented", "auto_unpublished"
   amenities                String // JSON string
   images                   String // JSON string
   latitude                 Float?
   longitude                Float?
   h3Index                  String?
-  bedrooms                 Int      @default(0)
-  bathrooms                Int      @default(0)
-  areaSqM                  Float    @default(0)
-  furnished                Boolean  @default(false)
-  parkingSpaces            Int      @default(0)
-  hasWater                 Boolean  @default(false)
-  hasElectricity           Boolean  @default(false)
-  isFenced                 Boolean  @default(false)
-  closeToRoad              Boolean  @default(false)
-  securityMeans            String   @default("None")
-  category                 String   @default("Apartment")
-  acquisitionSource        String   @default("LANDLORD") // DIRECT, AGENT, LANDLORD, ADMIN, IMPORT
+  bedrooms                 Int       @default(0)
+  bathrooms                Int       @default(0)
+  areaSqM                  Float     @default(0)
+  furnished                Boolean   @default(false)
+  parkingSpaces            Int       @default(0)
+  hasWater                 Boolean   @default(false)
+  hasElectricity           Boolean   @default(false)
+  isFenced                 Boolean   @default(false)
+  closeToRoad              Boolean   @default(false)
+  securityMeans            String    @default("None")
+  category                 String    @default("Apartment")
+  acquisitionSource        String    @default("LANDLORD") // DIRECT, AGENT, LANDLORD, ADMIN, IMPORT
   acquisitionAgentId       String?
-  lastConfirmedAvailableAt DateTime @default(now())
-  videoUrls                String   @default("[]") // JSON array of video tour URLs
+  lastConfirmedAvailableAt DateTime  @default(now())
+  videoUrls                String    @default("[]") // JSON array of video tour URLs
   premiumBoostUntil        DateTime? // When set, this property is boosted to top of feed
-  microMarket              String?   // e.g. "Soa", "Bonamoussadi", "Bastos"
-  applicationFeeRequired   Boolean  @default(true) // 2500 XAF fee required to apply
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @default(now()) @updatedAt
+  microMarket              String? // e.g. "Soa", "Bonamoussadi", "Bastos"
+  applicationFeeRequired   Boolean   @default(true) // 2500 XAF fee required to apply
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @default(now()) @updatedAt
 
   applications         Application[]
   propertyVerification PropertyVerification?
   leases               Lease[]
   rentals              Rental[]
   reviews              Review[]
+  comments             Comment[]
+  likes                PropertyLike[]
+  reshares             PropertyReshare[]
+  messages             Message[]
 
   @@index([status])
   @@index([category])
@@ -121,42 +134,42 @@ model PropertyVerification {
 }
 
 model Application {
-  id           String   @id @default(uuid())
-  propertyId   String
-  property     Property @relation(fields: [propertyId], references: [id])
-  tenantId     String
-  tenant       User     @relation("TenantApplications", fields: [tenantId], references: [id])
-  status       String   @default("submitted") // "draft", "submitted", "under_review", "approved", "rejected", "withdrawn"
-  coverLetter  String?
-  landlordNote String?
+  id               String   @id @default(uuid())
+  propertyId       String
+  property         Property @relation(fields: [propertyId], references: [id])
+  tenantId         String
+  tenant           User     @relation("TenantApplications", fields: [tenantId], references: [id])
+  status           String   @default("submitted") // "draft", "submitted", "under_review", "approved", "rejected", "withdrawn"
+  coverLetter      String?
+  landlordNote     String?
   nationalIdUrl    String?
   proofOfIncomeUrl String?
-  submittedAt  DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
+  submittedAt      DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
 
   lease Lease?
 }
 
 model Lease {
-  id               String      @id @default(uuid())
-  applicationId    String      @unique
-  application      Application @relation(fields: [applicationId], references: [id])
-  propertyId       String
-  property         Property    @relation(fields: [propertyId], references: [id])
-  tenantId         String?
-  tenant           User?       @relation("TenantLeases", fields: [tenantId], references: [id])
-  landlordId       String?
-  landlord         User?       @relation("LandlordLeases", fields: [landlordId], references: [id])
-  status           String      @default("generated") // "generated", "pending_tenant", "pending_landlord", "partially_signed", "signed", "active"
-  documentUrl      String?
+  id                    String      @id @default(uuid())
+  applicationId         String      @unique
+  application           Application @relation(fields: [applicationId], references: [id])
+  propertyId            String
+  property              Property    @relation(fields: [propertyId], references: [id])
+  tenantId              String?
+  tenant                User?       @relation("TenantLeases", fields: [tenantId], references: [id])
+  landlordId            String?
+  landlord              User?       @relation("LandlordLeases", fields: [landlordId], references: [id])
+  status                String      @default("generated") // "generated", "pending_tenant", "pending_landlord", "partially_signed", "signed", "active"
+  documentUrl           String?
   tenantSignatureHash   String?
   landlordSignatureHash String?
   tenantSignedIp        String?
   landlordSignedIp      String?
-  tenantSignedAt   DateTime?
-  landlordSignedAt DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @default(now()) @updatedAt
+  tenantSignedAt        DateTime?
+  landlordSignedAt      DateTime?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @default(now()) @updatedAt
 
   payments Payment[]
   rental   Rental?
@@ -179,9 +192,43 @@ model Rental {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @default(now()) @updatedAt
 
-  platformFees PlatformFee[]
-  disputes     Dispute[]
+  platformFees        PlatformFee[]
+  disputes            Dispute[]
   maintenanceRequests MaintenanceRequest[]
+  rnlpContract        RnlpContract?
+}
+
+model RnlpContract {
+  id                String   @id @default(uuid())
+  rentalId          String   @unique
+  rental            Rental   @relation(fields: [rentalId], references: [id])
+  tenantId          String
+  tenant            User     @relation("TenantRnlpContracts", fields: [tenantId], references: [id])
+  financedAmount    Int
+  remainingBalance  Int
+  totalMonths       Int
+  monthlyInstalment Int
+  status            String   @default("active")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+
+  instalments RnlpInstalment[]
+}
+
+model RnlpInstalment {
+  id                String       @id @default(uuid())
+  contractId        String
+  contract          RnlpContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  installmentNumber Int
+  amount            Int
+  dueDate           DateTime
+  status            String       @default("due")
+  paidAt            DateTime?
+  providerTxId      String?      @unique
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @default(now()) @updatedAt
+
+  @@unique([contractId, installmentNumber])
 }
 
 model Subscription {
@@ -241,6 +288,46 @@ model AgentTransaction {
   createdAt      DateTime  @default(now())
 }
 
+model TenantWallet {
+  id           String              @id @default(uuid())
+  tenantId     String              @unique
+  tenant       User                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  referralCode String              @unique
+  balance      Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  entries      TenantWalletEntry[]
+  withdrawals  TenantWithdrawal[]
+}
+
+model TenantWalletEntry {
+  id          String       @id @default(uuid())
+  walletId    String
+  wallet      TenantWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type        String // "referral_bonus", "rent_credit", "withdrawal"
+  amount      Int // positive credit, negative debit
+  description String
+  referenceId String?
+  createdAt   DateTime     @default(now())
+  user        User?        @relation(fields: [userId], references: [id])
+  userId      String?
+
+  @@index([walletId, createdAt])
+}
+
+model TenantWithdrawal {
+  id           String       @id @default(uuid())
+  walletId     String
+  wallet       TenantWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount       Int
+  method       String // "MTN", "ORANGE", "BANK_CARD"
+  destination  String
+  status       String       @default("pending")
+  providerTxId String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
 model Transaction {
   id              String   @id @default(uuid())
   userId          String
@@ -272,7 +359,6 @@ model Dispute {
   updatedAt   DateTime @default(now()) @updatedAt
 }
 
-
 model PasswordResetToken {
   id        String   @id @default(uuid())
   userId    String   @unique
@@ -286,11 +372,11 @@ model Notification {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String   // "application_update", "lease_signed", "payment_due", "maintenance_update", "general"
+  type      String // "application_update", "lease_signed", "payment_due", "maintenance_update", "general"
   title     String
   body      String
   isRead    Boolean  @default(false)
-  metadata  String?  // JSON string for extra data
+  metadata  String? // JSON string for extra data
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -298,21 +384,21 @@ model Notification {
 }
 
 model MaintenanceRequest {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   rentalId     String
-  rental       Rental   @relation(fields: [rentalId], references: [id])
+  rental       Rental    @relation(fields: [rentalId], references: [id])
   tenantId     String
-  tenant       User     @relation("TenantMaintenanceRequests", fields: [tenantId], references: [id])
+  tenant       User      @relation("TenantMaintenanceRequests", fields: [tenantId], references: [id])
   title        String
   description  String
-  category     String   @default("General") // "Plumbing", "Electrical", "Structural", "Appliance", "General"
-  urgency      String   @default("Normal")  // "Low", "Normal", "High", "Emergency"
-  status       String   @default("open")    // "open", "acknowledged", "in_progress", "resolved", "closed"
-  images       String?  // JSON array of image URLs
+  category     String    @default("General") // "Plumbing", "Electrical", "Structural", "Appliance", "General"
+  urgency      String    @default("Normal") // "Low", "Normal", "High", "Emergency"
+  status       String    @default("open") // "open", "acknowledged", "in_progress", "resolved", "closed"
+  images       String? // JSON array of image URLs
   landlordNote String?
   resolvedAt   DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
 
   @@index([rentalId])
   @@index([status])
@@ -326,7 +412,7 @@ model Review {
   tenant     User     @relation("TenantReviews", fields: [tenantId], references: [id])
   landlordId String
   landlord   User     @relation("LandlordReviews", fields: [landlordId], references: [id])
-  rating     Int      // 1–5
+  rating     Int // 1–5
   comment    String?
   createdAt  DateTime @default(now())
 
@@ -341,10 +427,66 @@ model Follow {
   followingId String
   createdAt   DateTime @default(now())
 
-  follower  User @relation("UserFollowers",  fields: [followerId],  references: [id], onDelete: Cascade)
+  follower  User @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
   following User @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
   @@index([followerId])
   @@index([followingId])
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  content    String
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation("UserComments", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([propertyId])
+  @@index([createdAt])
+}
+
+model PropertyLike {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([propertyId, userId])
+  @@index([propertyId])
+}
+
+model PropertyReshare {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([propertyId, userId])
+  @@index([propertyId])
+}
+
+model Message {
+  id         String    @id @default(uuid())
+  roomId     String
+  senderId   String
+  receiverId String
+  propertyId String?
+  body       String
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  sender   User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User      @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  @@index([roomId, createdAt])
+  @@index([senderId, receiverId, createdAt])
+  @@index([receiverId, readAt])
 }

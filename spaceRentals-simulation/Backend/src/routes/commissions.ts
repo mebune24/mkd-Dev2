@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { requestWithdrawal, commissionWebhook } from '../controllers/commissionController';
+import { commissionWebhook } from '../controllers/commissionController';
+import { requestWithdrawal } from '../controllers/agentController';
 import { authenticate, requireAgent } from '../middleware/authMiddleware';
 
 const router = Router();

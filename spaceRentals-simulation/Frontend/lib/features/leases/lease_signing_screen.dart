@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import '../../features/leases/domain/lease.dart';
 import '../../providers/lease_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared/models/enums.dart';
-import '../../core/utils/currency_formatter.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../providers/di_providers.dart';
 import '../../core/utils/ui_helpers.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:signature/signature.dart';
+import 'package:flutter/services.dart';
 
 // ── Provider: load a lease by its own ID ─────────────────────────────────────
 final leaseByIdProvider = FutureProvider.family<Lease?, String>((ref, leaseId) async {
@@ -46,6 +46,17 @@ class LeaseSigningScreen extends ConsumerStatefulWidget {
 class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
   bool _hasReadDocument = false;
   bool _isSigning = false;
+  final SignatureController _signatureController = SignatureController(
+    penStrokeWidth: 3,
+    penColor: Colors.black,
+    exportBackgroundColor: Colors.transparent,
+  );
+
+  @override
+  void dispose() {
+    _signatureController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,11 +148,9 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
             const SizedBox(height: 16),
           ],
 
-          // ── Consent Checkbox ─────────────────────────────────────────
+          // ── Signature Canvas ─────────────────────────────────────────
           if (canSign && !alreadySigned) ...[
-            _buildConsentCheckbox(theme),
-            const SizedBox(height: 20),
-            _buildSignButton(lease, session, theme),
+            if (!_hasReadDocument) _buildConsentCheckbox(theme) else _buildSignaturePad(lease, session, theme),
           ],
 
           // ── Already Signed ───────────────────────────────────────────
@@ -302,52 +311,118 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
   }
 
   Widget _buildConsentCheckbox(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Checkbox(
-            value: _hasReadDocument,
-            onChanged: (v) => setState(() => _hasReadDocument = v ?? false),
-            activeColor: theme.colorScheme.primary,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
           ),
-          const SizedBox(width: 4),
-          const Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(top: 12),
-              child: Text(
-                'I confirm that I have read and understood the full lease agreement and agree to be legally bound by its terms.',
-                style: TextStyle(fontSize: 13, height: 1.5),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Checkbox(
+                value: _hasReadDocument,
+                onChanged: (v) {
+                  setState(() => _hasReadDocument = v ?? false);
+                  if (v == true) HapticFeedback.mediumImpact();
+                },
+                activeColor: theme.colorScheme.primary,
               ),
-            ),
+              const SizedBox(width: 4),
+              const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 12),
+                  child: Text(
+                    'I confirm that I have read and understood the full lease agreement and agree to be legally bound by its terms.',
+                    style: TextStyle(fontSize: 13, height: 1.5),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton.icon(
+          onPressed: _hasReadDocument ? () {} : null,
+          icon: const Icon(Icons.arrow_downward),
+          label: const Text('Proceed to Sign'),
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildSignButton(Lease lease, dynamic session, ThemeData theme) {
-    return ElevatedButton.icon(
-      onPressed: (!_hasReadDocument || _isSigning)
-          ? null
-          : () => _signLease(lease, session),
-      icon: _isSigning
-          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-          : const Icon(Icons.draw),
-      label: Text(_isSigning ? 'Signing…' : 'Sign Electronically'),
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: Colors.grey.shade300,
-      ),
+  Widget _buildSignaturePad(Lease lease, dynamic session, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Draw your signature below', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        Container(
+          height: 200,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3), width: 2),
+            boxShadow: [BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.1), blurRadius: 10)],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Signature(
+              controller: _signatureController,
+              backgroundColor: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton.icon(
+              onPressed: () {
+                _signatureController.clear();
+                HapticFeedback.lightImpact();
+              },
+              icon: const Icon(Icons.clear),
+              label: const Text('Clear'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton.icon(
+          onPressed: _isSigning
+              ? null
+              : () async {
+                  if (_signatureController.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please draw your signature')),
+                    );
+                    return;
+                  }
+                  HapticFeedback.heavyImpact();
+                  await _signLease(lease, session);
+                },
+          icon: _isSigning
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : const Icon(Icons.draw),
+          label: Text(_isSigning ? 'Signing securely…' : 'Sign Electronically'),
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size.fromHeight(56),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: Colors.white,
+            elevation: 8,
+            shadowColor: theme.colorScheme.primary.withValues(alpha: 0.5),
+          ),
+        ),
+      ],
     );
   }
 

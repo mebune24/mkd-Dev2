@@ -10,8 +10,11 @@ import 'tenant_management.dart';
 import 'landlord_payments_screen.dart';
 import 'my_agents_screen.dart';
 import '../profile/profile_screen.dart';
-import 'monetization/landlord_monetization_screen.dart';
 import '../messages/chat_screens.dart';
+import '../../providers/domain_providers.dart';
+import '../../providers/property_provider.dart';
+import '../../providers/applications_provider.dart';
+import '../../shared/models/enums.dart';
 
 class LandlordDashboard extends ConsumerStatefulWidget {
   const LandlordDashboard({super.key});
@@ -37,28 +40,39 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      drawer: _LandlordDrawer(),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      drawer: const _LandlordDrawer(),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (_currentIndex != 1) ...[ // only show waitlist/whatsapp when AI bot is showing
+          if (_currentIndex != 1) ...[
+            // only show waitlist/whatsapp when AI bot is showing
             Container(
               margin: const EdgeInsets.only(right: 68),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Join the waitlist', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text(
+                    'Join the waitlist',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
                   SizedBox(width: 6),
                   Icon(Icons.arrow_downward, color: Colors.white, size: 16),
                 ],
@@ -79,7 +93,9 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                   backgroundColor: const Color(0xFF25D366),
                   foregroundColor: Colors.white,
                   elevation: 6,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                   tooltip: 'Join Waitlist via WhatsApp',
                   child: const FaIcon(FontAwesomeIcons.whatsapp, size: 30),
                 ),
@@ -93,7 +109,9 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,
                 elevation: 6,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
                 tooltip: _currentIndex == 1 ? 'Add Property' : 'SpaceBot AI',
                 child: Container(
                   width: 56,
@@ -101,14 +119,24 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: _currentIndex == 1
-                          ? [theme.colorScheme.primary, theme.colorScheme.primary]
-                          : [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
+                          ? [
+                              theme.colorScheme.primary,
+                              theme.colorScheme.primary,
+                            ]
+                          : [
+                              theme.colorScheme.primary,
+                              const Color(0xFF5D3F6A),
+                            ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(18),
                   ),
-                  child: Icon(_currentIndex == 1 ? Icons.add : Icons.auto_awesome, color: Colors.white, size: 26),
+                  child: Icon(
+                    _currentIndex == 1 ? Icons.add : Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 26,
+                  ),
                 ),
               ),
             ],
@@ -120,7 +148,11 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, -4)),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
           ],
         ),
         child: SafeArea(
@@ -129,13 +161,69 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _NavItem(icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard_rounded, label: 'Overview', index: 0, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.business_outlined, activeIcon: Icons.business_rounded, label: 'Properties', index: 1, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.people_outline, activeIcon: Icons.people_rounded, label: 'Tenants', index: 2, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.payments_outlined, activeIcon: Icons.payments_rounded, label: 'Payments', index: 3, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.real_estate_agent_outlined, activeIcon: Icons.real_estate_agent, label: 'Agents', index: 4, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.message_outlined, activeIcon: Icons.message_rounded, label: 'Messages', index: 5, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
-                _NavItem(icon: Icons.person_outline, activeIcon: Icons.person_rounded, label: 'Profile', index: 6, currentIndex: _currentIndex, onTap: (i) => setState(() => _currentIndex = i), theme: theme),
+                _NavItem(
+                  icon: Icons.dashboard_outlined,
+                  activeIcon: Icons.dashboard_rounded,
+                  label: 'Overview',
+                  index: 0,
+                  currentIndex: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                  theme: theme,
+                ),
+                _NavItem(
+                  icon: Icons.business_outlined,
+                  activeIcon: Icons.business_rounded,
+                  label: 'Properties',
+                  index: 1,
+                  currentIndex: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                  theme: theme,
+                ),
+                _NavItem(
+                  icon: Icons.people_outline,
+                  activeIcon: Icons.people_rounded,
+                  label: 'Tenants',
+                  index: 2,
+                  currentIndex: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                  theme: theme,
+                ),
+                _NavItem(
+                  icon: Icons.payments_outlined,
+                  activeIcon: Icons.payments_rounded,
+                  label: 'Payments',
+                  index: 3,
+                  currentIndex: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                  theme: theme,
+                ),
+                _NavItem(
+                  icon: Icons.real_estate_agent_outlined,
+                  activeIcon: Icons.real_estate_agent,
+                  label: 'Agents',
+                  index: 4,
+                  currentIndex: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                  theme: theme,
+                ),
+                _NavItem(
+                  icon: Icons.message_outlined,
+                  activeIcon: Icons.message_rounded,
+                  label: 'Messages',
+                  index: 5,
+                  currentIndex: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                  theme: theme,
+                ),
+                _NavItem(
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person_rounded,
+                  label: 'Profile',
+                  index: 6,
+                  currentIndex: _currentIndex,
+                  onTap: (i) => setState(() => _currentIndex = i),
+                  theme: theme,
+                ),
               ],
             ),
           ),
@@ -154,7 +242,15 @@ class _NavItem extends StatelessWidget {
   final void Function(int) onTap;
   final ThemeData theme;
 
-  const _NavItem({required this.icon, required this.activeIcon, required this.label, required this.index, required this.currentIndex, required this.onTap, required this.theme});
+  const _NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.index,
+    required this.currentIndex,
+    required this.onTap,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -165,15 +261,28 @@ class _NavItem extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? theme.colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+          color: isActive
+              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(isActive ? activeIcon : icon, color: isActive ? theme.colorScheme.primary : Colors.grey, size: 22),
+            Icon(
+              isActive ? activeIcon : icon,
+              color: isActive ? theme.colorScheme.primary : Colors.grey,
+              size: 22,
+            ),
             const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 10, fontWeight: isActive ? FontWeight.bold : FontWeight.normal, color: isActive ? theme.colorScheme.primary : Colors.grey)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                color: isActive ? theme.colorScheme.primary : Colors.grey,
+              ),
+            ),
           ],
         ),
       ),
@@ -206,8 +315,18 @@ class _LandlordDrawer extends StatelessWidget {
               children: [
                 Icon(Icons.business, size: 42, color: Colors.white),
                 SizedBox(height: 12),
-                Text('Tableau de Bord Bailleur', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                Text('Gérez vos propriétés et vos revenus', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(
+                  'Tableau de Bord Bailleur',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  'Gérez vos propriétés et vos revenus',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -221,7 +340,10 @@ class _LandlordDrawer extends StatelessWidget {
                   color: Colors.green,
                   label: 'Revenus & Parrainage',
                   subtitle: 'Commissions, bonus bailleurs',
-                  onTap: () { Navigator.pop(context); context.push('/landlord/monetization'); },
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/landlord/monetization');
+                  },
                 ),
                 _buildDrawerTile(
                   context,
@@ -229,7 +351,10 @@ class _LandlordDrawer extends StatelessWidget {
                   color: Colors.orange,
                   label: 'Publier une Tâche',
                   subtitle: 'Entretien, nettoyage...',
-                  onTap: () { Navigator.pop(context); context.push('/landlord/post-gig'); },
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/landlord/post-gig');
+                  },
                 ),
                 _buildDrawerTile(
                   context,
@@ -237,7 +362,10 @@ class _LandlordDrawer extends StatelessWidget {
                   color: Colors.blue,
                   label: 'Notifications',
                   subtitle: '',
-                  onTap: () { Navigator.pop(context); context.push('/notifications'); },
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/notifications');
+                  },
                 ),
               ],
             ),
@@ -247,52 +375,35 @@ class _LandlordDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerTile(BuildContext context, {required IconData icon, required Color color, required String label, required String subtitle, required VoidCallback onTap}) {
+  Widget _buildDrawerTile(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required String label,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
     return ListTile(
       onTap: onTap,
       leading: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Icon(icon, color: color, size: 22),
       ),
-      title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-      subtitle: subtitle.isNotEmpty ? Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 11)) : null,
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
-    );
-  }
-}
-
-class _ChatNavItem extends StatelessWidget {
-  final int currentIndex;
-  final VoidCallback onTap;
-  final ThemeData theme;
-
-  const _ChatNavItem({required this.currentIndex, required this.onTap, required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    final isActive = currentIndex == 2;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isActive
-                ? [theme.colorScheme.primary, const Color(0xFF5D3F6A)]
-                : [Colors.grey.shade400, Colors.grey.shade500],
-          ),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: (isActive ? theme.colorScheme.primary : Colors.grey).withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+      title: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
       ),
+      subtitle: subtitle.isNotEmpty
+          ? Text(
+              subtitle,
+              style: const TextStyle(color: Colors.grey, fontSize: 11),
+            )
+          : null,
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
     );
   }
 }
@@ -304,6 +415,33 @@ class _DashboardOverview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider);
     final theme = Theme.of(context);
+    final properties = ref
+        .watch(landlordPropertiesProvider)
+        .maybeWhen(data: (value) => value, orElse: () => const []);
+    final applications = ref
+        .watch(landlordApplicationsProvider)
+        .maybeWhen(data: (value) => value, orElse: () => const []);
+    final rentals = ref
+        .watch(landlordRentalsProvider)
+        .maybeWhen(data: (value) => value, orElse: () => const []);
+    final activeRentals = rentals.where(
+      (rental) => rental.status.name == 'active',
+    );
+    final activeTenantCount = activeRentals
+        .map((rental) => rental.tenantId)
+        .toSet()
+        .length;
+    final monthlyRevenue = activeRentals.fold<double>(
+      0,
+      (sum, rental) => sum + rental.monthlyRent.minorUnits.toDouble(),
+    );
+    final pendingApplications = applications
+        .where(
+          (application) =>
+              application.status == ApplicationStatus.submitted ||
+              application.status == ApplicationStatus.underReview,
+        )
+        .length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
@@ -318,7 +456,10 @@ class _DashboardOverview extends ConsumerWidget {
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
+                    colors: [
+                      theme.colorScheme.primary,
+                      const Color(0xFF5D3F6A),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -332,31 +473,20 @@ class _DashboardOverview extends ConsumerWidget {
                       children: [
                         Text(
                           'Good day, ${user.session?.fullName.split(' ').first ?? 'Landlord'} 👋',
-                          style: const TextStyle(color: Colors.white70, fontSize: 14),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         const Text(
                           'Landlord Dashboard',
-                          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                        ),
-                        if (false) // TODO: wire kycStatus from backend API response
-                          Container(
-                            margin: const EdgeInsets.only(top: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.star, color: Colors.amber, size: 14),
-                                SizedBox(width: 4),
-                                Text('Premium Landlord', style: TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold)),
-                              ],
-                            ),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
                           ),
+                        ),
                       ],
                     ),
                   ),
@@ -365,7 +495,12 @@ class _DashboardOverview extends ConsumerWidget {
             ),
             actions: [
               IconButton(
-                icon: const Badge(child: Icon(Icons.notifications_outlined, color: Colors.white)),
+                icon: const Badge(
+                  child: Icon(
+                    Icons.notifications_outlined,
+                    color: Colors.white,
+                  ),
+                ),
                 onPressed: () => context.push('/notifications'),
               ),
               IconButton(
@@ -387,41 +522,129 @@ class _DashboardOverview extends ConsumerWidget {
                   // Stats row
                   Row(
                     children: [
-                      Expanded(child: _buildStatCard(context, 'Properties', '2', Icons.business_rounded, theme.colorScheme.primary)),
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Properties',
+                          '${properties.length}',
+                          Icons.business_rounded,
+                          theme.colorScheme.primary,
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildStatCard(context, 'Tenants', '1', Icons.people_rounded, Colors.teal)),
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Tenants',
+                          '$activeTenantCount',
+                          Icons.people_rounded,
+                          Colors.teal,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(child: _buildStatCard(context, 'Monthly Revenue', CurrencyFormatter.formatCFA(150000), Icons.payments_rounded, Colors.green)),
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Monthly Rent',
+                          CurrencyFormatter.formatCFA(monthlyRevenue),
+                          Icons.payments_rounded,
+                          Colors.green,
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildStatCard(context, 'Pending Apps', '1', Icons.pending_actions_rounded, Colors.orange)),
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Pending Apps',
+                          '$pendingApplications',
+                          Icons.pending_actions_rounded,
+                          Colors.orange,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 28),
 
                   // Quick actions
-                  Text('Quick Actions', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Quick Actions',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(child: _buildQuickAction(context, Icons.add_business, 'Add Property', theme.colorScheme.primary, () => context.push('/landlord/add-property'))),
+                      Expanded(
+                        child: _buildQuickAction(
+                          context,
+                          Icons.add_business,
+                          'Add Property',
+                          theme.colorScheme.primary,
+                          () => context.push('/landlord/add-property'),
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildQuickAction(context, Icons.auto_awesome, 'Ask SpaceBot', const Color(0xFF5D3F6A), () => context.push('/chatbot'))),
+                      Expanded(
+                        child: _buildQuickAction(
+                          context,
+                          Icons.auto_awesome,
+                          'Ask SpaceBot',
+                          const Color(0xFF5D3F6A),
+                          () => context.push('/chatbot'),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 28),
 
                   // Recent activity
-                  Text('Recent Activity', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Recent Activity',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 16),
-                  _buildActivityTile(context, Icons.description, theme.colorScheme.primary, 'New Rental Application', 'Tenant applied for Modern 2 Bedroom Apartment', '2h ago'),
-                  const SizedBox(height: 12),
-                  _buildActivityTile(context, Icons.payments, Colors.green, 'Payment Received', '150,000 FCFA rent received from tenant', 'Aug 1'),
-                  const SizedBox(height: 12),
-                  _buildActivityTile(context, Icons.handyman, Colors.orange, 'Maintenance Request', 'Plumbing issue reported at property #1', '3 days ago'),
+                  if (applications.isEmpty && activeRentals.isEmpty)
+                    const Text(
+                      'No recent landlord activity.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ...applications
+                      .take(3)
+                      .map(
+                        (application) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildActivityTile(
+                            context,
+                            Icons.description,
+                            theme.colorScheme.primary,
+                            'Rental Application',
+                            '${application.tenantName} applied for ${application.propertyTitle}',
+                            '${application.submittedAt.day}/${application.submittedAt.month}/${application.submittedAt.year}',
+                          ),
+                        ),
+                      ),
+                  ...activeRentals
+                      .take(3)
+                      .map(
+                        (rental) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildActivityTile(
+                            context,
+                            Icons.home_work,
+                            Colors.green,
+                            'Active Rental',
+                            rental.propertyTitle,
+                            '${rental.activatedAt?.day ?? rental.createdAt.day}/${rental.activatedAt?.month ?? rental.createdAt.month}/${rental.activatedAt?.year ?? rental.createdAt.year}',
+                          ),
+                        ),
+                      ),
                 ],
               ),
             ),
@@ -431,33 +654,57 @@ class _DashboardOverview extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 12),
           Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickAction(BuildContext context, IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _buildQuickAction(
+    BuildContext context,
+    IconData icon,
+    String label,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -469,33 +716,64 @@ class _DashboardOverview extends ConsumerWidget {
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Icon(icon, color: Colors.white, size: 22),
             const SizedBox(width: 10),
-            Expanded(child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14))),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActivityTile(BuildContext context, IconData icon, Color color, String title, String subtitle, String time) {
+  Widget _buildActivityTile(
+    BuildContext context,
+    IconData icon,
+    Color color,
+    String title,
+    String subtitle,
+    String time,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 14),
@@ -503,9 +781,20 @@ class _DashboardOverview extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 3),
-                Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),

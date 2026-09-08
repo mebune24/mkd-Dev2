@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/utils/currency_formatter.dart';
-import 'package:go_router/go_router.dart';
 
 class AgentPropertiesScreen extends StatelessWidget {
   const AgentPropertiesScreen({super.key});

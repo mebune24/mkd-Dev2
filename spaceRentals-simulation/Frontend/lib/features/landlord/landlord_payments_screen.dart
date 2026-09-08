@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/payments_provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../data/api/api_payment_repository.dart';
 import '../../core/utils/currency_formatter.dart';
-import '../../core/utils/ui_helpers.dart';
 import 'package:intl/intl.dart';
 
 class LandlordPaymentsScreen extends ConsumerStatefulWidget {
   const LandlordPaymentsScreen({super.key});
 
   @override
-  ConsumerState<LandlordPaymentsScreen> createState() => _LandlordPaymentsScreenState();
+  ConsumerState<LandlordPaymentsScreen> createState() =>
+      _LandlordPaymentsScreenState();
 }
 
 class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
@@ -33,11 +32,11 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
-    final allAsync = ref.watch(myTransactionsProvider);
-    final pendingAsync = ref.watch(pendingTransactionsProvider);
-    final successfulAsync = ref.watch(successfulTransactionsProvider);
-    final totalRevenueAsync = ref.watch(totalRevenueProvider);
+
+    final allAsync = ref.watch(landlordTransactionsProvider);
+    final pendingAsync = ref.watch(landlordPendingTransactionsProvider);
+    final successfulAsync = ref.watch(landlordSuccessfulTransactionsProvider);
+    final totalRevenueAsync = ref.watch(landlordTotalRevenueProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
@@ -52,7 +51,10 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [theme.colorScheme.primary, const Color(0xFF2D6A4F)],
+                    colors: [
+                      theme.colorScheme.primary,
+                      const Color(0xFF2D6A4F),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -64,15 +66,55 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Text('Payments', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'Payments',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            Expanded(child: _buildHeaderStat('Total Revenue', totalRevenueAsync.when(data: (d) => CurrencyFormatter.formatCFA(d as double), loading: () => '...', error: (_,__) => 'Err'), Icons.account_balance_wallet, Colors.greenAccent)),
+                            Expanded(
+                              child: _buildHeaderStat(
+                                'Total Revenue',
+                                totalRevenueAsync.when(
+                                  data: (d) => CurrencyFormatter.formatCFA(d),
+                                  loading: () => '...',
+                                  error: (_, __) => 'Err',
+                                ),
+                                Icons.account_balance_wallet,
+                                Colors.greenAccent,
+                              ),
+                            ),
                             const SizedBox(width: 12),
-                            Expanded(child: _buildHeaderStat('Pending', pendingAsync.when(data: (l) => '${l.length}', loading: () => '...', error: (_,__) => 'Err'), Icons.pending_actions, Colors.orangeAccent)),
+                            Expanded(
+                              child: _buildHeaderStat(
+                                'Pending',
+                                pendingAsync.when(
+                                  data: (l) => '${l.length}',
+                                  loading: () => '...',
+                                  error: (_, __) => 'Err',
+                                ),
+                                Icons.pending_actions,
+                                Colors.orangeAccent,
+                              ),
+                            ),
                             const SizedBox(width: 12),
-                            Expanded(child: _buildHeaderStat('Approved', successfulAsync.when(data: (l) => '${l.length}', loading: () => '...', error: (_,__) => 'Err'), Icons.check_circle_outline, Colors.lightGreenAccent)),
+                            Expanded(
+                              child: _buildHeaderStat(
+                                'Approved',
+                                successfulAsync.when(
+                                  data: (l) => '${l.length}',
+                                  loading: () => '...',
+                                  error: (_, __) => 'Err',
+                                ),
+                                Icons.check_circle_outline,
+                                Colors.lightGreenAccent,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -97,7 +139,7 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
         ],
         body: allAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, st) => Center(child: Text('Error: \$e')),
+          error: (e, st) => const Center(child: Text('Error: \$e')),
           data: (all) {
             final pending = all.where((t) => t.status == 'PENDING').toList();
             final history = all.where((t) => t.status != 'PENDING').toList();
@@ -110,13 +152,18 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
                 _LedgerTab(transactions: all, totalRevenue: rev),
               ],
             );
-          }
+          },
         ),
       ),
     );
   }
 
-  Widget _buildHeaderStat(String label, String value, IconData icon, Color color) {
+  Widget _buildHeaderStat(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -128,8 +175,20 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
         children: [
           Icon(icon, color: color, size: 18),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 10),
+          ),
         ],
       ),
     );
@@ -150,9 +209,15 @@ class _PendingTab extends ConsumerWidget {
           children: [
             Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
             SizedBox(height: 16),
-            Text('No Pending Payments', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'No Pending Payments',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 8),
-            Text('All payments are up to date!', style: TextStyle(color: Colors.grey)),
+            Text(
+              'All payments are up to date!',
+              style: TextStyle(color: Colors.grey),
+            ),
           ],
         ),
       );
@@ -163,10 +228,7 @@ class _PendingTab extends ConsumerWidget {
       itemCount: transactions.length,
       itemBuilder: (context, index) {
         final tx = transactions[index];
-        return _TransactionCard(
-          tx: tx,
-          showActions: false, 
-        );
+        return _TransactionCard(tx: tx, showActions: false);
       },
     );
   }
@@ -180,12 +242,18 @@ class _HistoryTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (transactions.isEmpty) {
-      return const Center(child: Text('No payment history yet.', style: TextStyle(color: Colors.grey)));
+      return const Center(
+        child: Text(
+          'No payment history yet.',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: transactions.length,
-      itemBuilder: (context, index) => _TransactionCard(tx: transactions[index], showActions: false),
+      itemBuilder: (context, index) =>
+          _TransactionCard(tx: transactions[index], showActions: false),
     );
   }
 }
@@ -199,7 +267,7 @@ class _LedgerTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     final Map<String, List<TransactionRecord>> byMonth = {};
     for (final t in transactions) {
       final month = DateFormat('MMMM yyyy').format(t.createdAt);
@@ -216,24 +284,53 @@ class _LedgerTab extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [theme.colorScheme.primary, const Color(0xFF2D6A4F)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              gradient: LinearGradient(
+                colors: [theme.colorScheme.primary, const Color(0xFF2D6A4F)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Total Approved Revenue', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                const Text(
+                  'Total Approved Revenue',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
                 const SizedBox(height: 6),
-                Text(CurrencyFormatter.formatCFA(totalRevenue), style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                Text(
+                  CurrencyFormatter.formatCFA(totalRevenue),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _ledgerBadge("${transactions.where((p) => p.status == 'SUCCESSFUL').length} Approved", Colors.greenAccent),
+                    _ledgerBadge(
+                      "${transactions.where((p) => p.status == 'SUCCESSFUL').length} Approved",
+                      Colors.greenAccent,
+                    ),
                     const SizedBox(width: 8),
-                    _ledgerBadge("${transactions.where((p) => p.status == 'PENDING').length} Pending", Colors.orangeAccent),
+                    _ledgerBadge(
+                      "${transactions.where((p) => p.status == 'PENDING').length} Pending",
+                      Colors.orangeAccent,
+                    ),
                     const SizedBox(width: 8),
-                    _ledgerBadge("${transactions.where((p) => p.status == 'FAILED').length} Failed", Colors.redAccent),
+                    _ledgerBadge(
+                      "${transactions.where((p) => p.status == 'FAILED').length} Failed",
+                      Colors.redAccent,
+                    ),
                   ],
                 ),
               ],
@@ -242,15 +339,30 @@ class _LedgerTab extends StatelessWidget {
           const SizedBox(height: 24),
           ...months.map((month) {
             final monthTxs = byMonth[month]!;
-            final monthTotal = monthTxs.where((p) => p.status == 'SUCCESSFUL').fold(0.0, (s, p) => s + p.amount);
+            final monthTotal = monthTxs
+                .where((p) => p.status == 'SUCCESSFUL')
+                .fold(0.0, (s, p) => s + p.amount);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(month, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    Text(CurrencyFormatter.formatCFA(monthTotal), style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text(
+                      month,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    Text(
+                      CurrencyFormatter.formatCFA(monthTotal),
+                      style: TextStyle(
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -267,8 +379,18 @@ class _LedgerTab extends StatelessWidget {
   Widget _ledgerBadge(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
-      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }
@@ -279,32 +401,75 @@ class _LedgerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color statusColor = tx.status == 'SUCCESSFUL' ? Colors.green : tx.status == 'PENDING' ? Colors.orange : Colors.red;
+    Color statusColor = tx.status == 'SUCCESSFUL'
+        ? Colors.green
+        : tx.status == 'PENDING'
+        ? Colors.orange
+        : Colors.red;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6)]),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6),
+        ],
+      ),
       child: Row(
         children: [
-          Container(width: 4, height: 36, decoration: BoxDecoration(color: statusColor, borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 4,
+            height: 36,
+            decoration: BoxDecoration(
+              color: statusColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tx.transactionType, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                Text(DateFormat('MMM dd, yyyy').format(tx.createdAt), style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                Text(
+                  tx.transactionType,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  DateFormat('MMM dd, yyyy').format(tx.createdAt),
+                  style: const TextStyle(color: Colors.grey, fontSize: 11),
+                ),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(CurrencyFormatter.formatCFA(tx.amount.toDouble()), style: TextStyle(fontWeight: FontWeight.bold, color: statusColor, fontSize: 13)),
+              Text(
+                CurrencyFormatter.formatCFA(tx.amount.toDouble()),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: statusColor,
+                  fontSize: 13,
+                ),
+              ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Text(tx.status, style: TextStyle(color: statusColor, fontSize: 9, fontWeight: FontWeight.bold)),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  tx.status,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -323,15 +488,25 @@ class _TransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final statusColor = tx.status == 'SUCCESSFUL' ? Colors.green : tx.status == 'PENDING' ? Colors.orange : Colors.red;
-    final typeIcon = Icons.payments;
+    final statusColor = tx.status == 'SUCCESSFUL'
+        ? Colors.green
+        : tx.status == 'PENDING'
+        ? Colors.orange
+        : Colors.red;
+    const typeIcon = Icons.payments;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -341,24 +516,56 @@ class _TransactionCard extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(14)),
-                  child: Icon(typeIcon, color: theme.colorScheme.primary, size: 22),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    typeIcon,
+                    color: theme.colorScheme.primary,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(tx.transactionType, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text(
+                        tx.transactionType,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
                       const SizedBox(height: 2),
-                      Text(DateFormat('MMM dd, yyyy HH:mm').format(tx.createdAt), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(
+                        DateFormat('MMM dd, yyyy HH:mm').format(tx.createdAt),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                            child: Text(tx.paymentMethod, style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              tx.paymentMethod,
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -368,12 +575,32 @@ class _TransactionCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(CurrencyFormatter.formatCFA(tx.amount.toDouble()), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: statusColor)),
+                    Text(
+                      CurrencyFormatter.formatCFA(tx.amount.toDouble()),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: statusColor,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                      child: Text(tx.status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        tx.status,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),

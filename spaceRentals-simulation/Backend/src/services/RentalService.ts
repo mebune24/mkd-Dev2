@@ -44,9 +44,16 @@ export class RentalService {
     if (rental.status !== 'active') {
       throw { status: 400, message: 'Rental is not active.' };
     }
-    return prisma.rental.update({
-      where: { id },
-      data: { status: 'ended', endedAt: new Date() },
+    return prisma.$transaction(async (tx) => {
+      const updated = await tx.rental.update({
+        where: { id },
+        data: { status: 'ended', endedAt: new Date() },
+      });
+      const activeRental = await tx.rental.findFirst({ where: { propertyId: rental.propertyId, status: 'active' } });
+      if (!activeRental) {
+        await tx.property.update({ where: { id: rental.propertyId }, data: { status: 'available' } });
+      }
+      return updated;
     });
   }
 }

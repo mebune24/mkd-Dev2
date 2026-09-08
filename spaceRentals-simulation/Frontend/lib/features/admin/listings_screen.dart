@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/property_provider.dart';
-import '../../features/properties/domain/property.dart';
 import '../../core/utils/ui_helpers.dart';
-import '../../../core/utils/ui_helpers.dart';
 
 class AdminListingsScreen extends ConsumerStatefulWidget {
   const AdminListingsScreen({super.key});

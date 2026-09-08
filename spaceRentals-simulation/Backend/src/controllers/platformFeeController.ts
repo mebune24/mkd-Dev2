@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthRequest, assertOwnerOrAdmin } from '../middleware/authMiddleware';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -61,6 +62,13 @@ export const initiateFeePay = async (req: AuthRequest, res: Response) => {
 // ──────────────────────────────────────────────
 export const feePaymentWebhook = async (req: AuthRequest, res: Response) => {
   try {
+    const secret = process.env.PLATFORM_FEE_WEBHOOK_SECRET;
+    const signature = req.headers['x-platform-fee-signature'] as string;
+    if (!secret || !signature) return res.status(401).json({ message: 'Invalid webhook signature.' });
+    const expected = crypto.createHmac('sha256', secret).update(JSON.stringify(req.body)).digest('hex');
+    if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+      return res.status(401).json({ message: 'Invalid webhook signature.' });
+    }
     const { providerTxId, feeId, status } = req.body;
     if (!providerTxId || !feeId || !status) {
       return res.status(400).json({ message: 'providerTxId, feeId, and status are required.' });

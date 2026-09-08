@@ -1,4 +1,3 @@
-import 'dart:convert';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 
@@ -70,7 +69,7 @@ class ApiPaymentRepository {
     String? redirectUrl,
   }) async {
     final response = await _apiClient.post<Map<String, dynamic>>(
-      '/payments/initiate',
+      '${ApiEndpoints.payments}/initiate',
       data: {
         'amount': amount,
         'email': email,
@@ -91,12 +90,28 @@ class ApiPaymentRepository {
   }
 
   Future<List<TransactionRecord>> getMyTransactions() async {
-    final response = await _apiClient.get<List<dynamic>>('/payments/transactions');
+    final response = await _apiClient.get<List<dynamic>>(
+      '${ApiEndpoints.payments}/transactions',
+    );
 
     if (!response.isSuccess || response.data == null) {
       throw Exception(response.error?.message ?? 'Failed to load transactions');
     }
 
+    return response.data!
+        .map((j) => TransactionRecord.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<TransactionRecord>> getLandlordTransactions() async {
+    final response = await _apiClient.get<List<dynamic>>(
+      ApiEndpoints.landlordTransactions,
+    );
+    if (!response.isSuccess || response.data == null) {
+      throw Exception(
+        response.error?.message ?? 'Failed to load landlord transactions',
+      );
+    }
     return response.data!
         .map((j) => TransactionRecord.fromJson(j as Map<String, dynamic>))
         .toList();

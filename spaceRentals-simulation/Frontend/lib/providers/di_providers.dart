@@ -7,6 +7,7 @@ import '../repositories/auth_repository.dart';
 import '../repositories/property_repository.dart';
 import '../repositories/application_repository.dart';
 import '../repositories/lease_repository.dart';
+import '../repositories/rental_repository.dart';
 
 import '../data/api/api_auth_repository.dart';
 import '../data/api/api_property_repository.dart';
@@ -17,6 +18,12 @@ import '../data/api/api_agent_repository.dart';
 import '../data/api/api_dispute_repository.dart';
 import '../data/api/api_notification_repository.dart';
 import '../data/api/api_audit_repository.dart';
+import '../data/api/api_admin_repository.dart';
+import '../data/api/api_rental_repository.dart';
+import '../data/api/api_rnlp_repository.dart';
+import '../data/api/api_video_feed_repository.dart';
+import '../data/api/api_tenant_wallet_repository.dart';
+import '../data/api/api_message_repository.dart';
 import '../services/session_storage_service.dart';
 
 // ── Session Storage ────────────────────────────────────────────────────────
@@ -88,7 +95,9 @@ final disputeRepositoryProvider = Provider<ApiDisputeRepository>((ref) {
 });
 
 // ── Notifications ──────────────────────────────────────────────────────────
-final notificationRepositoryProvider = Provider<ApiNotificationRepository>((ref) {
+final notificationRepositoryProvider = Provider<ApiNotificationRepository>((
+  ref,
+) {
   final apiClient = ref.watch(apiClientProvider);
   return ApiNotificationRepository(apiClient);
 });
@@ -97,4 +106,31 @@ final notificationRepositoryProvider = Provider<ApiNotificationRepository>((ref)
 final auditRepositoryProvider = Provider<ApiAuditRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   return ApiAuditRepository(apiClient);
+});
+
+// ── Admin ───────────────────────────────────────────────────────────────────
+final adminRepositoryProvider = Provider<ApiAdminRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return ApiAdminRepository(apiClient);
+});
+
+final rentalRepositoryProvider = Provider<RentalRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return ApiRentalRepository(apiClient);
+});
+
+final rnlpRepositoryProvider = Provider<ApiRnlpRepository>((ref) {
+  return ApiRnlpRepository(ref.watch(apiClientProvider));
+});
+
+final videoFeedRepositoryProvider = Provider<ApiVideoFeedRepository>((ref) {
+  return ApiVideoFeedRepository(ref.watch(apiClientProvider));
+});
+
+final tenantWalletRepositoryProvider = Provider<ApiTenantWalletRepository>((ref) {
+  return ApiTenantWalletRepository(ref.watch(apiClientProvider));
+});
+
+final messageRepositoryProvider = Provider<ApiMessageRepository>((ref) {
+  return ApiMessageRepository(ref.watch(apiClientProvider));
 });

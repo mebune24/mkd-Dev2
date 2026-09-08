@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'dart:async';
 import '../../providers/auth_provider.dart';
 import '../../shared/models/enums.dart';
-import '../../features/auth/domain/user_session.dart';
 import '../../providers/domain_providers.dart';
 import 'onboarding_screen.dart';
 
@@ -29,49 +28,72 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       duration: const Duration(milliseconds: 1800),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
     );
     _scaleAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.7, curve: Curves.elasticOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.7, curve: Curves.elasticOut),
+      ),
     );
 
     _controller.forward();
 
-    Timer(const Duration(milliseconds: 3200), () async {
-      if (!mounted) return;
-      final authState = ref.read(authProvider);
-      if (authState.isAuthenticated) {
-        if (authState.session!.role == Role.admin) {
-          context.go('/admin');
-        } else if (authState.session!.role == Role.landlord) {
-          final kycList = await ref.read(kycSubmissionsProvider.future);
-          final userKyc = kycList.where((k) => k.userId == authState.session!.userId);
-          final isKycVerified = userKyc.isNotEmpty && (userKyc.first.status == 'verified' || userKyc.first.status == 'premium');
-          final isKycPending = userKyc.isNotEmpty && userKyc.first.status == 'pending';
-          
-          if (isKycPending) {
-            context.go('/landlord/pending');
-          } else if (!isKycVerified && userKyc.isEmpty) {
-            context.go('/landlord/kyc');
-          } else {
-            context.go('/landlord');
-          }
-        } else if (authState.session!.role == Role.agent) {
-          context.go('/agent/dashboard');
-        } else {
-          context.go('/tenant');
-        }
-      } else {
-        // First-time users see onboarding before login
-        final seenOnboarding = await hasSeenOnboarding();
+    _routeWhenReady();
+  }
+
+  Future<void> _routeWhenReady() async {
+    final minimumSplash = Future<void>.delayed(
+      const Duration(milliseconds: 650),
+    );
+    while (mounted && ref.read(authProvider).isLoading) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+    await minimumSplash;
+    if (!mounted) return;
+
+    final authState = ref.read(authProvider);
+    if (authState.isAuthenticated) {
+      if (authState.session!.role == Role.admin) {
+        context.go('/admin');
+      } else if (authState.session!.role == Role.landlord) {
+        final kycList = await ref.read(kycSubmissionsProvider.future);
         if (!mounted) return;
-        if (seenOnboarding) {
-          context.go('/login');
+        final userKyc = kycList.where(
+          (k) => k.userId == authState.session!.userId,
+        );
+        final isKycVerified =
+            userKyc.isNotEmpty &&
+            (userKyc.first.status == 'verified' ||
+                userKyc.first.status == 'premium');
+        final isKycPending =
+            userKyc.isNotEmpty && userKyc.first.status == 'pending';
+
+        if (isKycPending) {
+          context.go('/landlord/pending');
+        } else if (!isKycVerified && userKyc.isEmpty) {
+          context.go('/landlord/kyc');
         } else {
-          context.go('/onboarding');
+          context.go('/landlord');
         }
+      } else if (authState.session!.role == Role.agent) {
+        context.go('/agent/dashboard');
+      } else {
+        context.go('/tenant');
       }
-    });
+    } else {
+      // First-time users see onboarding before login
+      final seenOnboarding = await hasSeenOnboarding();
+      if (!mounted) return;
+      if (seenOnboarding) {
+        context.go('/login');
+      } else {
+        context.go('/onboarding');
+      }
+    }
   }
 
   @override
@@ -83,15 +105,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A0033),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF2D0057), Color(0xFF5D3F6A), Color(0xFF1A0033)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      backgroundColor: Colors.white,
+      body: ColoredBox(
+        color: Colors.white,
         child: SafeArea(
           child: Center(
             child: FadeTransition(
@@ -105,12 +121,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     child: Container(
                       width: 160,
                       height: 160,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF7B2FBE).withValues(alpha: 0.6),
+                            color: Colors.black12,
                             blurRadius: 40,
                             spreadRadius: 10,
                           ),
@@ -137,7 +153,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   const Text(
                     'SpaceRentals',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF303030),
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
                       letterSpacing: -0.5,
@@ -150,7 +166,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   const Text(
                     'Your perfect space awaits',
                     style: TextStyle(
-                      color: Colors.white60,
+                      color: Colors.grey,
                       fontSize: 16,
                       letterSpacing: 0.5,
                     ),
@@ -159,14 +175,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   const SizedBox(height: 80),
 
                   // Loading indicator
-                  SizedBox(
+                  const SizedBox(
                     width: 36,
                     height: 36,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white.withValues(alpha: 0.6),
-                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
                     ),
                   ),
                 ],

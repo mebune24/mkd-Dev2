@@ -4,6 +4,7 @@ import '../../core/utils/ui_helpers.dart';
 
 import 'package:space_rentals/providers/domain_providers.dart';
 import 'package:space_rentals/features/rentals/domain/dispute_record.dart';
+import '../../providers/di_providers.dart';
 
 // ── Disputes Screen ───────────────────────────────────────────────────────────
 class DisputesScreen extends ConsumerWidget {
@@ -30,10 +31,13 @@ class DisputesScreen extends ConsumerWidget {
       ),
       body: disputesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading disputes: $err')),
+        error: (err, stack) =>
+            Center(child: Text('Error loading disputes: $err')),
         data: (disputes) {
           final open = disputes.where((d) => d.status == 'open').length;
-          final review = disputes.where((d) => d.status == 'under_review').length;
+          final review = disputes
+              .where((d) => d.status == 'under_review')
+              .length;
           final resolved = disputes.where((d) => d.status == 'resolved').length;
 
           return Column(
@@ -74,7 +78,14 @@ class DisputesScreen extends ConsumerWidget {
   Widget _buildStat(String label, String value, Color color) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );
@@ -94,19 +105,27 @@ class _DisputeCardState extends ConsumerState<_DisputeCard> {
 
   Color _statusColor(String s) {
     switch (s) {
-      case 'open': return Colors.red;
-      case 'under_review': return Colors.orange;
-      case 'resolved': return Colors.green;
-      default: return Colors.grey;
+      case 'open':
+        return Colors.red;
+      case 'under_review':
+        return Colors.orange;
+      case 'resolved':
+        return Colors.green;
+      default:
+        return Colors.grey;
     }
   }
 
   String _statusLabel(String s) {
     switch (s) {
-      case 'open': return 'Open';
-      case 'under_review': return 'Under Review';
-      case 'resolved': return 'Resolved';
-      default: return 'Closed';
+      case 'open':
+        return 'Open';
+      case 'under_review':
+        return 'Under Review';
+      case 'resolved':
+        return 'Resolved';
+      default:
+        return 'Closed';
     }
   }
 
@@ -132,14 +151,23 @@ class _DisputeCardState extends ConsumerState<_DisputeCard> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (controller.text.trim().isEmpty) return;
-              // Call repository method to resolve dispute
-              // ref.read(disputeRepositoryProvider).resolveDispute(widget.dispute.id, controller.text.trim());
-              Navigator.pop(ctx);
-              context.showToast('Dispute marked as resolved. Both parties notified.');
+              try {
+                await ref
+                    .read(disputeRepositoryProvider)
+                    .resolveDispute(widget.dispute.id, controller.text.trim());
+                ref.invalidate(disputesProvider);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (mounted) context.showToast('Dispute marked as resolved.');
+              } catch (error) {
+                if (mounted) context.showErrorToast(error.toString());
+              }
             },
             child: const Text('Mark Resolved'),
           ),
@@ -168,26 +196,51 @@ class _DisputeCardState extends ConsumerState<_DisputeCard> {
               backgroundColor: color.withValues(alpha: 0.12),
               child: Icon(Icons.gavel, color: color),
             ),
-            title: Text(d.subject, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            title: Text(
+              d.subject,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${d.filedByName} (Tenant vs Landlord)', style: const TextStyle(fontSize: 12)),
+                Text(
+                  '${d.filedByName} (Tenant vs Landlord)',
+                  style: const TextStyle(fontSize: 12),
+                ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                      child: Text(_statusLabel(d.status), style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        _statusLabel(d.status),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    Text('ID: ${d.id}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                    Text(
+                      'ID: ${d.id}',
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
                   ],
                 ),
               ],
             ),
-            trailing: Icon(_expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: Colors.grey),
+            trailing: Icon(
+              _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              color: Colors.grey,
+            ),
             isThreeLine: true,
           ),
           if (_expanded)
@@ -198,21 +251,55 @@ class _DisputeCardState extends ConsumerState<_DisputeCard> {
                 children: [
                   const Divider(),
                   const SizedBox(height: 8),
-                  Text('Description', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                  Text(
+                    'Description',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(d.description, style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.black87)),
+                  Text(
+                    d.description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.5,
+                      color: Colors.black87,
+                    ),
+                  ),
                   const SizedBox(height: 12),
-                  Text('Filed: ${d.filedAt.day}/${d.filedAt.month}/${d.filedAt.year}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    'Filed: ${d.filedAt.day}/${d.filedAt.month}/${d.filedAt.year}',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                   if (d.resolution != null) ...[
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.green.withValues(alpha: 0.3))),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.green.withValues(alpha: 0.3),
+                        ),
+                      ),
                       child: Row(
                         children: [
-                          const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
-                          Expanded(child: Text(d.resolution!, style: const TextStyle(fontSize: 13, color: Colors.black87))),
+                          Expanded(
+                            child: Text(
+                              d.resolution!,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -237,7 +324,10 @@ class _DisputeCardState extends ConsumerState<_DisputeCard> {
                             onPressed: _showResolveDialog,
                             icon: const Icon(Icons.check, size: 16),
                             label: const Text('Resolve'),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                            ),
                           ),
                         ),
                       ],

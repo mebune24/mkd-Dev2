@@ -1,52 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/di_providers.dart';
 import '../../models/rnlp_model.dart';
+import '../../services/session_storage_service.dart';
 
-// ── Provider: fetch RNLP contract from backend ──────────────────────────────
-// The backend exposes rentals for the logged-in tenant; we compute the
-// financing schedule client-side from the active rental record.
 final _rnlpProvider = FutureProvider<RnlpModel?>((ref) async {
-  final client = ref.read(apiClientProvider);
-  try {
-    final resp = await client.get('/rentals/tenant');
-    if (resp.statusCode != 200) return null;
-    final List<dynamic> data = resp.data is List ? resp.data : (resp.data['rentals'] ?? []);
-    if (data.isEmpty) return null;
-
-    final active = data.firstWhere(
-      (r) => r['status'] == 'active',
-      orElse: () => data.first,
-    );
-
-    final deposit = (active['deposit'] as num?)?.toDouble() ?? 0.0;
-    if (deposit == 0) return null;
-
-    const months = 6;
-    final monthly = deposit / months;
-
-    final schedule = List.generate(months, (i) => RnlpInstalment(
-      month: i + 1,
-      amount: monthly,
-      paid: false,
-      dueDate: DateTime.now().add(Duration(days: 30 * (i + 1))),
-    ));
-
-    return RnlpModel(
-      id: 'rnlp_${active['id']}',
-      tenantId: active['tenantId'] ?? '',
-      rentalId: active['id'] ?? '',
-      financedAmount: deposit,
-      remainingBalance: deposit,
-      totalMonths: months,
-      monthlyInstalment: monthly,
-      status: RnlpStatus.active,
-      schedule: schedule,
-    );
-  } catch (_) {
-    return null;
-  }
+  return ref.read(rnlpRepositoryProvider).getOrCreateContract();
 });
 
 class RnlpScreen extends ConsumerStatefulWidget {
@@ -57,7 +18,8 @@ class RnlpScreen extends ConsumerStatefulWidget {
   ConsumerState<RnlpScreen> createState() => _RnlpScreenState();
 }
 
-class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStateMixin {
+class _RnlpScreenState extends ConsumerState<RnlpScreen>
+    with TickerProviderStateMixin {
   bool _checkingEligibility = false;
   bool _eligible = false;
   bool _checkedEligibility = false;
@@ -67,7 +29,10 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
   @override
   void initState() {
     super.initState();
-    _progressController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _progressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
   }
 
   @override
@@ -78,19 +43,20 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
 
   Future<void> _checkEligibility() async {
     setState(() => _checkingEligibility = true);
-    // Real eligibility check: query tenant's payment history from backend
     try {
-      final client = ref.read(apiClientProvider);
-      final resp = await client.get('/rentals/tenant');
-      final bool hasRentals = resp.statusCode == 200 &&
-          ((resp.data is List && (resp.data as List).isNotEmpty) ||
-           (resp.data['rentals'] != null && (resp.data['rentals'] as List).isNotEmpty));
+      final contract = await ref
+          .read(rnlpRepositoryProvider)
+          .getOrCreateContract();
+      final hasContract = contract != null;
       setState(() {
         _checkingEligibility = false;
-        _eligible = hasRentals;
+        _eligible = hasContract;
         _checkedEligibility = true;
       });
-      if (hasRentals) _progressController.forward();
+      if (hasContract) {
+        _progressController.forward();
+        ref.invalidate(_rnlpProvider);
+      }
     } catch (_) {
       setState(() {
         _checkingEligibility = false;
@@ -102,19 +68,47 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
 
   Future<void> _payInstalment(RnlpModel contract, int instalmentIndex) async {
     setState(() => _isPayingInstalment = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isPayingInstalment = false);
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Row(
-          children: [Icon(Icons.check_circle, color: Colors.green), SizedBox(width: 8), Text('Instalment Paid')],
+    try {
+      final instalment = contract.schedule[instalmentIndex];
+      final session = await SessionStorageService.instance.loadSession();
+      if (session == null || session.email.isEmpty) {
+        throw StateError(
+          'Your session is missing a payment email. Please sign in again.',
+        );
+      }
+      await ref
+          .read(rnlpRepositoryProvider)
+          .markInstalmentPending(instalment.id);
+      final payment = await ref
+          .read(paymentRepositoryProvider)
+          .initiatePayment(
+            amount: instalment.amount.round(),
+            email: session.email,
+            phoneNumber: session.phone,
+            message:
+                'RNLP instalment ${instalment.month} for contract ${contract.id}',
+            referenceType: 'RNLP_INSTALMENT',
+            referenceId: instalment.id,
+            paymentMethod: 'MOBILE_MONEY',
+          );
+      if (payment.paymentLink == null) {
+        throw StateError('The payment provider did not return a payment link.');
+      }
+      final uri = Uri.parse(payment.paymentLink!);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw StateError('Could not open the payment provider.');
+      }
+      ref.invalidate(_rnlpProvider);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Bad state: ', '')),
         ),
-        content: Text('${CurrencyFormatter.formatCFA(contract.monthlyInstalment)} has been processed via Mobile Money.'),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
-      ),
-    );
+      );
+    } finally {
+      if (mounted) setState(() => _isPayingInstalment = false);
+    }
   }
 
   @override
@@ -135,7 +129,8 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -144,10 +139,19 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.account_balance, color: Colors.white, size: 32),
+                      const Icon(
+                        Icons.account_balance,
+                        color: Colors.white,
+                        size: 32,
+                      ),
                       const SizedBox(width: 12),
-                      Text('RNLP Financing Engine',
-                          style: theme.textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                      Text(
+                        'RNLP Financing Engine',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -163,17 +167,26 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
 
             // Eligibility section
             if (!_checkedEligibility) ...[
-              Text('Step 1: Check Eligibility', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                'Step 1: Check Eligibility',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
-              const Text('We will assess your rental history and payment record.',
-                  style: TextStyle(color: Colors.grey)),
+              const Text(
+                'We will assess your rental history and payment record.',
+                style: TextStyle(color: Colors.grey),
+              ),
               const SizedBox(height: 16),
               _checkingEligibility
-                  ? const Column(children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 8),
-                      Text('Checking your eligibility...')
-                    ])
+                  ? const Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 8),
+                        Text('Checking your eligibility...'),
+                      ],
+                    )
                   : ElevatedButton.icon(
                       onPressed: _checkEligibility,
                       icon: const Icon(Icons.search),
@@ -197,9 +210,17 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Eligible for RNLP', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                          Text('You qualify for deposit financing up to 6 months.',
-                              style: TextStyle(color: Colors.green, fontSize: 12)),
+                          Text(
+                            'Eligible for RNLP',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'You qualify for deposit financing up to 6 months.',
+                            style: TextStyle(color: Colors.green, fontSize: 12),
+                          ),
                         ],
                       ),
                     ),
@@ -221,7 +242,15 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                   children: [
                     Icon(Icons.cancel, color: Colors.red),
                     SizedBox(width: 12),
-                    Expanded(child: Text('Not Eligible — no active rental found.', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
+                    Expanded(
+                      child: Text(
+                        'Not Eligible — no active rental found.',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -237,7 +266,12 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('Active RNLP Contract', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      'Active RNLP Contract',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 16),
 
                     // Summary card
@@ -247,18 +281,42 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.grey.shade200),
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2))],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Column(
                         children: [
-                          _buildContractRow('Financed Amount', CurrencyFormatter.formatCFA(contract.financedAmount)),
+                          _buildContractRow(
+                            'Financed Amount',
+                            CurrencyFormatter.formatCFA(
+                              contract.financedAmount,
+                            ),
+                          ),
                           const Divider(height: 20),
-                          _buildContractRow('Remaining Balance', CurrencyFormatter.formatCFA(contract.remainingBalance),
-                              valueColor: Colors.orange),
+                          _buildContractRow(
+                            'Remaining Balance',
+                            CurrencyFormatter.formatCFA(
+                              contract.remainingBalance,
+                            ),
+                            valueColor: Colors.orange,
+                          ),
                           const Divider(height: 20),
-                          _buildContractRow('Monthly Instalment', CurrencyFormatter.formatCFA(contract.monthlyInstalment)),
+                          _buildContractRow(
+                            'Monthly Instalment',
+                            CurrencyFormatter.formatCFA(
+                              contract.monthlyInstalment,
+                            ),
+                          ),
                           const Divider(height: 20),
-                          _buildContractRow('Duration', '${contract.totalMonths} months'),
+                          _buildContractRow(
+                            'Duration',
+                            '${contract.totalMonths} months',
+                          ),
 
                           const SizedBox(height: 16),
 
@@ -267,12 +325,23 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Repayment Progress', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                  const Text(
+                                    'Repayment Progress',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                   Text(
                                     '${contract.schedule.where((i) => i.paid).length}/${contract.totalMonths} paid',
-                                    style: TextStyle(fontSize: 12, color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -280,10 +349,16 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: LinearProgressIndicator(
-                                  value: contract.schedule.where((i) => i.paid).length / contract.totalMonths,
+                                  value:
+                                      contract.schedule
+                                          .where((i) => i.paid)
+                                          .length /
+                                      contract.totalMonths,
                                   minHeight: 10,
                                   backgroundColor: Colors.grey.shade200,
-                                  valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    theme.colorScheme.primary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -293,7 +368,12 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                     ),
 
                     const SizedBox(height: 24),
-                    Text('Repayment Schedule', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      'Repayment Schedule',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
 
                     ...contract.schedule.asMap().entries.map((entry) {
@@ -304,7 +384,9 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
-                            color: instalment.paid ? Colors.green.withValues(alpha: 0.3) : Colors.orange.withValues(alpha: 0.3),
+                            color: instalment.paid
+                                ? Colors.green.withValues(alpha: 0.3)
+                                : Colors.orange.withValues(alpha: 0.3),
                           ),
                         ),
                         child: ListTile(
@@ -313,17 +395,29 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                                 ? Colors.green.withValues(alpha: 0.1)
                                 : Colors.orange.withValues(alpha: 0.1),
                             child: Icon(
-                              instalment.paid ? Icons.check_circle : Icons.schedule,
-                              color: instalment.paid ? Colors.green : Colors.orange,
+                              instalment.paid
+                                  ? Icons.check_circle
+                                  : Icons.schedule,
+                              color: instalment.paid
+                                  ? Colors.green
+                                  : Colors.orange,
                             ),
                           ),
                           title: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Month ${instalment.month}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                              Text(
+                                'Month ${instalment.month}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               Text(
                                 CurrencyFormatter.formatCFA(instalment.amount),
-                                style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
                               ),
                             ],
                           ),
@@ -331,18 +425,28 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
                             children: [
                               Text(
                                 'Due: ${instalment.dueDate.day}/${instalment.dueDate.month}/${instalment.dueDate.year}',
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
                               ),
                               const Spacer(),
                               if (!instalment.paid)
                                 _isPayingInstalment
                                     ? const SizedBox(
-                                        height: 20, width: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
                                       )
                                     : TextButton(
-                                        onPressed: () => _payInstalment(contract, i),
-                                        child: const Text('Pay Now', style: TextStyle(fontSize: 12)),
+                                        onPressed: () =>
+                                            _payInstalment(contract, i),
+                                        child: const Text(
+                                          'Pay Now',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
                                       ),
                             ],
                           ),
@@ -364,7 +468,10 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen> with TickerProviderStat
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: const TextStyle(color: Colors.grey)),
-        Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: valueColor)),
+        Text(
+          value,
+          style: TextStyle(fontWeight: FontWeight.bold, color: valueColor),
+        ),
       ],
     );
   }

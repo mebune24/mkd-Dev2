@@ -1,4 +1,3 @@
-import '../../shared/models/enums.dart';
 
 sealed class AppFailure {
   final String message;

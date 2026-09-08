@@ -1,18 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/url_helper.dart';
-import '../../widgets/guest_guard.dart';
 import '../../providers/property_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../widgets/property_card_shimmer.dart';
 import '../../features/properties/domain/property.dart';
 import '../../core/utils/currency_formatter.dart';
-import '../../core/utils/ui_helpers.dart';
 import '../../widgets/empty_state.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -72,7 +69,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Row(
             children: [
               Icon(Icons.star_rounded, color: Colors.amber, size: 28),
@@ -84,20 +83,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'You recently rented "$rentalPropertyName". How was your experience?',
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(5, (index) {
                   return GestureDetector(
-                    onTap: () => setDialogState(() => selectedRating = index + 1),
+                    onTap: () =>
+                        setDialogState(() => selectedRating = index + 1),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(
-                        index < selectedRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                        index < selectedRating
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
                         color: Colors.amber,
                         size: 40,
                       ),
@@ -110,10 +112,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   padding: const EdgeInsets.only(top: 10),
                   child: Center(
                     child: Text(
-                      ['', 'Poor 😞', 'Fair 😐', 'Good 🙂', 'Great 😊', 'Excellent 🌟'][selectedRating],
+                      [
+                        '',
+                        'Poor 😞',
+                        'Fair 😐',
+                        'Good 🙂',
+                        'Great 😊',
+                        'Excellent 🌟',
+                      ][selectedRating],
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: selectedRating >= 4 ? Colors.green : selectedRating == 3 ? Colors.orange : Colors.red,
+                        color: selectedRating >= 4
+                            ? Colors.green
+                            : selectedRating == 3
+                            ? Colors.orange
+                            : Colors.red,
                         fontSize: 14,
                       ),
                     ),
@@ -124,7 +137,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Not Now', style: TextStyle(color: Colors.grey)),
+              child: const Text(
+                'Not Now',
+                style: TextStyle(color: Colors.grey),
+              ),
             ),
             if (selectedRating > 0)
               ElevatedButton(
@@ -132,13 +148,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Thank you for your rating! It is now visible to others.'),
+                      content: Text(
+                        'Thank you for your rating! It is now visible to others.',
+                      ),
                       backgroundColor: Colors.green,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                 },
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
                 child: const Text('Submit'),
               ),
           ],
@@ -170,255 +192,318 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-          // ── Gradient Header ──────────────────────────────────────
-          SliverAppBar(
-            expandedHeight: 200,
-            floating: false,
-            pinned: true,
-            elevation: 0,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary,
-                      const Color(0xFF5D3F6A),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            // ── Gradient Header ──────────────────────────────────────
+            SliverAppBar(
+              expandedHeight: 200,
+              floating: false,
+              pinned: true,
+              elevation: 0,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        const Color(0xFF5D3F6A),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isFr ? 'Bonjour, ${user.session?.fullName.split(' ').first ?? 'Invité'} 👋' : 'Hello, ${user.session?.fullName.split(' ').first ?? 'Guest'} 👋',
-                                    style: const TextStyle(color: Colors.white70, fontSize: 16),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isFr
+                                          ? 'Bonjour, ${user.session?.fullName.split(' ').first ?? 'Invité'} 👋'
+                                          : 'Hello, ${user.session?.fullName.split(' ').first ?? 'Guest'} 👋',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 16,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      isFr
+                                          ? 'Trouvez votre espace idéal'
+                                          : 'Find your perfect space',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: -0.5,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _QuickIconAction(
+                                  icon: Icons.auto_awesome,
+                                  label: 'Bot',
+                                  onTap: () => context.push('/chatbot'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _QuickIconAction(
+                                  icon: Icons.real_estate_agent_outlined,
+                                  label: 'Agent',
+                                  onTap: () =>
+                                      context.push('/agent/onboarding'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _QuickIconAction(
+                                  icon: Icons.home_work_outlined,
+                                  label: 'Homes',
+                                  onTap: () => context.push('/tenant/search'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: () {
+                              context.push('/tenant/search');
+                            },
+                            child: Container(
+                              height: 48,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 8,
                                   ),
-                                  const SizedBox(height: 6),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.search, color: Colors.grey),
+                                  const SizedBox(width: 12),
                                   Text(
-                                    isFr ? 'Trouvez votre espace idéal' : 'Find your perfect space',
-                                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: -0.5),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                    isFr
+                                        ? 'Rechercher Yaoundé, Douala...'
+                                        : 'Search Yaoundé, Douala...',
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 15,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        // Search bar
-                        GestureDetector(
-                          onTap: () {
-                            // Switch to search tab programmatically via tenant dashboard (bottom nav index 1 usually but here we can push a search screen)
-                            // or just push property search directly
-                            context.push('/tenant/search');
-                          },
-                          child: Container(
-                            height: 48,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8)],
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.search, color: Colors.grey),
-                                const SizedBox(width: 12),
-                                Text(
-                                  isFr ? 'Rechercher Yaoundé, Douala...' : 'Search Yaoundé, Douala...',
-                                  style: const TextStyle(color: Colors.grey, fontSize: 15),
-                                ),
-                              ],
-                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            leading: IconButton(
-              icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 28),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-              tooltip: isFr ? 'Menu' : 'Menu',
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.map, color: Colors.white),
-                tooltip: isFr ? 'Voir sur la carte' : 'Map View',
-                onPressed: () => context.push('/tenant/search', extra: {'showMap': true}),
+              leading: IconButton(
+                icon: const Icon(
+                  Icons.menu_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+                tooltip: isFr ? 'Menu' : 'Menu',
               ),
-              IconButton(
-                icon: const Badge(child: Icon(Icons.notifications_outlined, color: Colors.white)),
-                onPressed: () => context.push('/notifications'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.map, color: Colors.white),
+                  tooltip: isFr ? 'Voir sur la carte' : 'Map View',
+                  onPressed: () =>
+                      context.push('/tenant/search', extra: {'showMap': true}),
+                ),
+                IconButton(
+                  icon: const Badge(
+                    child: Icon(
+                      Icons.notifications_outlined,
+                      color: Colors.white,
+                    ),
+                  ),
+                  onPressed: () => context.push('/notifications'),
+                ),
+              ],
+            ),
+
+            // ── Categories always visible at the top ─────────────────────────
+            SliverToBoxAdapter(child: _buildCategoriesSection(isFr, theme)),
+
+            // ── Recently Viewed ──────────────────────────────────────
+            if (recentlyViewed.isNotEmpty)
+              _buildHorizontalSection(
+                title: isFr ? 'Vus Récemment' : 'Recently Viewed',
+                properties: recentlyViewed,
               ),
-            ],
-          ),
 
-          // ── Categories always visible at the top ─────────────────────────
-          SliverToBoxAdapter(
-            child: _buildCategoriesSection(isFr, theme),
-          ),
-
-          // ── Recently Viewed ──────────────────────────────────────
-          if (recentlyViewed.isNotEmpty)
-            _buildHorizontalSection(
-              title: isFr ? 'Vus Récemment' : 'Recently Viewed',
-              properties: recentlyViewed,
-            ),
-
-          // ── Recommended Location + Latest + Last Month ───────────
-          SliverToBoxAdapter(
-            child: marketplaceAsync.when(
-              data: (props) {
-                if (props.isEmpty) {
-                  return _buildGlobalEmptyState(theme, isFr);
-                }
-                final location = recommendedLocationAsync.value ?? 'Yaoundé';
-                return Column(
-                  children: [
-                    _buildHorizontalSectionWidget(
-                      title: isFr ? 'Recommandé à $location' : 'Recommended in $location',
-                      properties: props,
-                    ),
-                    _buildHorizontalSectionWidget(
-                      title: isFr ? 'Dernières Propriétés' : 'Latest Properties',
-                      properties: props,
-                    ),
-                  ],
-                );
-              },
-              loading: () => Column(children: [
-                _buildShimmerSection(),
-                _buildShimmerSection(),
-              ]),
-              error: (e, _) => _buildErrorState(theme, isFr),
-            ),
-          ),
-
-          // ── Most Rated Properties ──────────────────────────────
-          SliverToBoxAdapter(
-            child: marketplaceAsync.maybeWhen(
-              data: (props) => props.isEmpty
-                  ? const SizedBox.shrink()
-                  : _buildHorizontalSectionWidget(
-                      title: isFr ? 'Propriétés les Mieux Notées' : 'Most Rated Properties',
-                      properties: props,
-                    ),
-              orElse: () => const SizedBox.shrink(),
-            ),
-          ),
-
-          // ── Agent Promo Banner (Full Width) ────────────────────────
-          SliverToBoxAdapter(
-            child: _buildAgentPromoSection(isFr, theme),
-          ),
-
-          // ── All Properties (Explore) ────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-              child: Text(
-                isFr ? 'Explorer Tout' : 'Explore All',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            // ── Recommended Location + Latest + Last Month ───────────
+            SliverToBoxAdapter(
+              child: marketplaceAsync.when(
+                data: (props) {
+                  if (props.isEmpty) {
+                    return _buildGlobalEmptyState(theme, isFr);
+                  }
+                  final location = recommendedLocationAsync.value ?? 'Yaoundé';
+                  return Column(
+                    children: [
+                      _buildHorizontalSectionWidget(
+                        title: isFr
+                            ? 'Recommandé à $location'
+                            : 'Recommended in $location',
+                        properties: props,
+                      ),
+                      _buildHorizontalSectionWidget(
+                        title: isFr
+                            ? 'Dernières Propriétés'
+                            : 'Latest Properties',
+                        properties: props,
+                      ),
+                    ],
+                  );
+                },
+                loading: () => Column(
+                  children: [_buildShimmerSection(), _buildShimmerSection()],
+                ),
+                error: (e, _) => _buildErrorState(theme, isFr),
               ),
             ),
-          ),
 
-          SliverToBoxAdapter(
-            child: marketplaceAsync.when(
-              data: (props) {
-                final allCategories = ['Apartments', 'Studios', 'Villas', 'Commercial', 'Land'];
-                final grouped = <String, List<PropertyWithListing>>{};
-                for (final p in props) {
-                  grouped.putIfAbsent(p.property.category, () => []).add(p);
-                }
-                final cats = {...allCategories, ...grouped.keys}.toList()..sort();
+            // ── Most Rated Properties ──────────────────────────────
+            SliverToBoxAdapter(
+              child: marketplaceAsync.maybeWhen(
+                data: (props) => props.isEmpty
+                    ? const SizedBox.shrink()
+                    : _buildHorizontalSectionWidget(
+                        title: isFr
+                            ? 'Propriétés les Mieux Notées'
+                            : 'Most Rated Properties',
+                        properties: props,
+                      ),
+                orElse: () => const SizedBox.shrink(),
+              ),
+            ),
 
-                return Column(
-                  children: cats.map((cat) {
-                    final catProps = grouped[cat] ?? [];
-                    final section = _buildCategorySection(
-                      title: cat,
-                      properties: catProps,
-                      isFr: isFr,
-                      theme: theme,
-                    );
-                    if (cat == 'Villas') {
-                      return Column(
-                        children: [
-                          section,
-                          const SizedBox(height: 32),
-                          _buildUserReviewsSection(),
-                          const SizedBox(height: 24),
-                          _buildPartnershipsSection(),
-                        ],
+            // ── Agent Promo Banner (Full Width) ────────────────────────
+            SliverToBoxAdapter(child: _buildAgentPromoSection(isFr, theme)),
+
+            // ── All Properties (Explore) ────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                child: Text(
+                  isFr ? 'Explorer Tout' : 'Explore All',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            SliverToBoxAdapter(
+              child: marketplaceAsync.when(
+                data: (props) {
+                  final allCategories = [
+                    'Apartments',
+                    'Studios',
+                    'Villas',
+                    'Commercial',
+                    'Land',
+                  ];
+                  final grouped = <String, List<PropertyWithListing>>{};
+                  for (final p in props) {
+                    grouped.putIfAbsent(p.property.category, () => []).add(p);
+                  }
+                  final cats = {...allCategories, ...grouped.keys}.toList()
+                    ..sort();
+
+                  return Column(
+                    children: cats.map((cat) {
+                      final catProps = grouped[cat] ?? [];
+                      final section = _buildCategorySection(
+                        title: cat,
+                        properties: catProps,
+                        isFr: isFr,
+                        theme: theme,
                       );
-                    }
-                    return section;
-                  }).toList(),
-                );
-              },
-              loading: () => Column(children: [
-                _buildShimmerSection(),
-                _buildShimmerSection(),
-              ]),
-              error: (e, _) => _buildErrorState(theme, isFr),
+                      if (cat == 'Villas') {
+                        return Column(
+                          children: [
+                            section,
+                            const SizedBox(height: 32),
+                            _buildUserReviewsSection(),
+                            const SizedBox(height: 24),
+                            _buildPartnershipsSection(),
+                          ],
+                        );
+                      }
+                      return section;
+                    }).toList(),
+                  );
+                },
+                loading: () => Column(
+                  children: [_buildShimmerSection(), _buildShimmerSection()],
+                ),
+                error: (e, _) => _buildErrorState(theme, isFr),
+              ),
             ),
-          ),
 
-          // ── App Showcase Section ───────────────────────────────────
-          SliverToBoxAdapter(
-            child: _buildAppShowcaseSection(isFr, theme),
-          ),
+            // ── App Showcase Section ───────────────────────────────────
+            SliverToBoxAdapter(child: _buildAppShowcaseSection(isFr, theme)),
 
-          // ── Platform Statistics ────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: _buildPlatformStatistics(marketplaceAsync),
+            // ── Platform Statistics ────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: _buildPlatformStatistics(marketplaceAsync),
+              ),
             ),
-          ),
 
-          // ── What Are You Waiting For Banner ──────────────────────
-          SliverToBoxAdapter(
-            child: _buildWaitingForSection(theme),
-          ),
+            // ── What Are You Waiting For Banner ──────────────────────
+            SliverToBoxAdapter(child: _buildWaitingForSection(theme)),
 
-          // ── Map + Regions ─────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _buildMapAndRegionsSection(theme),
-          ),
+            // ── Map + Regions ─────────────────────────────────────────
+            SliverToBoxAdapter(child: _buildMapAndRegionsSection(theme)),
 
-          // ── FAQ ───────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _buildFaqSection(theme),
-          ),
+            // ── FAQ ───────────────────────────────────────────────────
+            SliverToBoxAdapter(child: _buildFaqSection(theme)),
 
-          // ── Footer ───────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _buildFooter(isFr, theme),
-          ),
+            // ── Footer ───────────────────────────────────────────────
+            SliverToBoxAdapter(child: _buildFooter(isFr, theme)),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
-        ],
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          ],
         ),
       ),
     );
@@ -427,7 +512,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildGlobalEmptyState(ThemeData theme, bool isFr) {
     return EmptyState(
       title: isFr ? 'Aucune propriété disponible' : 'No properties available',
-      message: isFr ? 'Les propriétés apparaîtront ici une fois publiées.' : 'Properties will appear here once published.',
+      message: isFr
+          ? 'Les propriétés apparaîtront ici une fois publiées.'
+          : 'Properties will appear here once published.',
       icon: Icons.home_work_outlined,
     );
   }
@@ -441,7 +528,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.grey.shade100),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10)],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -451,7 +543,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 color: theme.colorScheme.primary.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.search_off_rounded, size: 40, color: theme.colorScheme.primary),
+              child: Icon(
+                Icons.search_off_rounded,
+                size: 40,
+                color: theme.colorScheme.primary,
+              ),
             ),
             const SizedBox(height: 14),
             Text(
@@ -460,9 +556,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              isFr ? 'Nous n\'avons pas pu charger les propriétés. Vérifiez votre connexion.' : 'We couldn\'t load properties right now. They will appear here dynamically.',
+              isFr
+                  ? 'Nous n\'avons pas pu charger les propriétés. Vérifiez votre connexion.'
+                  : 'We couldn\'t load properties right now. They will appear here dynamically.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 14, height: 1.5),
+              style: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 14,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
@@ -472,8 +574,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
             ),
           ],
@@ -500,7 +607,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
@@ -514,14 +624,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                   ),
-                  if (properties.isNotEmpty) ...
-                    [
-                      const SizedBox(width: 8),
-                      Text(
-                        '${properties.length} ${isFr ? "biens" : "properties"}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  if (properties.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      '${properties.length} ${isFr ? "biens" : "properties"}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
                       ),
-                    ],
+                    ),
+                  ],
                 ],
               ),
               if (properties.isNotEmpty)
@@ -531,10 +643,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       Text(
                         isFr ? 'Voir tout' : 'See all',
-                        style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.arrow_forward, size: 16, color: theme.colorScheme.primary),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: theme.colorScheme.primary,
+                      ),
                     ],
                   ),
                 ),
@@ -559,7 +679,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: theme.colorScheme.primary.withValues(alpha: 0.07),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.search_off_rounded, size: 22, color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                    child: Icon(
+                      Icons.search_off_rounded,
+                      size: 22,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -567,13 +691,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isFr ? 'Aucun bien dans cette catégorie' : 'No $title available yet',
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                          isFr
+                              ? 'Aucun bien dans cette catégorie'
+                              : 'No $title available yet',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 3),
                         Text(
                           isFr ? 'Revenez bientôt !' : 'Check back soon!',
-                          style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -607,7 +739,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         image: DecorationImage(
                           image: NetworkImage(bgImage),
                           fit: BoxFit.cover,
-                          colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.5), BlendMode.darken),
+                          colorFilter: ColorFilter.mode(
+                            Colors.black.withValues(alpha: 0.5),
+                            BlendMode.darken,
+                          ),
                         ),
                       ),
                       child: Center(
@@ -616,14 +751,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           children: [
                             Container(
                               padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-                              child: const Icon(Icons.arrow_forward, color: Colors.white, size: 28),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_forward,
+                                color: Colors.white,
+                                size: 28,
+                              ),
                             ),
                             const SizedBox(height: 12),
-                            const Text('See more', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                            const Text(
+                              'See more',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              child: Text('in $title', style: const TextStyle(color: Colors.white70, fontSize: 12), textAlign: TextAlign.center),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                'in $title',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ],
                         ),
@@ -639,23 +797,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.easeOutBack,
                     builder: (context, scale, child) {
-                      return Transform.scale(
-                        scale: scale,
-                        child: child,
-                      );
+                      return Transform.scale(scale: scale, child: child);
                     },
                     child: Container(
                       width: MediaQuery.sizeOf(context).width * 0.7,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4))],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16),
+                            ),
                             child: Image.network(
                               property.property.images.isNotEmpty
                                   ? property.property.images.first
@@ -665,9 +828,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               fit: BoxFit.cover,
                               loadingBuilder: (context, child, progress) {
                                 if (progress == null) return child;
-                                return Container(height: 140, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator(strokeWidth: 2)));
+                                return Container(
+                                  height: 140,
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
                               },
-                              errorBuilder: (_, __, ___) => Container(height: 140, width: double.infinity, color: Colors.grey[200], child: Icon(Icons.image_not_supported, color: Colors.grey[400])),
+                              errorBuilder: (_, __, ___) => Container(
+                                height: 140,
+                                width: double.infinity,
+                                color: Colors.grey[200],
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  color: Colors.grey[400],
+                                ),
+                              ),
                             ),
                           ),
                           Padding(
@@ -677,35 +856,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               children: [
                                 if (property.verification.level.index >= 3)
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     margin: const EdgeInsets.only(bottom: 6),
                                     decoration: BoxDecoration(
-                                      color: Colors.green.withValues(alpha: 0.1),
+                                      color: Colors.green.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: const Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.verified, size: 10, color: Colors.green),
+                                        Icon(
+                                          Icons.verified,
+                                          size: 10,
+                                          color: Colors.green,
+                                        ),
                                         SizedBox(width: 3),
-                                        Text('Verified', style: TextStyle(fontSize: 9, color: Colors.green, fontWeight: FontWeight.bold)),
+                                        Text(
+                                          'Verified',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            color: Colors.green,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
                                 Text(
                                   property.property.title,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(Icons.location_on, size: 12, color: Colors.grey),
+                                    const Icon(
+                                      Icons.location_on,
+                                      size: 12,
+                                      color: Colors.grey,
+                                    ),
                                     Expanded(
                                       child: Text(
                                         property.property.location,
-                                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -736,16 +941,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildHorizontalSection({required String title, required List<PropertyWithListing> properties}) {
+  Widget _buildHorizontalSection({
+    required String title,
+    required List<PropertyWithListing> properties,
+  }) {
     return SliverToBoxAdapter(
-      child: _buildHorizontalSectionWidget(title: title, properties: properties),
+      child: _buildHorizontalSectionWidget(
+        title: title,
+        properties: properties,
+      ),
     );
   }
 
-  Widget _buildHorizontalSectionWidget({required String title, required List<PropertyWithListing> properties}) {
+  Widget _buildHorizontalSectionWidget({
+    required String title,
+    required List<PropertyWithListing> properties,
+  }) {
     final theme = Theme.of(context);
     final isFr = ref.read(localeProvider).languageCode == 'fr';
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -754,17 +968,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               GestureDetector(
                 onTap: () => context.push('/tenant/search'),
                 child: Row(
                   children: [
                     Text(
                       isFr ? 'Voir tout' : 'See all',
-                      style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(width: 4),
-                    Icon(Icons.arrow_forward, size: 16, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.arrow_forward,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
                   ],
                 ),
               ),
@@ -781,9 +1009,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               if (index == properties.take(5).length) {
-                final bgImage = properties.isNotEmpty ? properties.first.property.images.first : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800';
+                final bgImage = properties.isNotEmpty
+                    ? properties.first.property.images.first
+                    : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800';
                 return GestureDetector(
-                  onTap: () => context.push('/tenant/category/${Uri.encodeComponent(title)}', extra: properties.map((p) => p.property.id).toList()),
+                  onTap: () => context.push(
+                    '/tenant/category/${Uri.encodeComponent(title)}',
+                    extra: properties.map((p) => p.property.id).toList(),
+                  ),
                   child: Container(
                     width: MediaQuery.sizeOf(context).width * 0.6,
                     decoration: BoxDecoration(
@@ -791,9 +1024,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       image: DecorationImage(
                         image: NetworkImage(bgImage),
                         fit: BoxFit.cover,
-                        colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.5), BlendMode.darken),
+                        colorFilter: ColorFilter.mode(
+                          Colors.black.withValues(alpha: 0.5),
+                          BlendMode.darken,
+                        ),
                       ),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10)],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                        ),
+                      ],
                     ),
                     child: Center(
                       child: Column(
@@ -801,14 +1042,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-                            child: const Icon(Icons.arrow_forward, color: Colors.white, size: 28),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.arrow_forward,
+                              color: Colors.white,
+                              size: 28,
+                            ),
                           ),
                           const SizedBox(height: 12),
-                          const Text('See more', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                          const Text(
+                            'See more',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Text('in $title', style: const TextStyle(color: Colors.white70, fontSize: 12), textAlign: TextAlign.center, maxLines: 2),
+                            child: Text(
+                              'in $title',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                            ),
                           ),
                         ],
                       ),
@@ -824,15 +1087,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 10)],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.07),
+                        blurRadius: 10,
+                      ),
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(16),
+                        ),
                         child: Hero(
-                          tag: 'property_image_${property.property.id}_home_${title.hashCode}',
+                          tag:
+                              'property_image_${property.property.id}_home_${title.hashCode}',
                           child: Image.network(
                             property.property.images.first,
                             height: 140,
@@ -841,9 +1112,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             alignment: Alignment.center,
                             loadingBuilder: (context, child, progress) {
                               if (progress == null) return child;
-                              return Container(height: 140, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator(strokeWidth: 2)));
+                              return Container(
+                                height: 140,
+                                color: Colors.grey[200],
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
                             },
-                            errorBuilder: (_, __, ___) => Container(height: 140, width: double.infinity, color: Colors.grey[200], child: Icon(Icons.image_not_supported, color: Colors.grey[400])),
+                            errorBuilder: (_, __, ___) => Container(
+                              height: 140,
+                              width: double.infinity,
+                              color: Colors.grey[200],
+                              child: Icon(
+                                Icons.image_not_supported,
+                                color: Colors.grey[400],
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -854,7 +1141,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           children: [
                             if (property.verification.level.index >= 3)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 margin: const EdgeInsets.only(bottom: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.green.withValues(alpha: 0.1),
@@ -863,26 +1153,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.verified, size: 10, color: Colors.green),
+                                    Icon(
+                                      Icons.verified,
+                                      size: 10,
+                                      color: Colors.green,
+                                    ),
                                     SizedBox(width: 3),
-                                    Text('Verified', style: TextStyle(fontSize: 9, color: Colors.green, fontWeight: FontWeight.bold)),
+                                    Text(
+                                      'Verified',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
                             Text(
                               property.property.title,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 3),
                             Row(
                               children: [
-                                const Icon(Icons.location_on, size: 11, color: Colors.grey),
+                                const Icon(
+                                  Icons.location_on,
+                                  size: 11,
+                                  color: Colors.grey,
+                                ),
                                 Expanded(
                                   child: Text(
                                     property.property.location,
-                                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -960,7 +1271,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               final cat = categories[index];
               return GestureDetector(
                 onTap: () {
-                  context.push('/tenant/search', extra: {'category': cat['name']});
+                  context.push(
+                    '/tenant/search',
+                    extra: {'category': cat['name']},
+                  );
                 },
                 child: Container(
                   alignment: Alignment.center,
@@ -985,9 +1299,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildUserReviewsSection() {
     final theme = Theme.of(context);
     final reviews = [
-      {'name': 'Jean Dupont', 'avatar': 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100', 'rating': 5, 'text': 'Found a great apartment in Douala very quickly. The platform is secure and the landlord was responsive!'},
-      {'name': 'Marie K.', 'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100', 'rating': 4, 'text': 'Very useful application for students looking for housing near the university.'},
-      {'name': 'Paul B.', 'avatar': 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100', 'rating': 5, 'text': 'The 3D tours and floor plans saved me so much time. Highly recommend SpaceRentals!'},
+      {
+        'name': 'Jean Dupont',
+        'avatar':
+            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
+        'rating': 5,
+        'text':
+            'Found a great apartment in Douala very quickly. The platform is secure and the landlord was responsive!',
+      },
+      {
+        'name': 'Marie K.',
+        'avatar':
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+        'rating': 4,
+        'text':
+            'Very useful application for students looking for housing near the university.',
+      },
+      {
+        'name': 'Paul B.',
+        'avatar':
+            'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100',
+        'rating': 5,
+        'text':
+            'The 3D tours and floor plans saved me so much time. Highly recommend SpaceRentals!',
+      },
     ];
 
     return Column(
@@ -995,7 +1330,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       children: [
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
-          child: Text('User Reviews', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          child: Text(
+            'User Reviews',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
         ),
         SizedBox(
           height: 180,
@@ -1012,7 +1350,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1024,17 +1367,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           children: [
                             CircleAvatar(
                               radius: 14,
-                              backgroundImage: NetworkImage(review['avatar'] as String),
+                              backgroundImage: NetworkImage(
+                                review['avatar'] as String,
+                              ),
                             ),
                             const SizedBox(width: 8),
-                            Text(review['name'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text(
+                              review['name'] as String,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                         Row(
-                          children: List.generate(5, (i) => Icon(
-                            i < (review['rating'] as int) ? Icons.star : Icons.star_border,
-                            color: Colors.amber, size: 14,
-                          )),
+                          children: List.generate(
+                            5,
+                            (i) => Icon(
+                              i < (review['rating'] as int)
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: Colors.amber,
+                              size: 14,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -1042,7 +1398,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Expanded(
                       child: Text(
                         review['text'] as String,
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade700, height: 1.4),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                          height: 1.4,
+                        ),
                         overflow: TextOverflow.fade,
                       ),
                     ),
@@ -1061,8 +1421,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       {'name': 'Google', 'icon': Icons.g_mobiledata, 'color': Colors.red},
       {'name': 'Facebook', 'icon': Icons.facebook, 'color': Colors.blue},
       {'name': 'Instagram', 'icon': Icons.camera_alt, 'color': Colors.pink},
-      {'name': 'Orange', 'icon': Icons.signal_cellular_alt, 'color': Colors.orange},
-      {'name': 'Cameroon Real Estate', 'icon': Icons.business, 'color': Colors.grey.shade800},
+      {
+        'name': 'Orange',
+        'icon': Icons.signal_cellular_alt,
+        'color': Colors.orange,
+      },
+      {
+        'name': 'Cameroon Real Estate',
+        'icon': Icons.business,
+        'color': Colors.grey.shade800,
+      },
       {'name': 'MTN', 'icon': Icons.wifi, 'color': Colors.yellow.shade700},
     ];
 
@@ -1071,14 +1439,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       children: [
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
-          child: Text('Our Partnerships', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          child: Text(
+            'Our Partnerships',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
         ),
         SizedBox(
           height: 50,
           child: _AutoScrollMarquee(
             children: partners.map((partner) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
@@ -1087,9 +1461,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(partner['icon'] as IconData, color: partner['color'] as Color),
+                    Icon(
+                      partner['icon'] as IconData,
+                      color: partner['color'] as Color,
+                    ),
                     const SizedBox(width: 8),
-                    Text(partner['name'] as String, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+                    Text(
+                      partner['name'] as String,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -1100,27 +1483,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildPlatformStatistics(AsyncValue<List<PropertyWithListing>> marketplaceAsync) {
+  Widget _buildPlatformStatistics(
+    AsyncValue<List<PropertyWithListing>> marketplaceAsync,
+  ) {
     // Dynamic values based on backend data if available
     int totalProperties = 12500;
     int totalCities = 10;
-    
+
     marketplaceAsync.whenData((properties) {
       if (properties.isNotEmpty) {
-        totalProperties = properties.length * 150; // Scaled for platform projection
-        final cities = properties.map((p) => p.property.location.split(',').last.trim()).toSet();
+        totalProperties =
+            properties.length * 150; // Scaled for platform projection
+        final cities = properties
+            .map((p) => p.property.location.split(',').last.trim())
+            .toSet();
         if (cities.isNotEmpty) totalCities = cities.length;
       }
     });
 
-    final String propsStr = totalProperties > 1000 
-      ? '${(totalProperties / 1000).toStringAsFixed(1)}K+' 
-      : '$totalProperties+';
+    final String propsStr = totalProperties > 1000
+        ? '${(totalProperties / 1000).toStringAsFixed(1)}K+'
+        : '$totalProperties+';
 
     final stats = [
       {
         'title': '$propsStr Properties',
-        'desc': 'Find the perfect place from an extensive list in Yaoundé, Douala and more.',
+        'desc':
+            'Find the perfect place from an extensive list in Yaoundé, Douala and more.',
         'icon': Icons.home_work_rounded,
       },
       {
@@ -1140,7 +1529,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       children: [
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
-          child: Text('Platform Statistics', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          child: Text(
+            'Platform Statistics',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
         ),
         SizedBox(
           height: 210,
@@ -1165,10 +1557,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.4),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
-                    )
+                    ),
                   ],
                 ),
                 child: Column(
@@ -1180,19 +1574,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         color: Colors.white.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(stats[index]['icon'] as IconData, color: Colors.white, size: 28),
+                      child: Icon(
+                        stats[index]['icon'] as IconData,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       stats[index]['title'] as String,
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       stats[index]['desc'] as String,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),
@@ -1216,7 +1622,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           end: Alignment.bottomRight,
         ),
         boxShadow: [
-          BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.4), blurRadius: 20, offset: const Offset(0, 8)),
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
       child: Stack(
@@ -1234,7 +1644,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [theme.colorScheme.primary.withValues(alpha: 0.85), const Color(0xFF5D3F6A).withValues(alpha: 0.70)],
+                  colors: [
+                    theme.colorScheme.primary.withValues(alpha: 0.85),
+                    const Color(0xFF5D3F6A).withValues(alpha: 0.70),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -1250,32 +1663,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 8),
                 const Text(
                   'What Are You\nWaiting For?',
-                  style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold, height: 1.2),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
                   'Join Us',
-                  style: TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.w500, letterSpacing: 0.5),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   'Thousands of tenants and landlords are already\nusing SpaceRentals to find and list properties\nacross Cameroon.',
-                  style: TextStyle(color: Colors.white60, fontSize: 13, height: 1.6),
+                  style: TextStyle(
+                    color: Colors.white60,
+                    fontSize: 13,
+                    height: 1.6,
+                  ),
                 ),
                 const SizedBox(height: 28),
                 Row(
                   children: [
                     ElevatedButton.icon(
                       onPressed: () async {
-                        UrlHelper.openWhatsApp(context, 'https://wa.me/652856939');
+                        UrlHelper.openWhatsApp(
+                          context,
+                          'https://wa.me/652856939',
+                        );
                       },
                       icon: const Icon(Icons.message_rounded, size: 18),
-                      label: const Text('Contact Us', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Contact Us',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: const Color(0xFF6C3B9A),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                         elevation: 4,
                       ),
                     ),
@@ -1285,10 +1723,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
                         side: const BorderSide(color: Colors.white54),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
-                      child: const Text('Learn More', style: TextStyle(fontWeight: FontWeight.w600)),
+                      child: const Text(
+                        'Learn More',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ],
                 ),
@@ -1326,9 +1772,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('We Operate Across Cameroon', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'We Operate Across Cameroon',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 6),
-                Text('Find properties in all 10 regions', style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                Text(
+                  'Find properties in all 10 regions',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
               ],
             ),
           ),
@@ -1341,9 +1793,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 flex: 3,
                 child: GestureDetector(
                   onTap: () async {
-                    final Uri url = Uri.parse('https://www.google.com/maps/@5.5,12.3,7z');
+                    final Uri url = Uri.parse(
+                      'https://www.google.com/maps/@5.5,12.3,7z',
+                    );
                     if (await canLaunchUrl(url)) {
-                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                      await launchUrl(
+                        url,
+                        mode: LaunchMode.externalApplication,
+                      );
                     }
                   },
                   child: Container(
@@ -1351,7 +1808,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Stack(
                       fit: StackFit.expand,
@@ -1363,7 +1826,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           errorBuilder: (_, __, ___) => ColoredBox(
                             color: const Color(0xFFD4E6C3),
                             child: Center(
-                              child: Icon(Icons.map_outlined, size: 60, color: Colors.green.shade700),
+                              child: Icon(
+                                Icons.map_outlined,
+                                size: 60,
+                                color: Colors.green.shade700,
+                              ),
                             ),
                           ),
                         ),
@@ -1374,18 +1841,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           bottom: 10,
                           right: 10,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(20),
-                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 6)],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                ),
+                              ],
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.open_in_new, size: 12, color: theme.colorScheme.primary),
+                                Icon(
+                                  Icons.open_in_new,
+                                  size: 12,
+                                  color: theme.colorScheme.primary,
+                                ),
                                 const SizedBox(width: 4),
-                                Text('Open Maps', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                                Text(
+                                  'Open Maps',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -1408,29 +1894,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     itemBuilder: (context, index) {
                       final region = regions[index];
                       return GestureDetector(
-                        onTap: () => context.push('/tenant/search', extra: {'location': region['capital']}),
+                        onTap: () => context.push(
+                          '/tenant/search',
+                          extra: {'location': region['capital']},
+                        ),
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 6),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 6,
+                              ),
+                            ],
                           ),
                           child: Row(
                             children: [
-                              Icon(region['icon'] as IconData, size: 16, color: theme.colorScheme.primary),
+                              Icon(
+                                region['icon'] as IconData,
+                                size: 16,
+                                color: theme.colorScheme.primary,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(region['name'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                                    Text(region['capital'] as String, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+                                    Text(
+                                      region['name'] as String,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      region['capital'] as String,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
-                              Icon(Icons.chevron_right, size: 14, color: Colors.grey.shade400),
+                              Icon(
+                                Icons.chevron_right,
+                                size: 14,
+                                color: Colors.grey.shade400,
+                              ),
                             ],
                           ),
                         ),
@@ -1449,11 +1966,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<Widget> _mapPins(ThemeData theme) {
     // Alignment ranges: -1=left/top, 0=center, 1=right/bottom
     final pins = [
-      {'label': 'Yaoundé',  'ax': 0.0,   'ay': 0.2},
-      {'label': 'Douala',   'ax': -0.5,  'ay': 0.35},
-      {'label': 'Bamenda',  'ax': -0.55, 'ay': -0.2},
-      {'label': 'Garoua',   'ax': 0.05,  'ay': -0.65},
-      {'label': 'Buea',     'ax': -0.6,  'ay': 0.15},
+      {'label': 'Yaoundé', 'ax': 0.0, 'ay': 0.2},
+      {'label': 'Douala', 'ax': -0.5, 'ay': 0.35},
+      {'label': 'Bamenda', 'ax': -0.55, 'ay': -0.2},
+      {'label': 'Garoua', 'ax': 0.05, 'ay': -0.65},
+      {'label': 'Buea', 'ax': -0.6, 'ay': 0.15},
     ];
     return pins.map((pin) {
       return Align(
@@ -1466,9 +1983,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary,
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
-              child: Text(pin['label'] as String, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+              child: Text(
+                pin['label'] as String,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             const Icon(Icons.location_on, color: Colors.red, size: 16),
           ],
@@ -1483,7 +2012,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildFooter(bool isFr, ThemeData theme) {
-
     return Container(
       margin: const EdgeInsets.only(top: 40),
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
@@ -1496,20 +2024,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           Row(
             children: [
-              Image.asset('assets/images/logo.png', width: 32, height: 32, errorBuilder: (_, __, ___) => Icon(Icons.apartment, color: theme.colorScheme.primary, size: 32)),
+              Image.asset(
+                'assets/images/logo.png',
+                width: 32,
+                height: 32,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.apartment,
+                  color: theme.colorScheme.primary,
+                  size: 32,
+                ),
+              ),
               const SizedBox(width: 10),
               Text(
                 'SpaceRentals',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: -0.5),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                  letterSpacing: -0.5,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
-            isFr 
-                ? 'L\'avenir de la location immobilière en Afrique. Sécurisé, rapide et transparent.' 
+            isFr
+                ? 'L\'avenir de la location immobilière en Afrique. Sécurisé, rapide et transparent.'
                 : 'The future of real estate rentals in Africa. Secure, fast, and transparent.',
-            style: const TextStyle(color: Colors.black54, fontSize: 13, height: 1.5),
+            style: const TextStyle(
+              color: Colors.black54,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 32),
           Row(
@@ -1519,7 +2065,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(isFr ? 'Société' : 'Company', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(
+                      isFr ? 'Société' : 'Company',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     _footerLink(isFr ? 'À propos' : 'About Us'),
                     _footerLink(isFr ? 'Carrières' : 'Careers'),
@@ -1532,11 +2084,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(isFr ? 'Assistance' : 'Support', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(
+                      isFr ? 'Assistance' : 'Support',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     _footerLink(isFr ? 'Centre d\'aide' : 'Help Center'),
                     _footerLink(isFr ? 'Signaler un problème' : 'Report Issue'),
-                    _footerLink(isFr ? 'Conditions générales' : 'Terms of Service'),
+                    _footerLink(
+                      isFr ? 'Conditions générales' : 'Terms of Service',
+                    ),
                     _footerLink(isFr ? 'Confidentialité' : 'Privacy Policy'),
                   ],
                 ),
@@ -1549,7 +2109,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('© 2026 SpaceRentals. All rights reserved.', style: TextStyle(color: Colors.black45, fontSize: 11)),
+              const Text(
+                '© 2026 SpaceRentals. All rights reserved.',
+                style: TextStyle(color: Colors.black45, fontSize: 11),
+              ),
               Row(
                 children: [
                   _socialIcon(Icons.facebook),
@@ -1569,7 +2132,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _footerLink(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(text, style: const TextStyle(color: Colors.black54, fontSize: 13)),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.black54, fontSize: 13),
+      ),
     );
   }
 
@@ -1589,7 +2155,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 class _AutoScrollMarquee extends StatefulWidget {
   final List<Widget> children;
   const _AutoScrollMarquee({required this.children});
-  
+
   @override
   State<_AutoScrollMarquee> createState() => _AutoScrollMarqueeState();
 }
@@ -1653,23 +2219,28 @@ class _FaqSectionState extends State<_FaqSection> {
   final _faqs = const [
     {
       'q': 'How do I rent a property on SpaceRentals?',
-      'a': 'Simply browse our listings, select your ideal property, and submit a rental application. Our landlords typically respond within 24 hours. Once approved, you\'ll receive a digital rental agreement to sign.',
+      'a':
+          'Simply browse our listings, select your ideal property, and submit a rental application. Our landlords typically respond within 24 hours. Once approved, you\'ll receive a digital rental agreement to sign.',
     },
     {
       'q': 'Is SpaceRentals available across Cameroon?',
-      'a': 'Yes! We operate in all 10 regions of Cameroon including Centre, Littoral, Nord-Ouest, Sud-Ouest, Ouest, Nord, Adamaoua, Est, Sud, and Extrême-Nord.',
+      'a':
+          'Yes! We operate in all 10 regions of Cameroon including Centre, Littoral, Nord-Ouest, Sud-Ouest, Ouest, Nord, Adamaoua, Est, Sud, and Extrême-Nord.',
     },
     {
       'q': 'How are payments handled?',
-      'a': 'Payments are made securely through the app via Mobile Money (MTN, Orange) or bank transfer. All transactions are logged and both tenant and landlord receive instant receipts.',
+      'a':
+          'Payments are made securely through the app via Mobile Money (MTN, Orange) or bank transfer. All transactions are logged and both tenant and landlord receive instant receipts.',
     },
     {
       'q': 'Can I list my property as a landlord?',
-      'a': 'Absolutely! Register as a landlord, complete a quick KYC verification, and start listing your property with full details, photos, videos, and floor plans.',
+      'a':
+          'Absolutely! Register as a landlord, complete a quick KYC verification, and start listing your property with full details, photos, videos, and floor plans.',
     },
     {
       'q': 'How do I leave a review?',
-      'a': 'After your rental period ends, you\'ll receive an in-app prompt to rate your experience from 1 to 5 stars. Your review will be visible to all other users on the platform.',
+      'a':
+          'After your rental period ends, you\'ll receive an in-app prompt to rate your experience from 1 to 5 stars. Your review will be visible to all other users on the platform.',
     },
   ];
 
@@ -1680,9 +2251,15 @@ class _FaqSectionState extends State<_FaqSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Frequently Asked Questions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Frequently Asked Questions',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 6),
-          Text('Got questions? We have answers.', style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          Text(
+            'Got questions? We have answers.',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
           const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1694,19 +2271,32 @@ class _FaqSectionState extends State<_FaqSection> {
                   children: List.generate(_faqs.length, (index) {
                     final isSelected = _selectedIndex == index;
                     return GestureDetector(
-                      onTap: () => setState(() => _selectedIndex = isSelected ? null : index),
+                      onTap: () => setState(
+                        () => _selectedIndex = isSelected ? null : index,
+                      ),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: isSelected ? widget.theme.colorScheme.primary : Colors.white,
+                          color: isSelected
+                              ? widget.theme.colorScheme.primary
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? widget.theme.colorScheme.primary : Colors.grey.shade200,
+                            color: isSelected
+                                ? widget.theme.colorScheme.primary
+                                : Colors.grey.shade200,
                             width: 1.5,
                           ),
-                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isSelected ? 0.12 : 0.04), blurRadius: 8)],
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: isSelected ? 0.12 : 0.04,
+                              ),
+                              blurRadius: 8,
+                            ),
+                          ],
                         ),
                         child: Row(
                           children: [
@@ -1716,14 +2306,18 @@ class _FaqSectionState extends State<_FaqSection> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: isSelected ? Colors.white : Colors.black87,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black87,
                                 ),
                               ),
                             ),
                             Icon(
                               isSelected ? Icons.remove : Icons.add,
                               size: 16,
-                              color: isSelected ? Colors.white : widget.theme.colorScheme.primary,
+                              color: isSelected
+                                  ? Colors.white
+                                  : widget.theme.colorScheme.primary,
                             ),
                           ],
                         ),
@@ -1746,31 +2340,51 @@ class _FaqSectionState extends State<_FaqSection> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12)],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 12,
+                              ),
+                            ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: widget.theme.colorScheme.primary.withValues(alpha: 0.1),
+                                  color: widget.theme.colorScheme.primary
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   'Answer',
-                                  style: TextStyle(color: widget.theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 11),
+                                  style: TextStyle(
+                                    color: widget.theme.colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 12),
                               Text(
                                 _faqs[_selectedIndex!]['q']!,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
                               const SizedBox(height: 10),
                               Text(
                                 _faqs[_selectedIndex!]['a']!,
-                                style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.6),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade700,
+                                  height: 1.6,
+                                ),
                               ),
                             ],
                           ),
@@ -1781,17 +2395,28 @@ class _FaqSectionState extends State<_FaqSection> {
                           decoration: BoxDecoration(
                             color: Colors.grey.shade50,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade200, style: BorderStyle.solid),
+                            border: Border.all(
+                              color: Colors.grey.shade200,
+                              style: BorderStyle.solid,
+                            ),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.quiz_outlined, size: 40, color: Colors.grey.shade400),
+                              Icon(
+                                Icons.quiz_outlined,
+                                size: 40,
+                                color: Colors.grey.shade400,
+                              ),
                               const SizedBox(height: 12),
                               Text(
                                 'Select a question\non the left to see\nthe answer here.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey.shade500, fontSize: 13, height: 1.5),
+                                style: TextStyle(
+                                  color: Colors.grey.shade500,
+                                  fontSize: 13,
+                                  height: 1.5,
+                                ),
                               ),
                             ],
                           ),
@@ -1806,24 +2431,105 @@ class _FaqSectionState extends State<_FaqSection> {
   }
 }
 
+class _QuickIconAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickIconAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.14),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 22),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 extension _HomeScreenAgentAndShowcase on _HomeScreenState {
   // ── Full-Width Agent Promo Section ───────────────────────────────────────
   Widget _buildAgentPromoSection(bool isFr, ThemeData theme) {
     final benefits = isFr
         ? [
-            {'icon': Icons.payments_outlined, 'text': 'Gagnez jusqu\'à 5% de commission sur chaque transaction réussie'},
-            {'icon': Icons.verified_user_outlined, 'text': 'Badge Agent Vérifié pour renforcer votre crédibilité en ligne'},
-            {'icon': Icons.people_alt_outlined, 'text': 'Accès à un réseau actif de propriétaires & locataires au Cameroun'},
-            {'icon': Icons.trending_up_outlined, 'text': 'Tableau de bord analytique pour suivre leads & performances'},
-            {'icon': Icons.support_agent_outlined, 'text': 'Support dédié 24/7 et formations gratuites sur la plateforme'},
+            {
+              'icon': Icons.payments_outlined,
+              'text':
+                  'Gagnez jusqu\'à 5% de commission sur chaque transaction réussie',
+            },
+            {
+              'icon': Icons.verified_user_outlined,
+              'text':
+                  'Badge Agent Vérifié pour renforcer votre crédibilité en ligne',
+            },
+            {
+              'icon': Icons.people_alt_outlined,
+              'text':
+                  'Accès à un réseau actif de propriétaires & locataires au Cameroun',
+            },
+            {
+              'icon': Icons.trending_up_outlined,
+              'text':
+                  'Tableau de bord analytique pour suivre leads & performances',
+            },
+            {
+              'icon': Icons.support_agent_outlined,
+              'text':
+                  'Support dédié 24/7 et formations gratuites sur la plateforme',
+            },
           ]
         : [
-            {'icon': Icons.payments_outlined, 'text': 'Earn up to 5% commission on every successful rental deal'},
-            {'icon': Icons.verified_user_outlined, 'text': 'Receive a Verified Agent badge to build instant trust with clients'},
-            {'icon': Icons.people_alt_outlined, 'text': 'Access an active network of landlords & tenants across Cameroon'},
-            {'icon': Icons.trending_up_outlined, 'text': 'Analytics dashboard to track your earnings, leads & performance'},
-            {'icon': Icons.support_agent_outlined, 'text': 'Dedicated 24/7 support team & free onboarding training included'},
+            {
+              'icon': Icons.payments_outlined,
+              'text':
+                  'Earn up to 5% commission on every successful rental deal',
+            },
+            {
+              'icon': Icons.verified_user_outlined,
+              'text':
+                  'Receive a Verified Agent badge to build instant trust with clients',
+            },
+            {
+              'icon': Icons.people_alt_outlined,
+              'text':
+                  'Access an active network of landlords & tenants across Cameroon',
+            },
+            {
+              'icon': Icons.trending_up_outlined,
+              'text':
+                  'Analytics dashboard to track your earnings, leads & performance',
+            },
+            {
+              'icon': Icons.support_agent_outlined,
+              'text':
+                  'Dedicated 24/7 support team & free onboarding training included',
+            },
           ];
 
     return Container(
@@ -1843,68 +2549,114 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.real_estate_agent, color: Colors.amberAccent, size: 14),
+                      const Icon(
+                        Icons.real_estate_agent,
+                        color: Colors.amberAccent,
+                        size: 14,
+                      ),
                       const SizedBox(width: 7),
                       Text(
-                        isFr ? 'Programme Agent SpaceRentals' : 'SpaceRentals Agent Programme',
-                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.4),
+                        isFr
+                            ? 'Programme Agent SpaceRentals'
+                            : 'SpaceRentals Agent Programme',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.4,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 22),
                 Text(
-                  isFr ? 'Transformez votre réseau\nen revenus réels.' : 'Turn Your Network\nInto Real Income.',
-                  style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold, height: 1.2, letterSpacing: -0.5),
+                  isFr
+                      ? 'Transformez votre réseau\nen revenus réels.'
+                      : 'Turn Your Network\nInto Real Income.',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                    letterSpacing: -0.5,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Text(
                   isFr
                       ? 'Des centaines d\'agents gagnent déjà des commissions en aidant des Camerounais à trouver ou louer des propriétés. Rejoignez le mouvement — c\'est entièrement gratuit, sans abonnement mensuel.'
                       : 'Hundreds of agents are already earning commissions helping Cameroonians find and rent properties. Join the movement — it\'s completely free with no monthly subscription required.',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontSize: 14, height: 1.65),
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    fontSize: 14,
+                    height: 1.65,
+                  ),
                 ),
                 const SizedBox(height: 30),
                 Row(
                   children: [
-                    _agentStat2('500+', isFr ? 'Agents actifs' : 'Active Agents'),
+                    _agentStat2(
+                      '500+',
+                      isFr ? 'Agents actifs' : 'Active Agents',
+                    ),
                     _agentStatDivider2(),
-                    _agentStat2('5%', isFr ? 'Commission max' : 'Max Commission'),
+                    _agentStat2(
+                      '5%',
+                      isFr ? 'Commission max' : 'Max Commission',
+                    ),
                     _agentStatDivider2(),
                     _agentStat2('24h', isFr ? 'Approbation' : 'Approval Time'),
                   ],
                 ),
                 const SizedBox(height: 30),
-                ...benefits.map((b) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(10),
+                ...benefits.map(
+                  (b) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            b['icon'] as IconData,
+                            color: Colors.amberAccent,
+                            size: 18,
+                          ),
                         ),
-                        child: Icon(b['icon'] as IconData, color: Colors.amberAccent, size: 18),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Text(b['text'] as String,
-                          style: const TextStyle(color: Colors.white, fontSize: 13.5, height: 1.45)),
-                      ),
-                    ],
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            b['text'] as String,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13.5,
+                              height: 1.45,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                )),
+                ),
                 const SizedBox(height: 26),
                 Row(
                   children: [
@@ -1912,13 +2664,20 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
                       child: ElevatedButton.icon(
                         onPressed: () => context.push('/agent/onboarding'),
                         icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                        label: Text(isFr ? 'Je suis un agent' : 'I Am an Agent',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        label: Text(
+                          isFr ? 'Je suis un agent' : 'I Am an Agent',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF6A1B9A),
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           elevation: 6,
                         ),
                       ),
@@ -1926,16 +2685,29 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
                     const SizedBox(width: 12),
                     OutlinedButton(
                       onPressed: () async {
-                        UrlHelper.openWhatsApp(context, 'https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
+                        UrlHelper.openWhatsApp(
+                          context,
+                          'https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4',
+                        );
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white54, width: 1.5),
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        side: const BorderSide(
+                          color: Colors.white54,
+                          width: 1.5,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 18,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
-                      child: Text(isFr ? 'En savoir plus' : 'Learn More',
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                      child: Text(
+                        isFr ? 'En savoir plus' : 'Learn More',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ],
                 ),
@@ -1948,96 +2720,181 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
   }
 
   Widget _agentStat2(String value, String label) => Expanded(
-    child: Column(children: [
-      Text(value, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 3),
-      Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11), textAlign: TextAlign.center),
-    ]),
+    child: Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
+            fontSize: 11,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    ),
   );
 
-  Widget _agentStatDivider2() => Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.2));
+  Widget _agentStatDivider2() => Container(
+    width: 1,
+    height: 36,
+    color: Colors.white.withValues(alpha: 0.2),
+  );
 
   // ── App Showcase Section ──────────────────────────────────────────────────
   Widget _buildAppShowcaseSection(bool isFr, ThemeData theme) {
     return Container(
       color: const Color(0xFFF8F4FF),
       padding: const EdgeInsets.fromLTRB(0, 44, 0, 28),
-      child: Column(children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    isFr ? '📱 Application Mobile' : '📱 Mobile Application',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isFr
+                      ? 'Tout ce dont vous avez besoin,\ndans votre poche.'
+                      : 'Everything You Need,\nRight in Your Pocket.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    height: 1.25,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  isFr
+                      ? 'SpaceRentals est conçu pour le Cameroun. Trouvez une propriété, gérez vos baux, payez votre loyer via MTN Money ou Orange Money, et chattez directement avec les propriétaires — tout depuis une seule application.'
+                      : 'SpaceRentals is built for Cameroon. Find a property, manage your leases, pay rent via MTN Money or Orange Money, and chat directly with landlords — all from a single app.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                    height: 1.65,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+          Image.asset(
+            'assets/images/app_mockup.png',
+            width: double.infinity,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Container(
+              height: 260,
+              color: const Color(0xFFEDE7F6),
+              child: Center(
+                child: Icon(
+                  Icons.phone_android_rounded,
+                  size: 80,
+                  color: Colors.purple.shade200,
+                ),
               ),
-              child: Text(
-                isFr ? '📱 Application Mobile' : '📱 Mobile Application',
-                style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(height: 28),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                _appFeatureChip2(
+                  Icons.search_rounded,
+                  isFr ? 'Recherche avancée' : 'Smart Search',
+                  theme,
+                ),
+                _appFeatureChip2(
+                  Icons.verified_rounded,
+                  isFr ? 'Annonces vérifiées' : 'Verified Listings',
+                  theme,
+                ),
+                _appFeatureChip2(
+                  Icons.mobile_friendly_rounded,
+                  'Mobile Money',
+                  theme,
+                ),
+                _appFeatureChip2(
+                  Icons.chat_bubble_outline_rounded,
+                  isFr ? 'Chat en direct' : 'Live Chat',
+                  theme,
+                ),
+                _appFeatureChip2(
+                  Icons.build_circle_outlined,
+                  isFr ? 'Maintenance' : 'Maintenance',
+                  theme,
+                ),
+                _appFeatureChip2(
+                  Icons.bar_chart_rounded,
+                  isFr ? 'Tableau de bord' : 'Dashboard',
+                  theme,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 30),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                UrlHelper.openWhatsApp(
+                  context,
+                  'https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4',
+                );
+              },
+              icon: const Icon(Icons.download_rounded, size: 20),
+              label: Text(
+                isFr ? 'Obtenir un accès anticipé' : 'Get Early Access',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 54),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 4,
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              isFr ? 'Tout ce dont vous avez besoin,\ndans votre poche.' : 'Everything You Need,\nRight in Your Pocket.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, height: 1.25, letterSpacing: -0.3),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              isFr
-                  ? 'SpaceRentals est conçu pour le Cameroun. Trouvez une propriété, gérez vos baux, payez votre loyer via MTN Money ou Orange Money, et chattez directement avec les propriétaires — tout depuis une seule application.'
-                  : 'SpaceRentals is built for Cameroon. Find a property, manage your leases, pay rent via MTN Money or Orange Money, and chat directly with landlords — all from a single app.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.65),
-            ),
-          ]),
-        ),
-        const SizedBox(height: 28),
-        Image.asset(
-          'assets/images/app_mockup.png',
-          width: double.infinity,
-          fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => Container(
-            height: 260, color: const Color(0xFFEDE7F6),
-            child: Center(child: Icon(Icons.phone_android_rounded, size: 80, color: Colors.purple.shade200)),
           ),
-        ),
-        const SizedBox(height: 28),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Wrap(
-            spacing: 10, runSpacing: 10, alignment: WrapAlignment.center,
-            children: [
-              _appFeatureChip2(Icons.search_rounded, isFr ? 'Recherche avancée' : 'Smart Search', theme),
-              _appFeatureChip2(Icons.verified_rounded, isFr ? 'Annonces vérifiées' : 'Verified Listings', theme),
-              _appFeatureChip2(Icons.mobile_friendly_rounded, 'Mobile Money', theme),
-              _appFeatureChip2(Icons.chat_bubble_outline_rounded, isFr ? 'Chat en direct' : 'Live Chat', theme),
-              _appFeatureChip2(Icons.build_circle_outlined, isFr ? 'Maintenance' : 'Maintenance', theme),
-              _appFeatureChip2(Icons.bar_chart_rounded, isFr ? 'Tableau de bord' : 'Dashboard', theme),
-            ],
-          ),
-        ),
-        const SizedBox(height: 30),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: ElevatedButton.icon(
-            onPressed: () async {
-              UrlHelper.openWhatsApp(context, 'https://chat.whatsapp.com/JoffOh0nVQr4maaqFPdsex?s=cl&p=a&ilr=4');
-            },
-            icon: const Icon(Icons.download_rounded, size: 20),
-            label: Text(isFr ? 'Obtenir un accès anticipé' : 'Get Early Access',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 54),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              elevation: 4,
-            ),
-          ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
@@ -2047,15 +2904,30 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(30),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 15, color: theme.colorScheme.primary),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade800)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade800,
+            ),
+          ),
         ],
       ),
     );

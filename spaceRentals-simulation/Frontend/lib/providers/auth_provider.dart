@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../features/auth/domain/user_profile.dart';
 import '../features/auth/domain/user_session.dart';
-import '../shared/models/enums.dart';
 import '../services/session_storage_service.dart';
 import 'di_providers.dart';
 
@@ -165,4 +165,13 @@ class AuthNotifier extends Notifier<AuthState> {
 
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
   return AuthNotifier();
+});
+
+final currentUserProfileProvider = FutureProvider<UserProfile>((ref) async {
+  final repo = ref.watch(authRepositoryProvider);
+  final session = ref.watch(authProvider).session;
+  if (session == null) {
+    throw Exception('No authenticated user session');
+  }
+  return repo.getCurrentUserProfile();
 });

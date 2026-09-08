@@ -1,11 +1,22 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'api_client.dart';
+import 'api_endpoints.dart';
 import '../errors/app_failure.dart';
 import '../../services/session_storage_service.dart';
 
 class HttpApiClient implements ApiClient {
   final http.Client _client = http.Client();
+
+  Uri _resolveUri(String path, [Map<String, dynamic>? queryParameters]) {
+    final parsed = Uri.parse(path);
+    final uri = parsed.hasScheme
+        ? parsed
+        : Uri.parse(
+            '${ApiEndpoints.baseUrl}${path.startsWith('/') ? path : '/$path'}',
+          );
+    return uri.replace(queryParameters: queryParameters);
+  }
 
   Future<Map<String, String>> _getHeaders() async {
     final token = await SessionStorageService.instance.getAccessToken();
@@ -17,15 +28,23 @@ class HttpApiClient implements ApiClient {
   }
 
   ApiResponse<T> _processResponse<T>(
-      http.Response response, T Function(Map<String, dynamic>)? fromJson) {
+    http.Response response,
+    T Function(Map<String, dynamic>)? fromJson,
+  ) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       try {
         final decoded = json.decode(response.body);
         if (fromJson != null && decoded is Map<String, dynamic>) {
-          return ApiResponse.success(fromJson(decoded), statusCode: response.statusCode);
+          return ApiResponse.success(
+            fromJson(decoded),
+            statusCode: response.statusCode,
+          );
         }
         // Return raw decoded value (List or Map) as T
-        return ApiResponse.success(decoded as T, statusCode: response.statusCode);
+        return ApiResponse.success(
+          decoded as T,
+          statusCode: response.statusCode,
+        );
       } catch (_) {
         return ApiResponse.success(null, statusCode: response.statusCode);
       }
@@ -55,9 +74,11 @@ class HttpApiClient implements ApiClient {
     T Function(Map<String, dynamic>)? fromJson,
   }) async {
     try {
-      final uri = Uri.parse(path).replace(queryParameters: queryParameters);
+      final uri = _resolveUri(path, queryParameters);
       final headers = await _getHeaders();
-      final response = await _client.get(uri, headers: headers);
+      final response = await _client
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: 12));
       return _processResponse(response, fromJson);
     } catch (e) {
       return ApiResponse.failure(UnknownFailure(e.toString()), statusCode: 500);
@@ -72,9 +93,15 @@ class HttpApiClient implements ApiClient {
     T Function(Map<String, dynamic>)? fromJson,
   }) async {
     try {
-      final uri = Uri.parse(path).replace(queryParameters: queryParameters);
+      final uri = _resolveUri(path, queryParameters);
       final headers = await _getHeaders();
-      final response = await _client.post(uri, headers: headers, body: data != null ? json.encode(data) : null);
+      final response = await _client
+          .post(
+            uri,
+            headers: headers,
+            body: data != null ? json.encode(data) : null,
+          )
+          .timeout(const Duration(seconds: 12));
       return _processResponse(response, fromJson);
     } catch (e) {
       return ApiResponse.failure(UnknownFailure(e.toString()), statusCode: 500);
@@ -88,9 +115,13 @@ class HttpApiClient implements ApiClient {
     T Function(Map<String, dynamic>)? fromJson,
   }) async {
     try {
-      final uri = Uri.parse(path);
+      final uri = _resolveUri(path);
       final headers = await _getHeaders();
-      final response = await _client.patch(uri, headers: headers, body: data != null ? json.encode(data) : null);
+      final response = await _client.patch(
+        uri,
+        headers: headers,
+        body: data != null ? json.encode(data) : null,
+      );
       return _processResponse(response, fromJson);
     } catch (e) {
       return ApiResponse.failure(UnknownFailure(e.toString()), statusCode: 500);
@@ -104,9 +135,13 @@ class HttpApiClient implements ApiClient {
     T Function(Map<String, dynamic>)? fromJson,
   }) async {
     try {
-      final uri = Uri.parse(path);
+      final uri = _resolveUri(path);
       final headers = await _getHeaders();
-      final response = await _client.delete(uri, headers: headers, body: data != null ? json.encode(data) : null);
+      final response = await _client.delete(
+        uri,
+        headers: headers,
+        body: data != null ? json.encode(data) : null,
+      );
       return _processResponse(response, fromJson);
     } catch (e) {
       return ApiResponse.failure(UnknownFailure(e.toString()), statusCode: 500);

@@ -6,7 +6,6 @@ import '../../providers/locale_provider.dart';
 import '../../widgets/property_card.dart';
 import '../../widgets/property_card_shimmer.dart';
 import '../../features/properties/domain/property.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../core/utils/currency_formatter.dart';
 
 class PropertySearch extends ConsumerStatefulWidget {

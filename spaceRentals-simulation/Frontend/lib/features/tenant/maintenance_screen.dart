@@ -45,7 +45,26 @@ final maintenanceProvider = FutureProvider<List<MaintenanceModel>>((ref) async {
   if (response.data == null) return [];
   final data = response.data as Map<String, dynamic>;
   final list = data['data'] as List<dynamic>? ?? [];
-  return list.map((e) => MaintenanceModel.fromJson(e as Map<String, dynamic>)).toList();
+  return list
+      .map((e) => MaintenanceModel.fromJson(e as Map<String, dynamic>))
+      .toList();
+});
+
+final activeRentalIdProvider = FutureProvider<String?>((ref) async {
+  final client = ref.read(apiClientProvider);
+  final response = await client.get<dynamic>('${ApiEndpoints.rentals}/tenant');
+  if (!response.isSuccess) {
+    throw Exception(response.error?.message ?? 'Could not load your rental');
+  }
+  final rentals = response.data is List
+      ? response.data as List<dynamic>
+      : const <dynamic>[];
+  for (final item in rentals) {
+    if (item is Map<String, dynamic> && item['status'] == 'active') {
+      return item['id'] as String?;
+    }
+  }
+  return null;
 });
 
 class MaintenanceScreen extends ConsumerStatefulWidget {
@@ -88,7 +107,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
           data: (requests) => requests.isEmpty
               ? EmptyState(
                   title: 'No maintenance requests',
-                  message: 'Submit a request when something needs fixing in your rental.',
+                  message:
+                      'Submit a request when something needs fixing in your rental.',
                   icon: Icons.build_outlined,
                   onAction: () => _showSubmitDialog(context),
                   actionLabel: 'Submit First Request',
@@ -119,7 +139,9 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: const BoxDecoration(
@@ -133,19 +155,35 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Submit Maintenance Request', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                    const Text(
+                      'Submit Maintenance Request',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: titleCtrl,
-                  decoration: const InputDecoration(labelText: 'Title', hintText: 'e.g. Leaking tap in kitchen', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    hintText: 'e.g. Leaking tap in kitchen',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: descCtrl,
-                  decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 12),
@@ -154,10 +192,25 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: selectedCategory,
-                        decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                        items: ['Plumbing', 'Electrical', 'Structural', 'Appliance', 'General']
-                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                            .toList(),
+                        decoration: const InputDecoration(
+                          labelText: 'Category',
+                          border: OutlineInputBorder(),
+                        ),
+                        items:
+                            [
+                                  'Plumbing',
+                                  'Electrical',
+                                  'Structural',
+                                  'Appliance',
+                                  'General',
+                                ]
+                                .map(
+                                  (c) => DropdownMenuItem(
+                                    value: c,
+                                    child: Text(c),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (v) => setS(() => selectedCategory = v!),
                       ),
                     ),
@@ -165,9 +218,14 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: selectedUrgency,
-                        decoration: const InputDecoration(labelText: 'Urgency', border: OutlineInputBorder()),
+                        decoration: const InputDecoration(
+                          labelText: 'Urgency',
+                          border: OutlineInputBorder(),
+                        ),
                         items: ['Low', 'Normal', 'High', 'Emergency']
-                            .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                            .map(
+                              (u) => DropdownMenuItem(value: u, child: Text(u)),
+                            )
                             .toList(),
                         onChanged: (v) => setS(() => selectedUrgency = v!),
                       ),
@@ -176,30 +234,71 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: isLoading ? null : () async {
-                    if (titleCtrl.text.trim().isEmpty || descCtrl.text.trim().isEmpty) return;
-                    setS(() => isLoading = true);
-                    try {
-                      final client = ref.read(apiClientProvider);
-                      // TODO: we need to pass rentalId here, but for now we'll just try
-                      await client.post(ApiEndpoints.maintenance, data: {
-                        'rentalId': 'placeholder-will-fail-backend-check', 
-                        'title': titleCtrl.text.trim(),
-                        'description': descCtrl.text.trim(),
-                        'category': selectedCategory,
-                        'urgency': selectedUrgency,
-                      });
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      ref.invalidate(maintenanceProvider);
-                    } catch (e) {
-                      setS(() => isLoading = false);
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Failed: $e')));
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                  child: isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Submit Request', style: TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          if (titleCtrl.text.trim().isEmpty ||
+                              descCtrl.text.trim().isEmpty) {
+                            return;
+                          }
+                          setS(() => isLoading = true);
+                          try {
+                            final rentalId = await ref.read(
+                              activeRentalIdProvider.future,
+                            );
+                            if (rentalId == null) {
+                              setS(() => isLoading = false);
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'You need an active rental before submitting maintenance requests.',
+                                    ),
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+                            final client = ref.read(apiClientProvider);
+                            final response = await client.post(
+                              ApiEndpoints.maintenance,
+                              data: {
+                                'rentalId': rentalId,
+                                'title': titleCtrl.text.trim(),
+                                'description': descCtrl.text.trim(),
+                                'category': selectedCategory,
+                                'urgency': selectedUrgency,
+                              },
+                            );
+                            if (!response.isSuccess) {
+                              throw Exception(
+                                response.error?.message ??
+                                    'Failed to submit request',
+                              );
+                            }
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            ref.invalidate(maintenanceProvider);
+                          } catch (e) {
+                            setS(() => isLoading = false);
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text('Failed: $e')),
+                              );
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Submit Request',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -218,19 +317,28 @@ class _MaintenanceCard extends StatelessWidget {
 
   Color _urgencyColor() {
     switch (request.urgency) {
-      case 'Emergency': return Colors.red;
-      case 'High': return Colors.orange;
-      case 'Low': return Colors.blue;
-      default: return Colors.grey;
+      case 'Emergency':
+        return Colors.red;
+      case 'High':
+        return Colors.orange;
+      case 'Low':
+        return Colors.blue;
+      default:
+        return Colors.grey;
     }
   }
 
   Color _statusColor() {
     switch (request.status) {
-      case 'resolved': case 'closed': return Colors.green;
-      case 'in_progress': return Colors.blue;
-      case 'acknowledged': return Colors.orange;
-      default: return Colors.grey;
+      case 'resolved':
+      case 'closed':
+        return Colors.green;
+      case 'in_progress':
+        return Colors.blue;
+      case 'acknowledged':
+        return Colors.orange;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -241,7 +349,9 @@ class _MaintenanceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8),
+        ],
         border: Border(left: BorderSide(color: _urgencyColor(), width: 4)),
       ),
       child: Padding(
@@ -252,29 +362,79 @@ class _MaintenanceCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(child: Text(request.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                Expanded(
+                  child: Text(
+                    request.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: _statusColor().withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                  child: Text(request.status.replaceAll('_', ' ').toUpperCase(), style: TextStyle(fontSize: 10, color: _statusColor(), fontWeight: FontWeight.bold)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _statusColor().withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    request.status.replaceAll('_', ' ').toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: _statusColor(),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            Text(request.description, style: const TextStyle(color: Colors.grey, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+            Text(
+              request.description,
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
             const SizedBox(height: 10),
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                  child: Text(request.category, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    request.category,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: _urgencyColor().withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                  child: Text(request.urgency, style: TextStyle(fontSize: 11, color: _urgencyColor(), fontWeight: FontWeight.w600)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _urgencyColor().withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    request.urgency,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: _urgencyColor(),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
                 const Spacer(),
                 Text(
@@ -283,16 +443,32 @@ class _MaintenanceCard extends StatelessWidget {
                 ),
               ],
             ),
-            if (request.landlordNote != null && request.landlordNote!.isNotEmpty) ...[  
+            if (request.landlordNote != null &&
+                request.landlordNote!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, size: 14, color: Colors.blue),
+                    const Icon(
+                      Icons.info_outline,
+                      size: 14,
+                      color: Colors.blue,
+                    ),
                     const SizedBox(width: 6),
-                    Expanded(child: Text('Landlord: ${request.landlordNote}', style: const TextStyle(fontSize: 12, color: Colors.blue))),
+                    Expanded(
+                      child: Text(
+                        'Landlord: ${request.landlordNote}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

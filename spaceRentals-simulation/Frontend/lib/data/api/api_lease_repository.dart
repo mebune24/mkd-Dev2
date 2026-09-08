@@ -29,7 +29,7 @@ class ApiLeaseRepository implements LeaseRepository {
       default:                status = LeaseStatus.generated;
     }
 
-    LeaseSignature? _buildSig(String? signerId, Role role, DateTime? signedAt) {
+    LeaseSignature? buildSig(String? signerId, Role role, DateTime? signedAt) {
       if (signerId == null) return null;
       return LeaseSignature(
         id: '$signerId-${role.name}',
@@ -51,12 +51,12 @@ class ApiLeaseRepository implements LeaseRepository {
       landlordId:    j['landlordId'] ?? '',
       status:        status,
       leaseDocumentUrl: j['documentUrl'],
-      tenantSignature:   _buildSig(
+      tenantSignature:   buildSig(
         j['tenantId'],
         Role.tenant,
         j['tenantSignedAt'] != null ? DateTime.tryParse(j['tenantSignedAt']) : null,
       ),
-      landlordSignature: _buildSig(
+      landlordSignature: buildSig(
         j['landlordId'],
         Role.landlord,
         j['landlordSignedAt'] != null ? DateTime.tryParse(j['landlordSignedAt']) : null,

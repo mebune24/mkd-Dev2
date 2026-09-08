@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/money.dart';
 import '../../providers/applications_provider.dart';
-import '../../providers/domain_providers.dart';
 import '../../shared/models/enums.dart';
 import '../../widgets/empty_state.dart';
 
@@ -91,10 +90,10 @@ class PaymentsScreen extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // ── How Payments Work ────────────────────────────────────────────
-              _SectionHeader(title: 'How Payments Work'),
-              _InfoCard(
+              const _SectionHeader(title: 'How Payments Work'),
+              const _InfoCard(
                 icon: Icons.home_work_outlined,
-                iconColor: const Color(0xFF7B2FBE),
+                iconColor: Color(0xFF7B2FBE),
                 title: 'Rent → Directly to Your Landlord',
                 body:
                     'Space Rentals does NOT collect your monthly rent. You pay your landlord directly via the method agreed in your lease (mobile money, bank transfer, etc.).',
@@ -110,10 +109,10 @@ class PaymentsScreen extends ConsumerWidget {
               const SizedBox(height: 8),
 
               // ── Application Fees History ─────────────────────────────────────
-              _SectionHeader(title: 'Application Fee History'),
+              const _SectionHeader(title: 'Application Fee History'),
               if (submitted.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: EmptyState(
                     title: 'No Fees Yet',
                     message: 'No application fees yet. Submit a rental application to get started.',
@@ -131,7 +130,7 @@ class PaymentsScreen extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // ── Rent Payments Info ───────────────────────────────────────────
-              _SectionHeader(title: 'Your Active Rentals'),
+              const _SectionHeader(title: 'Your Active Rentals'),
               const _InfoCard(
                 icon: Icons.info_outline,
                 iconColor: Colors.blue,

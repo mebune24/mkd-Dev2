@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../providers/di_providers.dart';
 import '../../widgets/empty_state.dart';
-import '../tenant/maintenance_screen.dart' show MaintenanceModel, maintenanceProvider;
+import '../tenant/maintenance_screen.dart'
+    show MaintenanceModel, maintenanceProvider;
 
 class LandlordMaintenanceScreen extends ConsumerWidget {
   const LandlordMaintenanceScreen({super.key});
@@ -34,7 +35,8 @@ class LandlordMaintenanceScreen extends ConsumerWidget {
           data: (requests) => requests.isEmpty
               ? const EmptyState(
                   title: 'No maintenance requests',
-                  message: 'Your tenants have not submitted any maintenance requests yet.',
+                  message:
+                      'Your tenants have not submitted any maintenance requests yet.',
                   icon: Icons.build_circle_outlined,
                 )
               : ListView.builder(
@@ -64,13 +66,16 @@ class LandlordMaintenanceScreen extends ConsumerWidget {
   ) async {
     try {
       final client = ref.read(apiClientProvider);
-      await client.patch(
+      final response = await client.patch(
         ApiEndpoints.maintenanceRequest(id),
         data: {
           'status': status,
           if (note != null && note.isNotEmpty) 'landlordNote': note,
         },
       );
+      if (!response.isSuccess) {
+        throw Exception(response.error?.message ?? 'Failed to update request');
+      }
       ref.invalidate(maintenanceProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -79,9 +84,9 @@ class LandlordMaintenanceScreen extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
       }
     }
   }
@@ -98,26 +103,41 @@ class _LandlordMaintenanceCard extends StatelessWidget {
 
   Color _urgencyColor() {
     switch (request.urgency) {
-      case 'Emergency': return Colors.red;
-      case 'High': return Colors.orange;
-      case 'Low': return Colors.blue;
-      default: return Colors.grey;
+      case 'Emergency':
+        return Colors.red;
+      case 'High':
+        return Colors.orange;
+      case 'Low':
+        return Colors.blue;
+      default:
+        return Colors.grey;
     }
   }
 
   Color _statusColor() {
     switch (request.status) {
-      case 'resolved': case 'closed': return Colors.green;
-      case 'in_progress': return Colors.blue;
-      case 'acknowledged': return Colors.orange;
-      default: return Colors.grey;
+      case 'resolved':
+      case 'closed':
+        return Colors.green;
+      case 'in_progress':
+        return Colors.blue;
+      case 'acknowledged':
+        return Colors.orange;
+      default:
+        return Colors.grey;
     }
   }
 
   void _showUpdateDialog(BuildContext context) {
     String selectedStatus = request.status;
     final noteCtrl = TextEditingController(text: request.landlordNote ?? '');
-    const statuses = ['open', 'acknowledged', 'in_progress', 'resolved', 'closed'];
+    const statuses = [
+      'open',
+      'acknowledged',
+      'in_progress',
+      'resolved',
+      'closed',
+    ];
 
     showModalBottomSheet(
       context: context,
@@ -142,22 +162,35 @@ class _LandlordMaintenanceCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Update: ${request.title}',
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: selectedStatus,
-                  decoration: const InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
-                  items: statuses.map((s) => DropdownMenuItem(
-                    value: s,
-                    child: Text(s.replaceAll('_', ' ').toUpperCase()),
-                  )).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Status',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: statuses
+                      .map(
+                        (s) => DropdownMenuItem(
+                          value: s,
+                          child: Text(s.replaceAll('_', ' ').toUpperCase()),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (v) => setS(() => selectedStatus = v!),
                 ),
                 const SizedBox(height: 12),
@@ -174,13 +207,23 @@ class _LandlordMaintenanceCard extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () async {
                     Navigator.pop(ctx);
-                    await onUpdate(selectedStatus, noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim());
+                    await onUpdate(
+                      selectedStatus,
+                      noteCtrl.text.trim().isEmpty
+                          ? null
+                          : noteCtrl.text.trim(),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                  child: const Text('Update Request', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Update Request',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -198,7 +241,9 @@ class _LandlordMaintenanceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8),
+        ],
         border: Border(left: BorderSide(color: _urgencyColor(), width: 4)),
       ),
       child: Padding(
@@ -211,20 +256,30 @@ class _LandlordMaintenanceCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     request.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: _statusColor().withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     request.status.replaceAll('_', ' ').toUpperCase(),
-                    style: TextStyle(fontSize: 10, color: _statusColor(), fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: _statusColor(),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -240,20 +295,36 @@ class _LandlordMaintenanceCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                  child: Text(request.category, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    request.category,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: _urgencyColor().withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     request.urgency,
-                    style: TextStyle(fontSize: 11, color: _urgencyColor(), fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: _urgencyColor(),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const Spacer(),
@@ -263,24 +334,38 @@ class _LandlordMaintenanceCard extends StatelessWidget {
                   icon: const Icon(Icons.edit_note, size: 16),
                   label: const Text('Update', style: TextStyle(fontSize: 12)),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                   ),
                 ),
               ],
             ),
-            if (request.landlordNote != null && request.landlordNote!.isNotEmpty) ...[
+            if (request.landlordNote != null &&
+                request.landlordNote!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, size: 14, color: Colors.blue),
+                    const Icon(
+                      Icons.info_outline,
+                      size: 14,
+                      color: Colors.blue,
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         'Your note: ${request.landlordNote}',
-                        style: const TextStyle(fontSize: 12, color: Colors.blue),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.blue,
+                        ),
                       ),
                     ),
                   ],

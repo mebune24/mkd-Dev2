@@ -73,6 +73,10 @@ export const getMaintenanceRequestById = async (req: Request, res: Response) => 
       },
     });
     if (!request) return res.status(404).json({ message: 'Not found' }) as any;
+    const user = (req as any).user;
+    if (user.role !== 'admin' && request.tenantId !== user.userId && request.rental.landlordId !== user.userId) {
+      return res.status(403).json({ message: 'Forbidden' }) as any;
+    }
     res.json(request);
   } catch (e) {
     res.status(500).json({ message: 'Failed to fetch request' });
@@ -84,6 +88,15 @@ export const updateMaintenanceRequest = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const { status, landlordNote } = req.body;
+    const user = (req as any).user;
+    const existing = await prisma.maintenanceRequest.findUnique({ where: { id }, include: { rental: true } });
+    if (!existing) return res.status(404).json({ message: 'Not found' }) as any;
+    if (user.role !== 'admin' && existing.rental.landlordId !== user.userId) {
+      return res.status(403).json({ message: 'Only the landlord or admin can update a maintenance request' }) as any;
+    }
+    if (status && !['open', 'acknowledged', 'in_progress', 'resolved', 'closed'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid maintenance status' }) as any;
+    }
     const data: any = {};
     if (status) {
       data.status = status;

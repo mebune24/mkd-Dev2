@@ -5,10 +5,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared/models/enums.dart';
-import '../../features/auth/domain/user_session.dart';
 import '../../widgets/animated_loading_button.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import '../../core/utils/ui_helpers.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});

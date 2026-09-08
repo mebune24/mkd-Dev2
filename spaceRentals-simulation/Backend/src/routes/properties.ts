@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireLandlord } from '../middleware/authMiddleware';
+import { authenticate, optionalAuthenticate, requireLandlord } from '../middleware/authMiddleware';
 import {
   getProperties,
   getMyProperties,
@@ -13,21 +13,31 @@ import {
   confirmAvailability,
   searchProperties,
   boostProperty,
+  getVideoFeed,
 } from '../controllers/propertyController';
+import { getComments, addComment } from '../controllers/commentController';
 import { validateRequest } from '../middleware/validateMiddleware';
 import { createPropertySchema } from '../utils/schemas';
 import { cacheResponse } from '../middleware/cacheMiddleware';
+import { togglePropertyLike, togglePropertyReshare } from '../controllers/propertyEngagementController';
 
 const router = Router();
 
 // Public
 router.get('/search',  cacheResponse(300), searchProperties);
 router.get('/nearby',  cacheResponse(300), getNearbyProperties);
+router.get('/feed/video', optionalAuthenticate, getVideoFeed);
 router.get('/',        cacheResponse(300), getProperties);
+router.get('/my/listings', authenticate, getMyProperties);
+router.get('/:id/comments', getComments);
 router.get('/:id',     getPropertyById);
 
+// Protected — Tenant/Landlord Comments
+router.post('/:id/comments', authenticate, addComment);
+router.post('/:id/like', authenticate, togglePropertyLike);
+router.post('/:id/reshare', authenticate, togglePropertyReshare);
+
 // Protected — Landlord
-router.get('/my/listings', authenticate, getMyProperties);
 router.post('/', authenticate, requireLandlord, validateRequest(createPropertySchema), createProperty);
 router.patch('/:id',                      authenticate, requireLandlord, updateProperty);
 router.delete('/:id',                     authenticate, requireLandlord, deleteProperty);

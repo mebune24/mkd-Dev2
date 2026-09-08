@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../features/properties/domain/property.dart';
@@ -9,7 +8,10 @@ import '../../shared/models/enums.dart';
 // ── Top-level parse helpers (required by compute()) ───────────────────────────
 
 List<PropertyWithListing> _parsePropertyList(String responseBody) {
-  final List<dynamic> data = json.decode(responseBody);
+  final decoded = json.decode(responseBody);
+  final List<dynamic> data = decoded is Map<String, dynamic>
+      ? (decoded['data'] as List<dynamic>? ?? const [])
+      : (decoded as List<dynamic>);
   return data.map((j) => _parsePropertyMap(j as Map<String, dynamic>)).toList();
 }
 
@@ -25,6 +27,7 @@ PropertyWithListing _parsePropertyMap(Map<String, dynamic> j) {
     monthlyRentUnits: j['monthlyRent'] ?? 0,
     depositUnits: j['deposit'] ?? 0,
     images: _parseStringList(j['images']),
+    videoTourUrls: _parseStringList(j['videoUrls']),
     category: j['category'] ?? 'Apartment',
     furnished: j['furnished'] ?? false,
     areaSqM: (j['areaSqM'] ?? 0).toDouble(),
@@ -53,7 +56,8 @@ PropertyWithListing _parsePropertyMap(Map<String, dynamic> j) {
     propertyId: j['id'] ?? '',
     availabilityStatus: availStatus,
     lastAvailabilityConfirmedAt:
-        DateTime.tryParse(j['lastConfirmedAvailableAt'] ?? '') ?? DateTime.now(),
+        DateTime.tryParse(j['lastConfirmedAvailableAt'] ?? '') ??
+        DateTime.now(),
     publishedAt: DateTime.tryParse(j['createdAt'] ?? ''),
   );
 
@@ -61,10 +65,14 @@ PropertyWithListing _parsePropertyMap(Map<String, dynamic> j) {
   PropertyVerificationLevel level = PropertyVerificationLevel.unverified;
   if (vm != null) {
     final lvl = vm['level'];
-    if (lvl == 1) level = PropertyVerificationLevel.documentsSubmitted;
-    else if (lvl == 2) level = PropertyVerificationLevel.ownerVerified;
-    else if (lvl == 3) level = PropertyVerificationLevel.propertyVerified;
-    else if (lvl == 4) level = PropertyVerificationLevel.physicallyInspected;
+    if (lvl == 1) {
+      level = PropertyVerificationLevel.documentsSubmitted;
+    } else if (lvl == 2)
+      level = PropertyVerificationLevel.ownerVerified;
+    else if (lvl == 3)
+      level = PropertyVerificationLevel.propertyVerified;
+    else if (lvl == 4)
+      level = PropertyVerificationLevel.physicallyInspected;
   }
 
   return PropertyWithListing(
@@ -107,7 +115,8 @@ class ApiPropertyRepository implements PropertyRepository {
     double? latitude,
     double? longitude,
   }) async {
-    final hasFilters = (searchQuery != null && searchQuery.isNotEmpty) ||
+    final hasFilters =
+        (searchQuery != null && searchQuery.isNotEmpty) ||
         (location != null && location.isNotEmpty) ||
         (category != null && category != 'All');
 
@@ -117,14 +126,20 @@ class ApiPropertyRepository implements PropertyRepository {
     if (hasFilters) {
       path = '${ApiEndpoints.properties}/search';
       queryParams = <String, dynamic>{};
-      if (searchQuery != null && searchQuery.isNotEmpty) queryParams['q'] = searchQuery;
-      if (location != null && location.isNotEmpty) queryParams['location'] = location;
-      if (category != null && category != 'All') queryParams['category'] = category;
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        queryParams['q'] = searchQuery;
+      }
+      if (location != null && location.isNotEmpty) {
+        queryParams['location'] = location;
+      }
+      if (category != null && category != 'All') {
+        queryParams['category'] = category;
+      }
       if (latitude != null) queryParams['latitude'] = latitude;
       if (longitude != null) queryParams['longitude'] = longitude;
     } else if (latitude != null && longitude != null) {
       path = '${ApiEndpoints.properties}/search';
-      queryParams = { 'latitude': latitude, 'longitude': longitude };
+      queryParams = {'latitude': latitude, 'longitude': longitude};
     } else {
       path = ApiEndpoints.properties;
       queryParams = null;
@@ -137,12 +152,17 @@ class ApiPropertyRepository implements PropertyRepository {
   @override
   Future<PropertyWithListing> getProperty(String propertyId) async {
     final response = await _apiClient.get(ApiEndpoints.property(propertyId));
-    return _unwrap(response, (data) => _parsePropertyMap(data as Map<String, dynamic>));
+    return _unwrap(
+      response,
+      (data) => _parsePropertyMap(data as Map<String, dynamic>),
+    );
   }
 
   @override
   Future<List<PropertyWithListing>> getLandlordProperties() async {
-    final response = await _apiClient.get('${ApiEndpoints.properties}/my/listings');
+    final response = await _apiClient.get(
+      '${ApiEndpoints.properties}/my/listings',
+    );
     return _unwrap(response, (data) => _parsePropertyList(json.encode(data)));
   }
 
@@ -156,6 +176,7 @@ class ApiPropertyRepository implements PropertyRepository {
     required int monthlyRentUnits,
     required int depositUnits,
     required List<String> imageUrls,
+    List<String> videoUrls = const [],
     required String category,
     required Map<String, dynamic> amenities,
   }) async {
@@ -170,35 +191,66 @@ class ApiPropertyRepository implements PropertyRepository {
         'monthlyRent': monthlyRentUnits,
         'deposit': depositUnits,
         'images': imageUrls,
+        'videoUrls': videoUrls,
         'category': category,
         'amenities': amenities,
       },
     );
-    return _unwrap(response, (data) => _parsePropertyMap(data as Map<String, dynamic>).property);
+    return _unwrap(
+      response,
+      (data) => _parsePropertyMap(data as Map<String, dynamic>).property,
+    );
+  }
+
+  @override
+  Future<void> publishProperty(String propertyId) async {
+    final response = await _apiClient.patch(
+      '${ApiEndpoints.properties}/$propertyId/publish',
+    );
+    if (!response.isSuccess) {
+      throw Exception(response.error?.message ?? 'Failed to publish property');
+    }
   }
 
   @override
   Future<PropertyListing> confirmAvailability(String propertyId) async {
-    final response = await _apiClient.patch(ApiEndpoints.confirmAvailability(propertyId));
-    return _unwrap(response, (data) => _parsePropertyMap(data as Map<String, dynamic>).listing);
+    final response = await _apiClient.patch(
+      ApiEndpoints.confirmAvailability(propertyId),
+    );
+    return _unwrap(
+      response,
+      (data) => _parsePropertyMap(data as Map<String, dynamic>).listing,
+    );
   }
 
   @override
   Future<PropertyVerificationInfo> updateVerificationLevel(
-      String propertyId, PropertyVerificationLevel level) async {
+    String propertyId,
+    PropertyVerificationLevel level,
+  ) async {
     throw UnimplementedError('updateVerificationLevel not implemented in API');
   }
 
   @override
   Future<PropertyListing> unpublishListing(String propertyId) async {
-    final response = await _apiClient.patch('${ApiEndpoints.properties}/$propertyId/unpublish');
-    return _unwrap(response, (data) => _parsePropertyMap(data as Map<String, dynamic>).listing);
+    final response = await _apiClient.patch(
+      '${ApiEndpoints.properties}/$propertyId/unpublish',
+    );
+    return _unwrap(
+      response,
+      (data) => _parsePropertyMap(data as Map<String, dynamic>).listing,
+    );
   }
 
   @override
   Future<PropertyListing> republishListing(String propertyId) async {
-    final response = await _apiClient.patch('${ApiEndpoints.properties}/$propertyId/publish');
-    return _unwrap(response, (data) => _parsePropertyMap(data as Map<String, dynamic>).listing);
+    final response = await _apiClient.patch(
+      '${ApiEndpoints.properties}/$propertyId/publish',
+    );
+    return _unwrap(
+      response,
+      (data) => _parsePropertyMap(data as Map<String, dynamic>).listing,
+    );
   }
 
   @override

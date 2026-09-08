@@ -22,10 +22,12 @@ export class ApplicationService {
     return app;
   }
 
-  async submit(propertyId: string, tenantId: string, coverLetter?: string, nationalIdUrl?: string, proofOfIncomeUrl?: string) {
+  async submit(propertyId: string, tenantId: string, role: string, coverLetter?: string, nationalIdUrl?: string, proofOfIncomeUrl?: string) {
+    if (role !== 'tenant') throw { status: 403, message: 'Only tenants can submit applications.' };
     const property = await propertyRepository.findById(propertyId);
     if (!property) throw { status: 404, message: 'Property not found.' };
     if (property.status !== 'available') throw { status: 409, message: 'Property is no longer available.' };
+    if (!nationalIdUrl || !proofOfIncomeUrl) throw { status: 400, message: 'All required documents must be uploaded.' };
 
     const existing = await applicationRepository.countByPropertyAndTenant(propertyId, tenantId);
     if (existing > 0) throw { status: 409, message: 'You have already applied for this property.' };
@@ -59,6 +61,15 @@ export class ApplicationService {
     }
     
     const result = await prisma.$transaction(async (tx) => {
+      const reserved = await tx.property.updateMany({
+        where: { id: app.propertyId, status: 'available' },
+        data: { status: 'reserved' },
+      });
+      if (reserved.count !== 1) throw { status: 409, message: 'Property is no longer available.' };
+      await tx.application.updateMany({
+        where: { propertyId: app.propertyId, id: { not: id }, status: { in: ['submitted', 'under_review'] } },
+        data: { status: 'rejected', landlordNote: 'Another application was approved.' },
+      });
       const updated = await tx.application.update({
         where: { id },
         data: { status: 'approved', landlordNote: note }
@@ -98,6 +109,9 @@ export class ApplicationService {
     const app = await applicationRepository.findById(id);
     if (!app) throw { status: 404, message: 'Application not found.' };
     if (app.property.landlordId !== landlordId) throw { status: 403, message: 'Forbidden.' };
+    if (!['submitted', 'under_review'].includes(app.status)) {
+      throw { status: 400, message: 'Cannot reject an application in its current state.' };
+    }
     const updated = await applicationRepository.update(id, { status: 'rejected', landlordNote: note });
     await auditLogService.log({
       userId: landlordId,

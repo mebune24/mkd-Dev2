@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../features/auth/domain/user_session.dart';
@@ -38,7 +37,7 @@ class SessionStorageService {
   // ── SharedPreferences key prefix ──────────────────────────────────────────
   static const _kPrefix = 'sr_session_'; // e.g. sr_session_userId
 
-  String _prefKey(String userId, String field) => '${_kPrefix}${userId}_$field';
+  String _prefKey(String userId, String field) => '$_kPrefix${userId}_$field';
 
   // ── SAVE ──────────────────────────────────────────────────────────────────
 
@@ -166,7 +165,7 @@ class SessionStorageService {
       final prefs = await SharedPreferences.getInstance();
       // Remove all keys belonging to this user
       final keysToRemove = prefs.getKeys()
-          .where((k) => k.startsWith('${_kPrefix}${uid}_'))
+          .where((k) => k.startsWith('$_kPrefix${uid}_'))
           .toList();
       for (final k in keysToRemove) {
         await prefs.remove(k);

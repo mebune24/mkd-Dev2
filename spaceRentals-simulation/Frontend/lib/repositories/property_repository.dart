@@ -23,9 +23,12 @@ abstract class PropertyRepository {
     required String category,
     required Map<String, dynamic> amenities,
   });
+  Future<void> publishProperty(String propertyId);
   Future<PropertyListing> confirmAvailability(String propertyId);
   Future<PropertyVerificationInfo> updateVerificationLevel(
-      String propertyId, PropertyVerificationLevel level);
+    String propertyId,
+    PropertyVerificationLevel level,
+  );
   Future<PropertyListing> unpublishListing(String propertyId);
   Future<void> deleteProperty(String propertyId);
   Future<PropertyListing> republishListing(String propertyId);

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../core/utils/ui_helpers.dart';
-import '../../../core/utils/ui_helpers.dart';
 
 class LandlordPendingScreen extends ConsumerWidget {
   const LandlordPendingScreen({super.key});

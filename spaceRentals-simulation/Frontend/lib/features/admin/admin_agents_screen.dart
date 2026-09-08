@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import '../../core/api/api_endpoints.dart';
-import '../../providers/auth_provider.dart';
+import '../../providers/di_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/currency_formatter.dart';
 import 'package:space_rentals/providers/domain_providers.dart';
-import 'package:space_rentals/features/landlord/domain/kyc_submission.dart';
-import 'package:space_rentals/features/rentals/domain/dispute_record.dart';
 import 'package:space_rentals/features/agents/domain/agent_models.dart';
-import 'package:space_rentals/core/domain/audit_entry.dart';
 import '../../core/utils/ui_helpers.dart';
 
 class AdminAgentsScreen extends ConsumerWidget {
@@ -23,7 +18,10 @@ class AdminAgentsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
       appBar: AppBar(
-        title: const Text('Manage Agents', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Manage Agents',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -38,25 +36,37 @@ class AdminAgentsScreen extends ConsumerWidget {
       ),
       body: agents.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading agents: $err')),
+        error: (err, stack) =>
+            Center(child: Text('Error loading agents: $err')),
         data: (agentList) {
           if (agentList.isEmpty) {
             return const Center(child: Text('No agents registered yet.'));
           }
-          
+
           return transactions.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) => Center(child: Text('Error loading transactions: $err')),
+            error: (err, stack) =>
+                Center(child: Text('Error loading transactions: $err')),
             data: (txList) {
               return ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: agentList.length,
                 itemBuilder: (context, index) {
                   final agent = agentList[index];
-                  final agentTx = txList.where((t) => t.agentId == agent.userId).toList();
-                  final balance = agentTx.where((t) => t.status == 'Approved').fold(0.0, (s, t) => s + t.amount);
-                  final pending = agentTx.where((t) => t.status == 'Pending').fold(0.0, (s, t) => s + t.amount);
-                  return _AdminAgentCard(agent: agent, balance: balance, pending: pending);
+                  final agentTx = txList
+                      .where((t) => t.agentId == agent.userId)
+                      .toList();
+                  final balance = agentTx
+                      .where((t) => t.status == 'Approved')
+                      .fold(0.0, (s, t) => s + t.amount);
+                  final pending = agentTx
+                      .where((t) => t.status == 'Pending')
+                      .fold(0.0, (s, t) => s + t.amount);
+                  return _AdminAgentCard(
+                    agent: agent,
+                    balance: balance,
+                    pending: pending,
+                  );
                 },
               );
             },
@@ -72,14 +82,17 @@ class _AdminAgentCard extends ConsumerStatefulWidget {
   final double balance;
   final double pending;
 
-  const _AdminAgentCard({required this.agent, required this.balance, required this.pending});
+  const _AdminAgentCard({
+    required this.agent,
+    required this.balance,
+    required this.pending,
+  });
 
   @override
   ConsumerState<_AdminAgentCard> createState() => _AdminAgentCardState();
 }
 
 class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -87,9 +100,14 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
 
     Color statusColor;
     switch (agent.status) {
-      case 'active': statusColor = Colors.green; break;
-      case 'pending': statusColor = Colors.orange; break;
-      default: statusColor = Colors.red;
+      case 'active':
+        statusColor = Colors.green;
+        break;
+      case 'pending':
+        statusColor = Colors.orange;
+        break;
+      default:
+        statusColor = Colors.red;
     }
 
     return Card(
@@ -113,8 +131,22 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(agent.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text('${agent.agentId} · ${agent.location}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(
+                        agent.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${agent.agentId} · ${agent.location}',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -122,9 +154,22 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                      child: Text(agent.status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        agent.status.toUpperCase(),
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     if (agent.isWalletFrozen) ...[
                       const SizedBox(height: 4),
@@ -133,7 +178,14 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                         children: [
                           Icon(Icons.lock, size: 11, color: Colors.red),
                           SizedBox(width: 3),
-                          Text('Wallet Frozen', style: TextStyle(fontSize: 10, color: Colors.red, fontWeight: FontWeight.bold)),
+                          Text(
+                            'Wallet Frozen',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -146,16 +198,37 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
             // Stats row
             Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(color: const Color(0xFFF5F5F7), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F7),
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Row(
                 children: [
-                  Expanded(child: _StatCol(label: 'Properties', value: '${agent.propertiesVerified}')),
+                  Expanded(
+                    child: _StatCol(
+                      label: 'Properties',
+                      value: '${agent.propertiesVerified}',
+                    ),
+                  ),
                   Container(width: 1, height: 28, color: Colors.grey.shade300),
-                  Expanded(child: _StatCol(label: 'Tenants', value: '${agent.tenantsReferred}')),
+                  Expanded(
+                    child: _StatCol(
+                      label: 'Tenants',
+                      value: '${agent.tenantsReferred}',
+                    ),
+                  ),
                   Container(width: 1, height: 28, color: Colors.grey.shade300),
-                  Expanded(child: _StatCol(label: 'Rating', value: '${agent.rating}⭐')),
+                  Expanded(
+                    child: _StatCol(label: 'Rating', value: '${agent.rating}⭐'),
+                  ),
                   Container(width: 1, height: 28, color: Colors.grey.shade300),
-                  Expanded(child: _StatCol(label: 'Balance', value: CurrencyFormatter.formatCFA(widget.balance), color: Colors.green)),
+                  Expanded(
+                    child: _StatCol(
+                      label: 'Balance',
+                      value: CurrencyFormatter.formatCFA(widget.balance),
+                      color: Colors.green,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -164,9 +237,20 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.hourglass_empty, size: 13, color: Colors.orange),
+                  const Icon(
+                    Icons.hourglass_empty,
+                    size: 13,
+                    color: Colors.orange,
+                  ),
                   const SizedBox(width: 4),
-                  Text('${CurrencyFormatter.formatCFA(widget.pending)} pending commission', style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w600)),
+                  Text(
+                    '${CurrencyFormatter.formatCFA(widget.pending)} pending commission',
+                    style: const TextStyle(
+                      color: Colors.orange,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -181,16 +265,38 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                 if (agent.status == 'pending') ...[
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        // ref.read(agentProfilesProvider.notifier).reactivate(agent.agentId);
-                        context.showSuccessToast('${agent.name} approved!');
+                      onPressed: () async {
+                        try {
+                          final submissions = await ref
+                              .read(agentRepositoryProvider)
+                              .getAllKyc();
+                          final submission = submissions
+                              .where((item) => item.userId == agent.userId)
+                              .firstOrNull;
+                          if (submission == null) {
+                            throw Exception('KYC record not found');
+                          }
+                          await ref
+                              .read(agentRepositoryProvider)
+                              .approveKyc(submission.id);
+                          ref.invalidate(agentProfilesProvider);
+                          if (context.mounted) {
+                            context.showSuccessToast('${agent.name} approved!');
+                          }
+                        } catch (error) {
+                          if (context.mounted) {
+                            context.showErrorToast(error.toString());
+                          }
+                        }
                       },
                       icon: const Icon(Icons.check, size: 16),
                       label: const Text('Approve KYC'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
@@ -200,15 +306,35 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                 if (agent.status == 'active') ...[
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        // ref.read(agentProfilesProvider.notifier).suspend(agent.agentId);
-                        context.showErrorToast('${agent.name} suspended.');
+                      onPressed: () async {
+                        final response = await ref
+                            .read(apiClientProvider)
+                            .patch('/api/admin/users/${agent.userId}/suspend');
+                        if (!context.mounted) return;
+                        if (!response.isSuccess) {
+                          context.showErrorToast(
+                            response.error?.message ??
+                                'Could not suspend agent',
+                          );
+                        } else {
+                          ref.invalidate(agentProfilesProvider);
+                          context.showSuccessToast('${agent.name} suspended.');
+                        }
                       },
-                      icon: const Icon(Icons.block, size: 16, color: Colors.orange),
-                      label: const Text('Suspend', style: TextStyle(color: Colors.orange)),
+                      icon: const Icon(
+                        Icons.block,
+                        size: 16,
+                        color: Colors.orange,
+                      ),
+                      label: const Text(
+                        'Suspend',
+                        style: TextStyle(color: Colors.orange),
+                      ),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.orange),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
@@ -217,31 +343,24 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () async {
-                        final token = ref.read(authProvider).session?.accessToken ?? '';
-                        try {
-                          if (agent.isWalletFrozen) {
-                            await http.post(
-                              Uri.parse(ApiEndpoints.unfreezeWallet(agent.userId)),
-                              headers: {'Authorization': 'Bearer $token'},
-                            );
-                            context.showSuccessToast('${agent.name}\'s wallet unfrozen.');
-                          } else {
-                            await http.post(
-                              Uri.parse(ApiEndpoints.freezeWallet(agent.userId)),
-                              headers: {'Authorization': 'Bearer $token'},
-                            );
-                            context.showErrorToast('${agent.name}\'s wallet frozen.');
-                          }
-                          ref.invalidate(agentProfilesProvider);
-                        } catch (e) {
-                          context.showErrorToast('Failed to update wallet status');
-                        }
+                        context.showErrorToast(
+                          'Wallet freeze controls are not available on the backend yet.',
+                        );
                       },
-                      icon: Icon(agent.isWalletFrozen ? Icons.lock_open : Icons.lock, size: 16, color: Colors.red),
-                      label: Text(agent.isWalletFrozen ? 'Unfreeze' : 'Freeze Wallet', style: const TextStyle(color: Colors.red)),
+                      icon: Icon(
+                        agent.isWalletFrozen ? Icons.lock_open : Icons.lock,
+                        size: 16,
+                        color: Colors.red,
+                      ),
+                      label: Text(
+                        agent.isWalletFrozen ? 'Unfreeze' : 'Freeze Wallet',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.red),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
@@ -250,16 +369,31 @@ class _AdminAgentCardState extends ConsumerState<_AdminAgentCard> {
                 if (agent.status == 'suspended') ...[
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        // ref.read(agentProfilesProvider.notifier).reactivate(agent.agentId);
-                        context.showSuccessToast('${agent.name} reactivated!');
+                      onPressed: () async {
+                        final response = await ref
+                            .read(apiClientProvider)
+                            .patch('/api/admin/users/${agent.userId}/activate');
+                        if (!context.mounted) return;
+                        if (!response.isSuccess) {
+                          context.showErrorToast(
+                            response.error?.message ??
+                                'Could not reactivate agent',
+                          );
+                        } else {
+                          ref.invalidate(agentProfilesProvider);
+                          context.showSuccessToast(
+                            '${agent.name} reactivated!',
+                          );
+                        }
                       },
                       icon: const Icon(Icons.restore, size: 16),
                       label: const Text('Reactivate'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
@@ -285,9 +419,21 @@ class _StatCol extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color ?? Colors.black87), textAlign: TextAlign.center),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: color ?? Colors.black87,
+          ),
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10), textAlign: TextAlign.center),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.grey, fontSize: 10),
+          textAlign: TextAlign.center,
+        ),
       ],
     );
   }

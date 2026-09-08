@@ -197,7 +197,7 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                       children: [
                         _buildStarRating(4.5),
                         const SizedBox(width: 8),
-                        Text('${4.5}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text('${4.5}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         const Spacer(),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -212,32 +212,10 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                     ),
                     const SizedBox(height: 20),
 
-                    // ── Price ──────────────────────────────────────────
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${CurrencyFormatter.formatCFA(property.property.monthlyRentUnits.toDouble())} / month',
-                            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Deposit: ${CurrencyFormatter.formatCFA(property.property.depositUnits.toDouble())}',
-                            style: const TextStyle(color: Colors.white70, fontSize: 13),
-                          ),
-                        ],
-                      ),
+                    // ── Gamified RNPL Checkout Widget ──────────────────────────────────
+                    _RnplSliderWidget(
+                      monthlyRent: property.property.monthlyRentUnits.toDouble(), 
+                      deposit: property.property.depositUnits.toDouble()
                     ),
                     const SizedBox(height: 20),
 
@@ -645,6 +623,112 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
   }
 }
 
+class _RnplSliderWidget extends StatefulWidget {
+  final double monthlyRent;
+  final double deposit;
+  const _RnplSliderWidget({required this.monthlyRent, required this.deposit});
+
+  @override
+  State<_RnplSliderWidget> createState() => _RnplSliderWidgetState();
+}
+
+class _RnplSliderWidgetState extends State<_RnplSliderWidget> {
+  double _sliderValue = 0.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final totalUpfront = widget.monthlyRent + widget.deposit; // Assume 1 month rent + deposit
+    final rnplMonthly = widget.monthlyRent * 1.15; // 15% RNPL premium
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _sliderValue > 0.5 ? theme.colorScheme.primary : Colors.grey.shade900,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: (_sliderValue > 0.5 ? theme.colorScheme.primary : Colors.black).withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          )
+        ],
+      ),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _sliderValue > 0.5
+            ? Column(
+                key: const ValueKey('rnpl'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.bolt, color: Colors.amberAccent, size: 24),
+                      SizedBox(width: 8),
+                      Text('RNPL Activated', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Instead of ${CurrencyFormatter.formatCFA(totalUpfront)} today,\npay only ${CurrencyFormatter.formatCFA(rnplMonthly)}/mo via Orange Money.',
+                    style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.4),
+                  ),
+                  const SizedBox(height: 16),
+                  SliderTheme(
+                    data: SliderThemeData(
+                      activeTrackColor: Colors.white,
+                      inactiveTrackColor: Colors.white24,
+                      thumbColor: Colors.amberAccent,
+                      overlayColor: Colors.amberAccent.withValues(alpha: 0.2),
+                    ),
+                    child: Slider(
+                      value: _sliderValue,
+                      onChanged: (val) => setState(() => _sliderValue = val),
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                key: const ValueKey('standard'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Standard Upfront: ${CurrencyFormatter.formatCFA(totalUpfront)}',
+                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${CurrencyFormatter.formatCFA(widget.monthlyRent)}/mo + ${CurrencyFormatter.formatCFA(widget.deposit)} Deposit',
+                    style: const TextStyle(color: Colors.white54, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  const Row(
+                    children: [
+                      Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 14),
+                      SizedBox(width: 8),
+                      Text('Slide to activate Pay Later', style: TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  SliderTheme(
+                    data: SliderThemeData(
+                      activeTrackColor: Colors.amberAccent,
+                      inactiveTrackColor: Colors.white12,
+                      thumbColor: Colors.white,
+                      overlayColor: Colors.white.withValues(alpha: 0.1),
+                    ),
+                    child: Slider(
+                      value: _sliderValue,
+                      onChanged: (val) => setState(() => _sliderValue = val),
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
 // ── Map Section ───────────────────────────────────────────────────────────────
 /// Shows a real Google Map when MAPS_API_KEY is configured, or a premium
 /// placeholder otherwise. To enable: replace YOUR_MAPS_API_KEY in AndroidManifest.xml.
@@ -830,15 +914,14 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
                 ],
               ],
             ),
-            if (user != null)
-              GestureDetector(
-                onTap: () => setState(() => _showForm = !_showForm),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-                  child: Text(_showForm ? 'Cancel' : '+ Review', style: TextStyle(color: theme.colorScheme.primary, fontSize: 13, fontWeight: FontWeight.bold)),
-                ),
+            GestureDetector(
+              onTap: () => setState(() => _showForm = !_showForm),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+                child: Text(_showForm ? 'Cancel' : '+ Review', style: TextStyle(color: theme.colorScheme.primary, fontSize: 13, fontWeight: FontWeight.bold)),
               ),
+            ),
           ],
         ),
         const SizedBox(height: 14),

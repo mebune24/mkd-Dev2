@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'di_providers.dart';
 import '../features/applications/domain/application.dart';
-import '../shared/models/enums.dart';
 
 // --- Tenant Applications --- //
 
