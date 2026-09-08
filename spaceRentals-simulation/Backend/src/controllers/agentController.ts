@@ -50,13 +50,13 @@ export const getPendingKyc = async (_req: AuthRequest, res: Response) => {
 
 // PATCH /api/agents/kyc/:id/approve  (admin)
 export const approveKyc = async (req: AuthRequest, res: Response) => {
-  try { return res.json(await agentService.approveKyc(String(req.params.id))); }
+  try { return res.json(await agentService.approveKyc(String(req.params.id), req.user!.userId)); }
   catch (err) { return handle(res, err); }
 };
 
 // PATCH /api/agents/kyc/:id/reject  (admin)
 export const rejectKyc = async (req: AuthRequest, res: Response) => {
-  try { return res.json(await agentService.rejectKyc(String(req.params.id), req.body.adminNote)); }
+  try { return res.json(await agentService.rejectKyc(String(req.params.id), req.user!.userId, req.body.adminNote)); }
   catch (err) { return handle(res, err); }
 };
 

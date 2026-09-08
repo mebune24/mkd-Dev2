@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma';
 import { userRepository } from '../repositories/UserRepository';
 import { v4 as uuidv4 } from 'uuid';
+import { auditLogService } from './AuditLogService';
 
 export class AgentService {
   // ── KYC ──────────────────────────────────────────────────────────────────
@@ -64,22 +65,40 @@ export class AgentService {
     });
   }
 
-  async approveKyc(kycId: string) {
+  async approveKyc(kycId: string, adminId: string) {
     const kyc = await prisma.agentVerification.findUnique({ where: { id: kycId } });
     if (!kyc) throw { status: 404, message: 'KYC application not found.' };
-    return prisma.agentVerification.update({
+    if (kyc.status !== 'pending') throw { status: 409, message: `KYC is already ${kyc.status}.` };
+    const updated = await prisma.agentVerification.update({
       where: { id: kycId },
       data: { status: 'approved' },
     });
+    await auditLogService.log({
+      userId: adminId,
+      action: 'kyc.approved',
+      resourceId: kyc.id,
+      resourceType: 'agent_verification',
+      metadata: { agentId: kyc.agentId },
+    });
+    return updated;
   }
 
-  async rejectKyc(kycId: string, adminNote?: string) {
+  async rejectKyc(kycId: string, adminId: string, adminNote?: string) {
     const kyc = await prisma.agentVerification.findUnique({ where: { id: kycId } });
     if (!kyc) throw { status: 404, message: 'KYC application not found.' };
-    return prisma.agentVerification.update({
+    if (kyc.status !== 'pending') throw { status: 409, message: `KYC is already ${kyc.status}.` };
+    const updated = await prisma.agentVerification.update({
       where: { id: kycId },
       data: { status: 'rejected', adminNotes: adminNote },
     });
+    await auditLogService.log({
+      userId: adminId,
+      action: 'kyc.rejected',
+      resourceId: kyc.id,
+      resourceType: 'agent_verification',
+      metadata: { agentId: kyc.agentId, adminNote: adminNote ?? '' },
+    });
+    return updated;
   }
 
   // ── Profile ──────────────────────────────────────────────────────────────

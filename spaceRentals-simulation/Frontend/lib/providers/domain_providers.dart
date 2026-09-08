@@ -28,7 +28,7 @@ final allUsersProvider = FutureProvider<List<UserModel>>((ref) async {
 // --- KYC Submissions ---
 final kycSubmissionsProvider = FutureProvider<List<KYCSubmission>>((ref) async {
   final repo = ref.watch(agentRepositoryProvider);
-  return repo.getPendingKyc();
+  return repo.getAllKyc();
 });
 
 // --- Disputes ---
