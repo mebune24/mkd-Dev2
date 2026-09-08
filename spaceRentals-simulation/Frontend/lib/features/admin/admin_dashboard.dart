@@ -12,6 +12,7 @@ import '../../models/user_model.dart';
 import '../profile/profile_screen.dart';
 import 'audit_logs_screen.dart';
 import 'reports_screen.dart';
+import 'domain/admin_transaction.dart';
 import '../../core/utils/ui_helpers.dart';
 
 class AdminDashboard extends ConsumerStatefulWidget {
@@ -336,6 +337,10 @@ class _AdminOverviewScreen extends ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 28),
+                          if (overview != null) ...[
+                            _OperationalPulse(snapshot: overview),
+                            const SizedBox(height: 28),
+                          ],
 
                           // ── KYC Management ─────────────────────────────────────────
                           _SectionHeader(
@@ -1163,6 +1168,99 @@ class _KYCCard extends ConsumerWidget {
               child: IconButton(
                 icon: const Icon(Icons.close, color: Colors.white, size: 30),
                 onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OperationalPulse extends StatelessWidget {
+  final AdminOverviewSnapshot snapshot;
+
+  const _OperationalPulse({required this.snapshot});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          title: 'Operational Pulse',
+          subtitle: 'Live platform state',
+          icon: Icons.monitor_heart_outlined,
+          color: Colors.blue,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _pulseTile(
+              'Pending payments',
+              '${snapshot.pendingPayments}',
+              Icons.payments,
+              Colors.orange,
+            ),
+            _pulseTile(
+              'Open maintenance',
+              '${snapshot.openMaintenance}',
+              Icons.build,
+              Colors.teal,
+            ),
+            _pulseTile(
+              'Subscriptions',
+              '${snapshot.activeSubscriptions}',
+              Icons.card_membership,
+              Colors.indigo,
+            ),
+            _pulseTile(
+              'Under review',
+              '${snapshot.underReviewDisputes}',
+              Icons.rate_review,
+              Colors.blue,
+            ),
+            _pulseTile(
+              'Suspended users',
+              '${snapshot.suspendedUsers}',
+              Icons.person_off,
+              Colors.red,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _pulseTile(String label, String value, IconData icon, Color color) {
+    return SizedBox(
+      width: 150,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(fontWeight: FontWeight.bold, color: color),
+                  ),
+                  Text(
+                    label,
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                ],
               ),
             ),
           ],
