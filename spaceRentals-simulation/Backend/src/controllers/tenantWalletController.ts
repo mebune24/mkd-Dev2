@@ -4,7 +4,10 @@ import { tenantWalletService } from '../services/TenantWalletService';
 
 export const getTenantWallet = async (req: AuthRequest, res: Response) => {
   try { return res.json(await tenantWalletService.getWallet(req.user!.userId)); }
-  catch (error: any) { return res.status(error?.status || 500).json({ message: error?.message || 'Unable to load wallet.' }); }
+  catch (error: any) {
+    console.error('[TenantWalletController] getWallet failed:', error);
+    return res.status(error?.status || 500).json({ message: error?.message || 'Unable to load wallet.' });
+  }
 };
 
 export const applyWalletToRent = async (req: AuthRequest, res: Response) => {
