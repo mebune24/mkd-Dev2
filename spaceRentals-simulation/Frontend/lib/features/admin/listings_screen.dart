@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/property_provider.dart';
 import '../../core/utils/ui_helpers.dart';
+import '../../providers/di_providers.dart';
+import '../../core/api/api_endpoints.dart';
 
 class AdminListingsScreen extends ConsumerStatefulWidget {
   const AdminListingsScreen({super.key});
@@ -56,7 +58,8 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen> {
             itemCount: listings.length,
             itemBuilder: (context, i) {
               final p = listings[i];
-              final status = _statuses[p.property.id] ?? 'active';
+                final status = _statuses[p.property.id] ??
+                  (p.listing.isPublished ? 'available' : 'unpublished');
               return Card(
                 margin: const EdgeInsets.only(bottom: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -92,17 +95,22 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen> {
                           Text('${p.property.location}  ·  ${p.property.category}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                           Text('Landlord ID: ${p.property.landlordId}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
                           const SizedBox(height: 12),
-                          if (status != 'removed')
+                          if (status != 'unpublished')
                             Row(
                               children: [
                                 if (status != 'verified')
                                   Expanded(
                                     child: ElevatedButton.icon(
-                                      onPressed: () {
-                                        setState(() => _statuses[p.property.id] = 'verified');
-                                        if (p.property.acquisitionAgentId != null && p.property.acquisitionAgentId!.isNotEmpty) {
+                                      onPressed: () async {
+                                        final response = await ref.read(apiClientProvider).patch(ApiEndpoints.publishProperty(p.property.id));
+                                        if (!context.mounted) return;
+                                        if (!response.isSuccess) {
+                                          context.showErrorToast(response.error?.message ?? 'Could not publish listing');
+                                          return;
                                         }
-                                        context.showSuccessToast('"${p.property.title}" is now Verified (Level 3).');
+                                        setState(() => _statuses[p.property.id] = 'available');
+                                        ref.invalidate(marketplaceListingsProvider);
+                                        context.showSuccessToast('"${p.property.title}" published.');
                                       },
                                       icon: const Icon(Icons.verified, size: 16),
                                       label: const Text('Verify'),
@@ -110,37 +118,41 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen> {
                                     ),
                                   ),
                                 if (status != 'verified') const SizedBox(width: 8),
-                                if (status != 'flagged')
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: () {
-                                        setState(() => _statuses[p.property.id] = 'flagged');
-                                        context.showToast('"${p.property.title}" flagged for review.');
-                                      },
-                                      icon: const Icon(Icons.flag, size: 16, color: Colors.orange),
-                                      label: const Text('Flag', style: TextStyle(color: Colors.orange)),
-                                    ),
-                                  ),
-                                const SizedBox(width: 8),
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                                   tooltip: 'Remove listing',
-                                  onPressed: () {
-                                    setState(() => _statuses[p.property.id] = 'removed');
-                                    context.showToast('"${p.property.title}" removed from platform.');
+                                  onPressed: () async {
+                                    final response = await ref.read(apiClientProvider).patch(ApiEndpoints.unpublishProperty(p.property.id));
+                                    if (!context.mounted) return;
+                                    if (!response.isSuccess) {
+                                      context.showErrorToast(response.error?.message ?? 'Could not unpublish listing');
+                                      return;
+                                    }
+                                    setState(() => _statuses[p.property.id] = 'unpublished');
+                                    ref.invalidate(marketplaceListingsProvider);
+                                    context.showSuccessToast('"${p.property.title}" unpublished.');
                                   },
                                 ),
                               ],
                             )
-                          else
+                            else
                             Row(
                               children: [
                                 const Icon(Icons.block, color: Colors.red, size: 16),
                                 const SizedBox(width: 6),
-                                const Text('Removed from platform', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13)),
+                                const Text('Unpublished from platform', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13)),
                                 const Spacer(),
                                 TextButton(
-                                  onPressed: () => setState(() => _statuses[p.property.id] = 'active'),
+                                  onPressed: () async {
+                                    final response = await ref.read(apiClientProvider).patch(ApiEndpoints.publishProperty(p.property.id));
+                                    if (!context.mounted) return;
+                                    if (response.isSuccess) {
+                                      ref.invalidate(marketplaceListingsProvider);
+                                      context.showSuccessToast('Listing published.');
+                                    } else {
+                                      context.showErrorToast(response.error?.message ?? 'Could not publish listing');
+                                    }
+                                  },
                                   child: const Text('Restore'),
                                 ),
                               ],
@@ -163,9 +175,11 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen> {
   Widget _buildStatusBadge(String status) {
     final Map<String, Color> colors = {
       'active': Colors.blue,
+      'available': Colors.blue,
       'verified': Colors.green,
       'flagged': Colors.orange,
       'removed': Colors.red,
+      'unpublished': Colors.red,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

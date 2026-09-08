@@ -33,6 +33,8 @@ class ApiEndpoints {
   static String propertyComments(String id) => '$_base/properties/$id/comments';
   static String propertyVerification(String id) =>
       '$_base/properties/$id/verification';
+    static String publishProperty(String id) => '$_base/properties/$id/publish';
+    static String unpublishProperty(String id) => '$_base/properties/$id/unpublish';
   static String confirmAvailability(String id) =>
       '$_base/properties/$id/confirm-availability';
 
