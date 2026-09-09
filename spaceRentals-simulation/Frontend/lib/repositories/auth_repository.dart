@@ -14,6 +14,7 @@ abstract class AuthRepository {
   });
   Future<void> signOut();
   Future<UserSession> refreshSession();
+  Future<void> acceptTerms(String version);
   Future<void> requestPasswordReset({required String email});
   Future<UserProfile> getCurrentUserProfile();
   Future<void> updateProfile({

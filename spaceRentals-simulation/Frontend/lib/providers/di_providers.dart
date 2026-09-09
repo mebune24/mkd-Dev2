@@ -24,6 +24,7 @@ import '../data/api/api_rnlp_repository.dart';
 import '../data/api/api_video_feed_repository.dart';
 import '../data/api/api_tenant_wallet_repository.dart';
 import '../data/api/api_message_repository.dart';
+import '../data/api/api_landlord_repository.dart';
 import '../services/session_storage_service.dart';
 
 // ── Session Storage ────────────────────────────────────────────────────────
@@ -127,10 +128,16 @@ final videoFeedRepositoryProvider = Provider<ApiVideoFeedRepository>((ref) {
   return ApiVideoFeedRepository(ref.watch(apiClientProvider));
 });
 
-final tenantWalletRepositoryProvider = Provider<ApiTenantWalletRepository>((ref) {
+final tenantWalletRepositoryProvider = Provider<ApiTenantWalletRepository>((
+  ref,
+) {
   return ApiTenantWalletRepository(ref.watch(apiClientProvider));
 });
 
 final messageRepositoryProvider = Provider<ApiMessageRepository>((ref) {
   return ApiMessageRepository(ref.watch(apiClientProvider));
+});
+
+final landlordRepositoryProvider = Provider<ApiLandlordRepository>((ref) {
+  return ApiLandlordRepository(ref.watch(apiClientProvider));
 });

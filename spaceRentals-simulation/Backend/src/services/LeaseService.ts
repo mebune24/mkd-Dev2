@@ -2,6 +2,7 @@ import { leaseRepository } from '../repositories/LeaseRepository';
 import { applicationRepository } from '../repositories/ApplicationRepository';
 import { prisma } from '../lib/prisma';
 import { auditLogService } from './AuditLogService';
+import { hasVerifiedLandlordAccess } from '../middleware/authMiddleware';
 
 export class LeaseService {
   /**
@@ -73,6 +74,9 @@ export class LeaseService {
 
     if (!isTenant && !isLandlord) {
       throw { status: 403, message: 'You are not a party on this lease.' };
+    }
+    if (isLandlord && !(await hasVerifiedLandlordAccess({ userId, role: role as any }))) {
+      throw { status: 403, message: 'Approved landlord verification is required before signing a lease.' };
     }
 
     // Idempotency: already signed by this party?

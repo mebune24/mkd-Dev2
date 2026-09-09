@@ -126,11 +126,18 @@ class _AgentKYCScreenState extends ConsumerState<AgentKYCScreen> {
                                 XFile(_uploadedDocs['agency_license']!),
                                 'kyc-documents',
                               );
+                        final taxCardPath = _uploadedDocs['tax_card'] == null
+                            ? null
+                            : await StorageService.instance.uploadFile(
+                                XFile(_uploadedDocs['tax_card']!),
+                                'kyc-documents',
+                              );
                         await ref
                             .read(agentRepositoryProvider)
                             .submitKyc(
                               nationalIdUrl: idPath,
                               businessDocUrl: businessPath,
+                              taxCardUrl: taxCardPath,
                             );
                         if (!mounted) return;
                         router.go('/agent/pending');

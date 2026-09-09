@@ -10,6 +10,8 @@ import {
   adminSuspendUser,
   adminActivateUser,
   getAdminProperties,
+  getAdminPlatformFees,
+  getAdminSubscriptions,
 } from '../controllers/adminController';
 
 const router = Router();
@@ -26,5 +28,7 @@ router.post('/users/bulk-suspend', bulkSuspendUsers);
 router.patch('/users/:id/suspend', adminSuspendUser);
 router.patch('/users/:id/activate', adminActivateUser);
 router.get('/properties',         getAdminProperties);
+router.get('/platform-fees',      getAdminPlatformFees);
+router.get('/subscriptions',      getAdminSubscriptions);
 
 export default router;

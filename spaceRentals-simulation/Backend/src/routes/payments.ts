@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../middleware/authMiddleware';
+import { authenticate, requireLandlordVerificationIfApplicable, requireRole } from '../middleware/authMiddleware';
 import {
   initiatePayment,
   initiatePayout,
@@ -17,7 +17,7 @@ const router = Router();
 router.post('/webhook', fapshiWebhook);
 
 // All other payment routes require authentication
-router.use(authenticate);
+router.use(authenticate, requireLandlordVerificationIfApplicable);
 
 router.post('/initiate', requireRole(['tenant', 'landlord', 'agent', 'admin']), validateRequest(initiatePaymentSchema), initiatePayment);
 router.post('/payout', requireRole(['landlord', 'agent', 'admin']), initiatePayout);

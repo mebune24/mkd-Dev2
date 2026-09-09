@@ -31,7 +31,7 @@ class SocketService {
 
     _socket!.onConnect((_) {
       _isConnected = true;
-      print('[Socket] Connected ✓');
+      print('[Socket] Connected');
     });
 
     _socket!.onDisconnect((_) {
@@ -95,6 +95,8 @@ class SocketService {
       if (data is Map) handler(Map<String, dynamic>.from(data));
     });
   }
+
+  void offNotification() => _socket?.off('notification');
 }
 
 /// Riverpod provider to access the SocketService.

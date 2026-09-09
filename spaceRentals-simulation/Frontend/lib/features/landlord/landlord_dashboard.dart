@@ -14,7 +14,7 @@ import '../messages/chat_screens.dart';
 import '../../providers/domain_providers.dart';
 import '../../providers/property_provider.dart';
 import '../../providers/applications_provider.dart';
-import '../../shared/models/enums.dart';
+import 'domain/landlord_dashboard_snapshot.dart';
 
 class LandlordDashboard extends ConsumerStatefulWidget {
   const LandlordDashboard({super.key});
@@ -415,33 +415,38 @@ class _DashboardOverview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider);
     final theme = Theme.of(context);
-    final properties = ref
-        .watch(landlordPropertiesProvider)
-        .maybeWhen(data: (value) => value, orElse: () => const []);
-    final applications = ref
-        .watch(landlordApplicationsProvider)
-        .maybeWhen(data: (value) => value, orElse: () => const []);
-    final rentals = ref
-        .watch(landlordRentalsProvider)
-        .maybeWhen(data: (value) => value, orElse: () => const []);
-    final activeRentals = rentals.where(
-      (rental) => rental.status.name == 'active',
-    );
-    final activeTenantCount = activeRentals
-        .map((rental) => rental.tenantId)
-        .toSet()
-        .length;
-    final monthlyRevenue = activeRentals.fold<double>(
-      0,
-      (sum, rental) => sum + rental.monthlyRent.minorUnits.toDouble(),
-    );
-    final pendingApplications = applications
-        .where(
-          (application) =>
-              application.status == ApplicationStatus.submitted ||
-              application.status == ApplicationStatus.underReview,
-        )
-        .length;
+    final dashboardAsync = ref.watch(landlordDashboardProvider);
+    final dashboard = dashboardAsync.value;
+    if (dashboard == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF5F5F7),
+        body: dashboardAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.cloud_off_outlined,
+                  size: 48,
+                  color: Colors.red,
+                ),
+                const SizedBox(height: 12),
+                const Text('Dashboard data could not be loaded.'),
+                TextButton(
+                  onPressed: () => ref.invalidate(landlordDashboardProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+          data: (_) => const Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+    final activeTenantCount = dashboard.occupiedProperties;
+    final monthlyRevenue = dashboard.expectedMonthlyRent.toDouble();
+    final pendingApplications = dashboard.pendingApplications;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
@@ -472,7 +477,7 @@ class _DashboardOverview extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text(
-                          'Good day, ${user.session?.fullName.split(' ').first ?? 'Landlord'} 👋',
+                          'Good day, ${user.session?.fullName.split(' ').first ?? 'Landlord'}',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 14,
@@ -504,6 +509,16 @@ class _DashboardOverview extends ConsumerWidget {
                 onPressed: () => context.push('/notifications'),
               ),
               IconButton(
+                tooltip: 'Refresh dashboard',
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                onPressed: () {
+                  ref.invalidate(landlordDashboardProvider);
+                  ref.invalidate(landlordPropertiesProvider);
+                  ref.invalidate(landlordApplicationsProvider);
+                  ref.invalidate(landlordRentalsProvider);
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.logout, color: Colors.white),
                 onPressed: () {
                   ref.read(authProvider.notifier).signOut();
@@ -526,7 +541,7 @@ class _DashboardOverview extends ConsumerWidget {
                         child: _buildStatCard(
                           context,
                           'Properties',
-                          '${properties.length}',
+                          '${dashboard.totalProperties}',
                           Icons.business_rounded,
                           theme.colorScheme.primary,
                         ),
@@ -549,7 +564,7 @@ class _DashboardOverview extends ConsumerWidget {
                       Expanded(
                         child: _buildStatCard(
                           context,
-                          'Monthly Rent',
+                          'Expected Monthly Rent',
                           CurrencyFormatter.formatCFA(monthlyRevenue),
                           Icons.payments_rounded,
                           Colors.green,
@@ -567,6 +582,67 @@ class _DashboardOverview extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 28),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Occupancy',
+                          '${dashboard.occupancyRate.toStringAsFixed(1)}%',
+                          Icons.pie_chart_rounded,
+                          Colors.indigo,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Outstanding',
+                          CurrencyFormatter.formatCFA(
+                            dashboard.pendingAmount.toDouble(),
+                          ),
+                          Icons.warning_amber_rounded,
+                          Colors.redAccent,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Maintenance',
+                          '${dashboard.openMaintenance}',
+                          Icons.build_circle_outlined,
+                          Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Unread Messages',
+                          '${dashboard.unreadMessages}',
+                          Icons.mark_unread_chat_alt_outlined,
+                          Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  Text(
+                    'Rent Collections',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _RentCollectionsChart(points: dashboard.monthlyCollections),
                   const SizedBox(height: 28),
 
                   // Quick actions
@@ -610,41 +686,32 @@ class _DashboardOverview extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  if (applications.isEmpty && activeRentals.isEmpty)
+                  if (dashboard.recentActivity.isEmpty)
                     const Text(
                       'No recent landlord activity.',
                       style: TextStyle(color: Colors.grey),
                     ),
-                  ...applications
-                      .take(3)
-                      .map(
-                        (application) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildActivityTile(
-                            context,
-                            Icons.description,
-                            theme.colorScheme.primary,
-                            'Rental Application',
-                            '${application.tenantName} applied for ${application.propertyTitle}',
-                            '${application.submittedAt.day}/${application.submittedAt.month}/${application.submittedAt.year}',
-                          ),
-                        ),
+                  ...dashboard.recentActivity.map(
+                    (activity) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildActivityTile(
+                        context,
+                        activity.type == 'message'
+                            ? Icons.message_outlined
+                            : activity.type == 'rental'
+                            ? Icons.home_work
+                            : Icons.description,
+                        activity.type == 'message'
+                            ? Colors.blue
+                            : activity.type == 'rental'
+                            ? Colors.green
+                            : theme.colorScheme.primary,
+                        activity.title,
+                        activity.description,
+                        '${activity.createdAt.day}/${activity.createdAt.month}/${activity.createdAt.year}',
                       ),
-                  ...activeRentals
-                      .take(3)
-                      .map(
-                        (rental) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildActivityTile(
-                            context,
-                            Icons.home_work,
-                            Colors.green,
-                            'Active Rental',
-                            rental.propertyTitle,
-                            '${rental.activatedAt?.day ?? rental.createdAt.day}/${rental.activatedAt?.month ?? rental.createdAt.month}/${rental.activatedAt?.year ?? rental.createdAt.year}',
-                          ),
-                        ),
-                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -800,6 +867,75 @@ class _DashboardOverview extends ConsumerWidget {
           ),
           Text(time, style: const TextStyle(color: Colors.grey, fontSize: 11)),
         ],
+      ),
+    );
+  }
+}
+
+class _RentCollectionsChart extends StatelessWidget {
+  final List<RentCollectionPoint> points;
+
+  const _RentCollectionsChart({required this.points});
+
+  @override
+  Widget build(BuildContext context) {
+    if (points.isEmpty) {
+      return const Text(
+        'No rent collection history yet.',
+        style: TextStyle(color: Colors.grey),
+      );
+    }
+    final maximum = points.fold<int>(
+      0,
+      (max, point) => point.amount > max ? point.amount : max,
+    );
+    return Container(
+      height: 180,
+      padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: points.map((point) {
+          final ratio = maximum == 0 ? 0.0 : point.amount / maximum;
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    '${(point.amount / 1000).round()}k',
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 4),
+                  Flexible(
+                    child: FractionallySizedBox(
+                      heightFactor: ratio == 0 ? 0.02 : ratio,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    point.month.substring(5),
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

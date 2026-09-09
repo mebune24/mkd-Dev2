@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/authMiddleware';
+import { authenticate, requireLandlordVerificationIfApplicable, requireVerifiedLandlord } from '../middleware/authMiddleware';
 import {
   getTenantApplications,
   getApplicationById,
@@ -12,14 +12,14 @@ import {
 
 const router = Router();
 
-router.use(authenticate);
+router.use(authenticate, requireLandlordVerificationIfApplicable);
 
 router.get('/tenant', getTenantApplications);
-router.get('/landlord', getLandlordApplications);
+router.get('/landlord', requireVerifiedLandlord, getLandlordApplications);
 router.get('/:id', getApplicationById);
 router.post('/', submitApplication);
-router.patch('/:id/approve', approveApplication);
-router.patch('/:id/reject', rejectApplication);
+router.patch('/:id/approve', requireVerifiedLandlord, approveApplication);
+router.patch('/:id/reject', requireVerifiedLandlord, rejectApplication);
 router.patch('/:id/withdraw', withdrawApplication);
 
 export default router;

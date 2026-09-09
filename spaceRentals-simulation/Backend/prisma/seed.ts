@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding SpaceRentals database...');
+  console.log('Seeding SpaceRentals database...');
 
   // ── Users ─────────────────────────────────────────────────────────
   const passwordHash = await bcrypt.hash('Password123!', 10);
@@ -114,7 +114,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Users seeded');
+  console.log('Users seeded');
 
   // ── Properties ────────────────────────────────────────────────────
   const properties = [
@@ -382,7 +382,7 @@ async function main() {
     }
   }
 
-  console.log('✅ Properties seeded (10 properties across Yaoundé, Douala & Buea)');
+  console.log('Properties seeded (10 properties across Yaoundé, Douala & Buea)');
 
   // ── Subscriptions for Landlords ───────────────────────────────────
   for (const landlord of [landlord1, landlord2, landlord3]) {
@@ -401,9 +401,9 @@ async function main() {
     });
   }
 
-  console.log('✅ Subscriptions seeded');
-  console.log('\n🎉 Database seeded successfully!');
-  console.log('\n📧 Test Credentials (password: Password123! for all):');
+  console.log('Subscriptions seeded');
+  console.log('\nDatabase seeded successfully!');
+  console.log('\nTest Credentials (password: Password123! for all):');
   console.log('   Admin:     admin@spacerentals.cm');
   console.log('   Landlord1: landlord1@spacerentals.cm');
   console.log('   Landlord2: landlord2@spacerentals.cm');

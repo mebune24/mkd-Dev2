@@ -19,7 +19,7 @@ redisClient.on('error', (_err) => {
   }
 });
 redisClient.on('connect', () => {
-  console.log('[Redis] Connected ✓');
+  console.log('[Redis] Connected');
   redisAvailable = true;
 });
 

@@ -8,6 +8,7 @@ import '../core/domain/audit_entry.dart';
 import '../models/user_model.dart';
 import 'di_providers.dart';
 import '../features/tenant/domain/tenant_wallet.dart';
+import '../features/landlord/domain/landlord_dashboard_snapshot.dart';
 
 // --- Users ---
 final allUsersProvider = FutureProvider<List<UserModel>>((ref) async {
@@ -31,6 +32,12 @@ final kycSubmissionsProvider = FutureProvider<List<KYCSubmission>>((ref) async {
   return repo.getAllKyc();
 });
 
+final landlordKycSubmissionsProvider = FutureProvider<List<KYCSubmission>>((
+  ref,
+) {
+  return ref.watch(adminRepositoryProvider).getLandlordKyc();
+});
+
 // --- Disputes ---
 final disputesProvider = FutureProvider<List<DisputeRecord>>((ref) async {
   final repo = ref.watch(disputeRepositoryProvider);
@@ -45,6 +52,12 @@ final agentProfilesProvider = FutureProvider<List<AgentProfile>>((ref) async {
 
 final currentAgentProfileProvider = FutureProvider<AgentProfile>((ref) async {
   return ref.watch(agentRepositoryProvider).getProfile();
+});
+
+final landlordDashboardProvider = FutureProvider<LandlordDashboardSnapshot>((
+  ref,
+) {
+  return ref.watch(landlordRepositoryProvider).getDashboardSnapshot();
 });
 
 // --- Admin Transactions ---
@@ -85,8 +98,7 @@ final agentWalletProvider = FutureProvider<AgentWallet>((ref) async {
 final agentAgreementsProvider = FutureProvider<List<AgentServiceAgreement>>((
   ref,
 ) async {
-  // Not implemented in backend MVP, returning empty for now
-  return [];
+  return ref.watch(agentRepositoryProvider).getAgreements();
 });
 
 // --- Audit Log ---
@@ -97,6 +109,18 @@ final auditLogProvider = FutureProvider<List<AuditEntry>>((ref) async {
 
 final adminReportsProvider = FutureProvider<AdminReportsSummary>((ref) async {
   return ref.watch(adminRepositoryProvider).getReportsSummary();
+});
+
+final adminPlatformFeesProvider = FutureProvider<List<AdminPlatformFee>>((
+  ref,
+) async {
+  return ref.watch(adminRepositoryProvider).getPlatformFees();
+});
+
+final adminSubscriptionsProvider = FutureProvider<List<AdminSubscription>>((
+  ref,
+) async {
+  return ref.watch(adminRepositoryProvider).getSubscriptions();
 });
 
 final adminOverviewProvider = FutureProvider<AdminOverviewSnapshot>((

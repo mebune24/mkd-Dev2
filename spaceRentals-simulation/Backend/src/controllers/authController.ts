@@ -12,8 +12,14 @@ const handle = (res: Response, err: any) => {
 // POST /api/auth/register
 export const register = async (req: Request, res: Response) => {
   try {
-    const result = await authService.register(req.body.name, req.body.email, req.body.password, req.body.role);
+    const result = await authService.register(req.body.name, req.body.email, req.body.password, req.body.role, req.body.termsAccepted === true, req.body.termsVersion);
     return res.status(201).json(result);
+  } catch (err) { return handle(res, err); }
+};
+
+export const acceptTerms = async (req: AuthRequest, res: Response) => {
+  try {
+    return res.json(await authService.acceptTerms(req.user!.userId, req.body.termsVersion));
   } catch (err) { return handle(res, err); }
 };
 

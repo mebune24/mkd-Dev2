@@ -4,7 +4,7 @@ Welcome to the SpaceRentals project repository. This document outlines the curre
 
 ---
 
-## 🟢 1. Fully Functional Features
+## 1. Fully Functional Features
 
 The core architecture of SpaceRentals is built on a robust Node.js/Express backend (using Prisma ORM & PostgreSQL) and a Flutter Riverpod frontend. The following systems are completely wired and functional:
 
@@ -35,7 +35,7 @@ The core architecture of SpaceRentals is built on a robust Node.js/Express backe
 
 ---
 
-## 🟡 2. Lacking / Missing Features
+## 2. Lacking / Missing Features
 
 While the core loop is functional, several secondary features are currently mocked or incomplete:
 
@@ -47,7 +47,7 @@ While the core loop is functional, several secondary features are currently mock
 
 ---
 
-## 🔵 3. Areas to Reinforce
+## 3. Areas to Reinforce
 
 To ensure the application scales gracefully and maintains high performance, the following areas should be reinforced:
 
@@ -59,7 +59,7 @@ To ensure the application scales gracefully and maintains high performance, the 
 
 ---
 
-## 🔴 4. Current Security Risks
+## 4. Current Security Risks
 
 The application implements standard security practices (Helmet, CORS, rate limiting), but the following risks must be addressed before a large-scale public launch:
 

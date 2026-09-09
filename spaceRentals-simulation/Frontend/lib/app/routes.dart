@@ -21,6 +21,8 @@ import '../features/tenant/monetization/tenant_gigs_screen.dart';
 import '../features/messages/chat_screens.dart';
 import '../features/landlord/landlord_dashboard.dart';
 import '../features/landlord/add_property.dart';
+import '../features/landlord/edit_property.dart';
+import '../features/landlord/my_properties.dart';
 import '../features/landlord/kyc_screen.dart';
 import '../features/landlord/kyc_pending_screen.dart';
 import '../features/landlord/monetization/landlord_monetization_screen.dart';
@@ -31,6 +33,7 @@ import '../features/admin/admin_landlords_screen.dart';
 import '../features/admin/admin_tenants_screen.dart';
 import '../features/admin/users_screen.dart';
 import '../features/admin/kyc_management_screen.dart';
+import '../features/admin/admin_landlord_kyc_screen.dart';
 import '../features/admin/admin_agents_screen.dart';
 import '../features/admin/disputes_screen.dart';
 import '../features/admin/listings_screen.dart';
@@ -39,6 +42,8 @@ import '../features/admin/reports_screen.dart';
 import '../features/admin/audit_logs_screen.dart';
 import '../features/admin/admin_management_screen.dart';
 import '../features/admin/maintenance_operations_screen.dart';
+import '../features/admin/admin_platform_fees_screen.dart';
+import '../features/admin/admin_subscriptions_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/agent/agent_onboarding_screen.dart';
 import '../features/agent/agent_dashboard.dart';
@@ -48,6 +53,7 @@ import '../features/chatbot/chatbot_screen.dart';
 import '../features/properties/domain/property.dart';
 import '../features/leases/lease_signing_screen.dart';
 import '../features/splash/onboarding_screen.dart';
+import '../features/auth/terms_screen.dart';
 import '../features/landlord/landlord_maintenance_screen.dart';
 
 // ── Reusable transition builders ──────────────────────────────────────────────
@@ -146,23 +152,35 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isGuest = authState.isGuest;
 
       final isGoingToSplash = state.matchedLocation == '/splash';
+      final isGoingToOnboarding = state.matchedLocation == '/onboarding';
+      final isGoingToTerms = state.matchedLocation == '/terms';
       final isGoingToLogin = state.matchedLocation == '/login';
       final isGoingToRegister = state.matchedLocation == '/register';
       final isGoingToForgot = state.matchedLocation == '/forgot-password';
 
       final isAuthRoute =
-          isGoingToLogin || isGoingToRegister || isGoingToForgot;
+          isGoingToLogin ||
+          isGoingToRegister ||
+          isGoingToForgot ||
+          isGoingToTerms;
 
-      // Not signed in and not a guest → force to login
+      final hasAcceptedTerms = authState.hasConsent;
+
+      // Not signed in and not a guest → force the consent gate before auth screens.
       if (!hasAccess) {
-        if (!isAuthRoute && !isGoingToSplash) return '/login';
+        if (!hasAcceptedTerms) {
+          if (!isAuthRoute && !isGoingToSplash && !isGoingToOnboarding)
+            return '/terms';
+          if (isGoingToLogin || isGoingToRegister || isGoingToForgot)
+            return '/terms';
+        }
         return null;
       }
 
       // Guest: allow splash routes to pass through to /tenant, but let them visit auth routes to log in
       if (isGuest) {
         if (isGoingToSplash) return '/tenant';
-        if (isAuthRoute) return null; // Allow guests to visit login/register
+        if (isAuthRoute && !isGoingToTerms) return null;
 
         // Guests can browse /tenant, /chatbot, and /agent/onboarding
         final loc = state.matchedLocation;
@@ -172,14 +190,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return '/tenant';
       }
 
-      // Signed-in user: redirect away from auth/splash screens to their dashboard
+      // Signed-in user: redirect away from auth/splash screens to their dashboard.
       final session = authState.session!;
+      if (!session.termsAccepted && !isGoingToTerms && !isGoingToSplash) {
+        return '/terms';
+      }
       if (isAuthRoute || isGoingToSplash) {
         switch (session.role) {
           case Role.tenant:
             return '/tenant';
           case Role.landlord:
-            return '/landlord';
+            if (session.isKycVerified) return '/landlord';
+            if (session.kycStatus == 'not_submitted') return '/landlord/kyc';
+            return '/landlord/pending';
           case Role.admin:
             return '/admin';
           case Role.agent:
@@ -197,6 +220,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         if (loc.startsWith('/tenant')) return null;
         if (loc == '/chatbot') return null;
         return '/agent/pending'; // block everything else
+      }
+
+      // A landlord must complete KYC before any landlord dashboard or
+      // operation route is reachable. The API enforces this independently.
+      if (session.role == Role.landlord && !session.isKycVerified) {
+        final loc = state.matchedLocation;
+        final awaitingReview = session.kycStatus == 'pending';
+        if (awaitingReview && loc == '/landlord/pending') return null;
+        if (!awaitingReview && loc == '/landlord/kyc') return null;
+        return awaitingReview ? '/landlord/pending' : '/landlord/kyc';
       }
 
       // Role enforcement: prevent cross-role navigation
@@ -229,6 +262,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/splash',
         pageBuilder: (context, state) =>
             _fade(context, state, const SplashScreen()),
+      ),
+      GoRoute(
+        path: '/terms',
+        pageBuilder: (context, state) =>
+            _fade(context, state, const TermsScreen()),
       ),
       GoRoute(
         path: '/login',
@@ -392,6 +430,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 _slideUp(context, state, const AddProperty()),
           ),
           GoRoute(
+            path: 'edit-property/:id',
+            pageBuilder: (context, state) {
+              final property = state.extra as PropertyWithListing?;
+              if (property == null) {
+                return _fade(context, state, const MyProperties());
+              }
+              return _slideUp(context, state, EditProperty(property: property));
+            },
+          ),
+          GoRoute(
             path: 'monetization',
             pageBuilder: (context, state) =>
                 _slideRight(context, state, const LandlordMonetizationScreen()),
@@ -457,6 +505,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 _slideRight(context, state, const AdminKYCManagementScreen()),
           ),
           GoRoute(
+            path: 'landlord-kyc',
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AdminLandlordKycScreen()),
+          ),
+          GoRoute(
             path: 'disputes',
             pageBuilder: (context, state) =>
                 _slideRight(context, state, const DisputesScreen()),
@@ -487,9 +540,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 _slideRight(context, state, const AdminManagementScreen()),
           ),
           GoRoute(
-            path: 'maintenance',
+            path: 'platform-fees',
             pageBuilder: (context, state) =>
-                _slideRight(context, state, const AdminMaintenanceOperationsScreen()),
+                _slideRight(context, state, const AdminPlatformFeesScreen()),
+          ),
+          GoRoute(
+            path: 'subscriptions',
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const AdminSubscriptionsScreen()),
+          ),
+          GoRoute(
+            path: 'maintenance',
+            pageBuilder: (context, state) => _slideRight(
+              context,
+              state,
+              const AdminMaintenanceOperationsScreen(),
+            ),
           ),
         ],
       ),

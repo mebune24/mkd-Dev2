@@ -79,6 +79,81 @@ export const requireLandlord = requireRole('admin', 'landlord');
 export const requireAgent   = requireRole('admin', 'agent');
 export const requireTenant  = requireRole('admin', 'tenant');
 
+/**
+ * Landlord role alone is deliberately not enough to operate a landlord
+ * account.  Keep this check at the API boundary so it cannot be bypassed by
+ * navigating directly to a Flutter route or calling the REST API.
+ */
+export const requireVerifiedLandlord = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.user) return res.status(401).json({ message: 'Authentication required' });
+  if (req.user.role === 'admin') return next();
+  if (req.user.role !== 'landlord') {
+    return res.status(403).json({ message: 'Landlord access required.' });
+  }
+
+  const verification = await prisma.landlordVerification.findUnique({
+    where: { landlordId: req.user.userId },
+    select: { status: true },
+  });
+  if (verification?.status !== 'approved') {
+    return res.status(403).json({
+      message: 'Approved landlord verification is required before using landlord operations.',
+      code: 'LANDLORD_KYC_REQUIRED',
+    });
+  }
+  return next();
+};
+
+export const requireVerifiedAgent = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.user) return res.status(401).json({ message: 'Authentication required' });
+  if (req.user.role === 'admin') return next();
+  if (req.user.role !== 'agent') {
+    return res.status(403).json({ message: 'Agent access required.' });
+  }
+
+  const verification = await prisma.agentVerification.findUnique({
+    where: { agentId: req.user.userId },
+    select: { status: true },
+  });
+  if (verification?.status !== 'approved') {
+    return res.status(403).json({
+      message: 'Approved agent verification is required before using agent operations.',
+      code: 'AGENT_KYC_REQUIRED',
+    });
+  }
+  return next();
+};
+
+/** For mixed-role controllers where a route cannot use the middleware. */
+export const hasVerifiedLandlordAccess = async (user: NonNullable<AuthRequest['user']>) => {
+  if (user.role === 'admin') return true;
+  if (user.role !== 'landlord') return false;
+  const verification = await prisma.landlordVerification.findUnique({
+    where: { landlordId: user.userId },
+    select: { status: true },
+  });
+  return verification?.status === 'approved';
+};
+
+/** Apply to mixed tenant/landlord routes to prevent an unverified landlord
+ * from reaching an operation through an endpoint that also serves tenants. */
+export const requireLandlordVerificationIfApplicable = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (req.user?.role !== 'landlord') return next();
+  return requireVerifiedLandlord(req, res, next);
+};
+
 // ──────────────────────────────────────────────
 // OBJECT-LEVEL AUTHORIZATION helpers
 // Call these inside controllers before returning / mutating data.

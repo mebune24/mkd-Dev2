@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
@@ -14,6 +13,7 @@ import 'audit_logs_screen.dart';
 import 'reports_screen.dart';
 import 'domain/admin_transaction.dart';
 import '../../core/utils/ui_helpers.dart';
+import '../../core/api/storage_service.dart';
 
 class AdminDashboard extends ConsumerStatefulWidget {
   const AdminDashboard({super.key});
@@ -168,7 +168,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
     final overviewAsync = ref.watch(adminOverviewProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: Colors.white,
       body: allUsersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) => Center(child: Text('Error loading users: $e')),
@@ -248,7 +248,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  'Welcome, ${admin.session?.fullName ?? 'Admin'} 👋',
+                                  'Welcome, ${admin.session?.fullName ?? 'Admin'}',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 22,
@@ -278,6 +278,8 @@ class _AdminOverviewScreen extends ConsumerWidget {
                           ref.invalidate(allUsersProvider);
                           ref.invalidate(kycSubmissionsProvider);
                           ref.invalidate(disputesProvider);
+                          ref.invalidate(adminPlatformFeesProvider);
+                          ref.invalidate(adminSubscriptionsProvider);
                         },
                       ),
                       IconButton(
@@ -458,10 +460,37 @@ class _AdminOverviewScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 10),
                           _ManagementTile(
+                            icon: Icons.business_outlined,
+                            color: Colors.blue,
+                            title: 'Landlord KYC',
+                            subtitle:
+                                'Review and approve landlord verification',
+                            onTap: () => context.push('/admin/landlord-kyc'),
+                          ),
+                          const SizedBox(height: 10),
+                          _ManagementTile(
+                            icon: Icons.monetization_on_rounded,
+                            color: Colors.green,
+                            title: 'Platform Fees',
+                            subtitle:
+                                'Review fee status and settlement activity',
+                            onTap: () => context.push('/admin/platform-fees'),
+                          ),
+                          const SizedBox(height: 10),
+                          _ManagementTile(
+                            icon: Icons.subscriptions_rounded,
+                            color: Colors.deepPurple,
+                            title: 'Subscriptions',
+                            subtitle: 'Monitor plan adoption and access usage',
+                            onTap: () => context.push('/admin/subscriptions'),
+                          ),
+                          const SizedBox(height: 10),
+                          _ManagementTile(
                             icon: Icons.build_circle_outlined,
                             color: Colors.orange,
                             title: 'Maintenance Operations',
-                            subtitle: 'Acknowledge, resolve, and close requests',
+                            subtitle:
+                                'Acknowledge, resolve, and close requests',
                             onTap: () => context.push('/admin/maintenance'),
                           ),
                           const SizedBox(height: 10),
@@ -861,7 +890,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
           children: [
             Icon(Icons.delete_sweep_rounded, color: Colors.red),
             SizedBox(width: 10),
-            Text('Suspend Matching Test Accounts'),
+            Expanded(child: Text('Suspend Matching Test Accounts')),
           ],
         ),
         content: testAccounts.isEmpty
@@ -1064,10 +1093,6 @@ class _KYCCard extends ConsumerWidget {
                               color: Colors.grey.shade100,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: Colors.grey.shade300),
-                              image: DecorationImage(
-                                image: FileImage(File(entry.value)),
-                                fit: BoxFit.cover,
-                              ),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -1153,35 +1178,47 @@ class _KYCCard extends ConsumerWidget {
     //   ref.read(authProvider).session?.fullName ?? 'Admin',
     //   'Rejected KYC for ${sub.userName}',
     // );
-    context.showErrorToast('KYC Rejected ❌');
+    context.showErrorToast('KYC Rejected');
   }
 
   String _formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
-  void _showDocumentFullscreen(BuildContext context, String imagePath) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.zero,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            InteractiveViewer(
-              child: Image.file(File(imagePath), fit: BoxFit.contain),
-            ),
-            Positioned(
-              top: 40,
-              right: 20,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                onPressed: () => Navigator.pop(ctx),
+  Future<void> _showDocumentFullscreen(
+    BuildContext context,
+    String documentPath,
+  ) async {
+    try {
+      final bytes = await StorageService.instance.downloadFile(
+        documentPath,
+        'kyc-documents',
+      );
+      if (!context.mounted) return;
+      showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              InteractiveViewer(
+                child: Image.memory(bytes, fit: BoxFit.contain),
               ),
-            ),
-          ],
+              Positioned(
+                top: 40,
+                right: 20,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    } catch (error) {
+      if (context.mounted) context.showErrorToast(error.toString());
+    }
   }
 }
 

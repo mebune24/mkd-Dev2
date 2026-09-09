@@ -21,7 +21,8 @@ class PropertyDetails extends ConsumerStatefulWidget {
   ConsumerState<PropertyDetails> createState() => _PropertyDetailsState();
 }
 
-class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTickerProviderStateMixin {
+class _PropertyDetailsState extends ConsumerState<PropertyDetails>
+    with SingleTickerProviderStateMixin {
   int _currentImageIndex = 0;
   final PageController _pageController = PageController();
   late AnimationController _animController;
@@ -30,7 +31,10 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
     _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeIn);
     _animController.forward();
   }
@@ -46,7 +50,9 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
   Widget build(BuildContext context) {
     final property = widget.property;
     final theme = Theme.of(context);
-    final isFav = ref.watch(favoritesProvider).any((p) => p.property.id == property.property.id);
+    final isFav = ref
+        .watch(favoritesProvider)
+        .any((p) => p.property.id == property.property.id);
 
     return Scaffold(
       body: FadeTransition(
@@ -61,11 +67,16 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
               foregroundColor: Colors.white,
               actions: [
                 IconButton(
-                  icon: Icon(isFav ? Icons.favorite : Icons.favorite_border,
-                      color: isFav ? Colors.red : Colors.white),
+                  icon: Icon(
+                    isFav ? Icons.favorite : Icons.favorite_border,
+                    color: isFav ? Colors.red : Colors.white,
+                  ),
                   onPressed: () => GuestGuard.check(
-                    context, ref,
-                    () => ref.read(favoritesProvider.notifier).toggleFavorite(property),
+                    context,
+                    ref,
+                    () => ref
+                        .read(favoritesProvider.notifier)
+                        .toggleFavorite(property),
                     featureName: 'saved properties',
                   ),
                 ),
@@ -77,10 +88,15 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                     PageView.builder(
                       controller: _pageController,
                       itemCount: property.property.images.length,
-                      onPageChanged: (i) => setState(() => _currentImageIndex = i),
+                      onPageChanged: (i) =>
+                          setState(() => _currentImageIndex = i),
                       itemBuilder: (context, index) {
                         return GestureDetector(
-                          onTap: () => openPhotoGallery(context, property.property.images, initialIndex: index),
+                          onTap: () => openPhotoGallery(
+                            context,
+                            property.property.images,
+                            initialIndex: index,
+                          ),
                           child: Image.network(
                             property.property.images[index],
                             fit: BoxFit.cover,
@@ -89,7 +105,11 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                             cacheHeight: 600,
                             errorBuilder: (_, __, ___) => Container(
                               color: Colors.grey[800],
-                              child: const Icon(Icons.image_not_supported, size: 60, color: Colors.white38),
+                              child: const Icon(
+                                Icons.image_not_supported,
+                                size: 60,
+                                color: Colors.white38,
+                              ),
                             ),
                           ),
                         );
@@ -106,7 +126,10 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                           gradient: LinearGradient(
                             begin: Alignment.bottomCenter,
                             end: Alignment.topCenter,
-                            colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
+                            colors: [
+                              Colors.black.withValues(alpha: 0.7),
+                              Colors.transparent,
+                            ],
                           ),
                         ),
                       ),
@@ -118,18 +141,23 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                       right: 0,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(property.property.images.length, (i) {
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                            width: _currentImageIndex == i ? 20 : 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: _currentImageIndex == i ? Colors.white : Colors.white54,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          );
-                        }),
+                        children: List.generate(
+                          property.property.images.length,
+                          (i) {
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              width: _currentImageIndex == i ? 20 : 7,
+                              height: 7,
+                              decoration: BoxDecoration(
+                                color: _currentImageIndex == i
+                                    ? Colors.white
+                                    : Colors.white54,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                     // Photo counter badge
@@ -137,14 +165,21 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                       top: 16,
                       right: 16,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.55),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           '${_currentImageIndex + 1} / ${property.property.images.length}',
-                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -164,17 +199,32 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(property.property.title,
-                              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                          child: Text(
+                            property.property.title,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                         if (property.verification.level.index >= 3)
                           Padding(
                             padding: const EdgeInsets.only(left: 8),
                             child: Row(
                               children: [
-                                const Icon(Icons.verified, color: Colors.green, size: 20),
+                                const Icon(
+                                  Icons.verified,
+                                  color: Colors.green,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 4),
-                                Text('Verified', style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold, fontSize: 12)),
+                                Text(
+                                  'Verified',
+                                  style: TextStyle(
+                                    color: Colors.green[700],
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -185,9 +235,19 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                     // ── Location ───────────────────────────────────────
                     Row(
                       children: [
-                        const Icon(Icons.location_on, color: Colors.grey, size: 18),
+                        const Icon(
+                          Icons.location_on,
+                          color: Colors.grey,
+                          size: 18,
+                        ),
                         const SizedBox(width: 4),
-                        Text(property.property.location, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+                        Text(
+                          property.property.location,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -197,16 +257,33 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                       children: [
                         _buildStarRating(4.5),
                         const SizedBox(width: 8),
-                        const Text('${4.5}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text(
+                          '${4.5}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.1,
+                            ),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text(property.property.category,
-                              style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                          child: Text(
+                            property.property.category,
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -214,19 +291,41 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
 
                     // ── Gamified RNPL Checkout Widget ──────────────────────────────────
                     _RnplSliderWidget(
-                      monthlyRent: property.property.monthlyRentUnits.toDouble(), 
-                      deposit: property.property.depositUnits.toDouble()
+                      monthlyRent: property.property.monthlyRentUnits
+                          .toDouble(),
+                      deposit: property.property.depositUnits.toDouble(),
                     ),
                     const SizedBox(height: 20),
 
                     // ── Quick Stats ────────────────────────────────────
                     Row(
                       children: [
-                        Expanded(child: _buildStatChip(context, Icons.bed, '${property.property.bedrooms}', 'Beds')),
+                        Expanded(
+                          child: _buildStatChip(
+                            context,
+                            Icons.bed,
+                            '${property.property.bedrooms}',
+                            'Beds',
+                          ),
+                        ),
                         const SizedBox(width: 10),
-                        Expanded(child: _buildStatChip(context, Icons.bathtub, '${property.property.bathrooms}', 'Baths')),
+                        Expanded(
+                          child: _buildStatChip(
+                            context,
+                            Icons.bathtub,
+                            '${property.property.bathrooms}',
+                            'Baths',
+                          ),
+                        ),
                         const SizedBox(width: 10),
-                        Expanded(child: _buildStatChip(context, Icons.square_foot, '${property.property.areaSqM.toInt()} m²', 'Area')),
+                        Expanded(
+                          child: _buildStatChip(
+                            context,
+                            Icons.square_foot,
+                            '${property.property.areaSqM.toInt()} m²',
+                            'Area',
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -237,16 +336,37 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        if (property.property.furnished) _buildDetailBadge(Icons.chair, 'Furnished', Colors.teal),
-                        if (property.property.parkingSpaces > 0) _buildDetailBadge(Icons.local_parking, '${property.property.parkingSpaces} Parking', Colors.indigo),
-                        if (false) _buildDetailBadge(Icons.stairs, 'Floor ${0}/${0}', Colors.purple),
-                        if (false) _buildDetailBadge(Icons.calendar_today, 'Built ${0}', Colors.blueGrey),
+                        if (property.property.furnished)
+                          _buildDetailBadge(
+                            Icons.chair,
+                            'Furnished',
+                            Colors.teal,
+                          ),
+                        if (property.property.parkingSpaces > 0)
+                          _buildDetailBadge(
+                            Icons.local_parking,
+                            '${property.property.parkingSpaces} Parking',
+                            Colors.indigo,
+                          ),
+                        if (false)
+                          _buildDetailBadge(
+                            Icons.stairs,
+                            'Floor ${0}/${0}',
+                            Colors.purple,
+                          ),
+                        if (false)
+                          _buildDetailBadge(
+                            Icons.calendar_today,
+                            'Built ${0}',
+                            Colors.blueGrey,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 20),
 
                     // ── Multimedia buttons ─────────────────────────────
-                    if (property.property.floorPlanUrls.isNotEmpty || property.property.videoTourUrls.isNotEmpty) ...[
+                    if (property.property.floorPlanUrls.isNotEmpty ||
+                        property.property.videoTourUrls.isNotEmpty) ...[
                       Row(
                         children: [
                           if (property.property.floorPlanUrls.isNotEmpty)
@@ -255,10 +375,14 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                                 icon: Icons.architecture,
                                 label: 'Floor Plan',
                                 color: Colors.indigo,
-                                onTap: () => _showFloorPlanGallery(context, property.property.floorPlanUrls),
+                                onTap: () => _showFloorPlanGallery(
+                                  context,
+                                  property.property.floorPlanUrls,
+                                ),
                               ),
                             ),
-                          if (property.property.floorPlanUrls.isNotEmpty && property.property.videoTourUrls.isNotEmpty)
+                          if (property.property.floorPlanUrls.isNotEmpty &&
+                              property.property.videoTourUrls.isNotEmpty)
                             const SizedBox(width: 12),
                           if (property.property.videoTourUrls.isNotEmpty)
                             Expanded(
@@ -266,7 +390,10 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                                 icon: Icons.play_circle_filled,
                                 label: 'Video Tour',
                                 color: Colors.red,
-                                onTap: () => _showVideoDialog(context, property.property.videoTourUrls),
+                                onTap: () => _showVideoDialog(
+                                  context,
+                                  property.property.videoTourUrls,
+                                ),
                               ),
                             ),
                         ],
@@ -277,7 +404,14 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                     // ── Description ────────────────────────────────────
                     _buildSectionHeader('Description'),
                     const SizedBox(height: 10),
-                    Text(property.property.description, style: TextStyle(color: Colors.grey[700], height: 1.6, fontSize: 14)),
+                    Text(
+                      property.property.description,
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        height: 1.6,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 28),
 
                     // ── Amenities ──────────────────────────────────────
@@ -291,11 +425,31 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                       mainAxisSpacing: 12,
                       childAspectRatio: 2.8,
                       children: [
-                        _buildAmenityTile(Icons.water_drop, 'Water', property.property.hasWater),
-                        _buildAmenityTile(Icons.bolt, 'Electricity', property.property.hasElectricity),
-                        _buildAmenityTile(Icons.fence, 'Fenced', property.property.isFenced),
-                        _buildAmenityTile(Icons.traffic, 'Near Road', property.property.closeToRoad),
-                        _buildAmenityTileText(Icons.security, 'Security', property.property.securityMeans),
+                        _buildAmenityTile(
+                          Icons.water_drop,
+                          'Water',
+                          property.property.hasWater,
+                        ),
+                        _buildAmenityTile(
+                          Icons.bolt,
+                          'Electricity',
+                          property.property.hasElectricity,
+                        ),
+                        _buildAmenityTile(
+                          Icons.fence,
+                          'Fenced',
+                          property.property.isFenced,
+                        ),
+                        _buildAmenityTile(
+                          Icons.traffic,
+                          'Near Road',
+                          property.property.closeToRoad,
+                        ),
+                        _buildAmenityTileText(
+                          Icons.security,
+                          'Security',
+                          property.property.securityMeans,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 28),
@@ -309,48 +463,106 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
-                        children: (['No smoking inside the apartment', 'No loud noise after 10PM']).asMap().entries.map((entry) {
-                          final isLast = entry.key == (['No smoking inside the apartment', 'No loud noise after 10PM']).length - 1;
-                          return Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 18),
-                                    const SizedBox(width: 12),
-                                    Expanded(child: Text(entry.value, style: const TextStyle(fontSize: 13, height: 1.4))),
-                                  ],
-                                ),
-                              ),
-                              if (!isLast) Divider(height: 1, indent: 46, color: Colors.grey.shade200),
-                            ],
-                          );
-                        }).toList(),
+                        children:
+                            ([
+                              'No smoking inside the apartment',
+                              'No loud noise after 10PM',
+                            ]).asMap().entries.map((entry) {
+                              final isLast =
+                                  entry.key ==
+                                  ([
+                                        'No smoking inside the apartment',
+                                        'No loud noise after 10PM',
+                                      ]).length -
+                                      1;
+                              return Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            entry.value,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (!isLast)
+                                    Divider(
+                                      height: 1,
+                                      indent: 46,
+                                      color: Colors.grey.shade200,
+                                    ),
+                                ],
+                              );
+                            }).toList(),
                       ),
                     ),
                     const SizedBox(height: 28),
 
                     // ── Nearby Amenities ───────────────────────────────
-                    if ((['Supermarket (200m)', 'Pharmacy (500m)']).isNotEmpty) ...[  
+                    if (([
+                      'Supermarket (200m)',
+                      'Pharmacy (500m)',
+                    ]).isNotEmpty) ...[
                       _buildSectionHeader('Nearby Amenities'),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: (['Supermarket (200m)', 'Pharmacy (500m)']).map((amenity) => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.teal.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.teal.withValues(alpha: 0.3)),
-                          ),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            const Icon(Icons.place, size: 13, color: Colors.teal),
-                            const SizedBox(width: 4),
-                            Text(amenity, style: const TextStyle(fontSize: 12, color: Colors.teal, fontWeight: FontWeight.w500)),
-                          ]),
-                        )).toList(),
+                        children: (['Supermarket (200m)', 'Pharmacy (500m)'])
+                            .map(
+                              (amenity) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.teal.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.teal.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.place,
+                                      size: 13,
+                                      color: Colors.teal,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      amenity,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.teal,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .toList(),
                       ),
                       const SizedBox(height: 28),
                     ],
@@ -376,7 +588,13 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         decoration: BoxDecoration(
           color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -4))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
         child: Consumer(
           builder: (context, ref, child) {
@@ -385,15 +603,24 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: theme.colorScheme.primary, width: 1.5),
+                    border: Border.all(
+                      color: theme.colorScheme.primary,
+                      width: 1.5,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: IconButton(
-                    icon: Icon(Icons.chat_bubble_outline, color: theme.colorScheme.primary),
+                    icon: Icon(
+                      Icons.chat_bubble_outline,
+                      color: theme.colorScheme.primary,
+                    ),
                     onPressed: () => GuestGuard.check(
-                      context, ref,
+                      context,
+                      ref,
                       () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Opening chat with landlord...')),
+                        const SnackBar(
+                          content: Text('Opening chat with landlord...'),
+                        ),
                       ),
                       featureName: 'landlord chat',
                     ),
@@ -406,14 +633,23 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                       minimumSize: const Size.fromHeight(50),
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () => GuestGuard.check(
-                      context, ref,
+                      context,
+                      ref,
                       () => context.push('/tenant/apply', extra: property),
                       featureName: 'property applications',
                     ),
-                    child: const Text('Apply / Rent Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Apply / Rent Now',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -429,7 +665,11 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, letterSpacing: 0.2),
+      style: const TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.2,
+      ),
     );
   }
 
@@ -448,7 +688,12 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
     );
   }
 
-  Widget _buildStatChip(BuildContext context, IconData icon, String value, String label) {
+  Widget _buildStatChip(
+    BuildContext context,
+    IconData icon,
+    String value,
+    String label,
+  ) {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
@@ -460,14 +705,26 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
         children: [
           Icon(icon, color: theme.colorScheme.primary, size: 20),
           const SizedBox(height: 4),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 13)),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              fontSize: 13,
+            ),
+          ),
           Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
         ],
       ),
     );
   }
 
-  Widget _buildMediaButton({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+  Widget _buildMediaButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -482,7 +739,14 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
           children: [
             Icon(icon, color: color, size: 20),
             const SizedBox(width: 8),
-            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13)),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
           ],
         ),
       ),
@@ -493,16 +757,35 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: available ? Colors.green.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.08),
+        color: available
+            ? Colors.green.withValues(alpha: 0.08)
+            : Colors.grey.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: available ? Colors.green.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: available
+              ? Colors.green.withValues(alpha: 0.3)
+              : Colors.grey.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         children: [
           Icon(icon, size: 18, color: available ? Colors.green : Colors.grey),
           const SizedBox(width: 8),
-          Expanded(child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: available ? Colors.green[700] : Colors.grey[600]))),
-          Icon(available ? Icons.check : Icons.close, size: 14, color: available ? Colors.green : Colors.grey),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: available ? Colors.green[700] : Colors.grey[600],
+              ),
+            ),
+          ),
+          Icon(
+            available ? Icons.check : Icons.close,
+            size: 14,
+            color: available ? Colors.green : Colors.grey,
+          ),
         ],
       ),
     );
@@ -513,9 +796,15 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: hasValue ? Colors.blue.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.08),
+        color: hasValue
+            ? Colors.blue.withValues(alpha: 0.08)
+            : Colors.grey.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: hasValue ? Colors.blue.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: hasValue
+              ? Colors.blue.withValues(alpha: 0.3)
+              : Colors.grey.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         children: [
@@ -524,7 +813,11 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
           Expanded(
             child: Text(
               value != 'None' ? value : 'No Security',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: hasValue ? Colors.blue[700] : Colors.grey[600]),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: hasValue ? Colors.blue[700] : Colors.grey[600],
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -542,12 +835,27 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
         initialChildSize: 0.85,
         maxChildSize: 0.95,
         builder: (_, scrollController) => Container(
-          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
           child: Column(
             children: [
               const Padding(
                 padding: EdgeInsets.all(16),
-                child: Row(children: [Icon(Icons.architecture, color: Colors.indigo), SizedBox(width: 8), Text('Floor Plans', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))]),
+                child: Row(
+                  children: [
+                    Icon(Icons.architecture, color: Colors.indigo),
+                    SizedBox(width: 8),
+                    Text(
+                      'Floor Plans',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               Expanded(
                 child: ListView.separated(
@@ -560,9 +868,29 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
                     final isLocal = path.startsWith('/');
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: isLocal 
-                          ? Image.file(File(path), fit: BoxFit.contain, cacheWidth: 800, cacheHeight: 600, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 60, color: Colors.grey))
-                          : Image.network(path, fit: BoxFit.contain, cacheWidth: 800, cacheHeight: 600, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 60, color: Colors.grey)),
+                      child: isLocal
+                          ? Image.file(
+                              File(path),
+                              fit: BoxFit.contain,
+                              cacheWidth: 800,
+                              cacheHeight: 600,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.broken_image,
+                                size: 60,
+                                color: Colors.grey,
+                              ),
+                            )
+                          : Image.network(
+                              path,
+                              fit: BoxFit.contain,
+                              cacheWidth: 800,
+                              cacheHeight: 600,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.broken_image,
+                                size: 60,
+                                color: Colors.grey,
+                              ),
+                            ),
                     );
                   },
                 ),
@@ -580,25 +908,48 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
-          children: [Icon(Icons.play_circle_filled, color: Colors.red), SizedBox(width: 10), Text('Video Tour')],
+          children: [
+            Icon(Icons.play_circle_filled, color: Colors.red),
+            SizedBox(width: 10),
+            Text('Video Tour'),
+          ],
         ),
         content: Container(
           height: 180,
-          decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            color: Colors.black87,
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.play_circle_filled, size: 64, color: Colors.red),
+                const Icon(
+                  Icons.play_circle_filled,
+                  size: 64,
+                  color: Colors.red,
+                ),
                 const SizedBox(height: 12),
-                Text('${videoUrls.length} video(s) uploaded', style: const TextStyle(color: Colors.white70)),
+                Text(
+                  '${videoUrls.length} video(s) uploaded',
+                  style: const TextStyle(color: Colors.white70),
+                ),
                 const SizedBox(height: 4),
-                const Text('Contact the landlord to watch the tour', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.white54)),
+                const Text(
+                  'Contact the landlord to watch the tour',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 11, color: Colors.white54),
+                ),
               ],
             ),
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
@@ -616,7 +967,14 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails> with SingleTi
         children: [
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -638,21 +996,26 @@ class _RnplSliderWidgetState extends State<_RnplSliderWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final totalUpfront = widget.monthlyRent + widget.deposit; // Assume 1 month rent + deposit
+    final totalUpfront =
+        widget.monthlyRent + widget.deposit; // Assume 1 month rent + deposit
     final rnplMonthly = widget.monthlyRent * 1.15; // 15% RNPL premium
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _sliderValue > 0.5 ? theme.colorScheme.primary : Colors.grey.shade900,
+        color: _sliderValue > 0.5
+            ? theme.colorScheme.primary
+            : Colors.grey.shade900,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: (_sliderValue > 0.5 ? theme.colorScheme.primary : Colors.black).withValues(alpha: 0.3),
+            color:
+                (_sliderValue > 0.5 ? theme.colorScheme.primary : Colors.black)
+                    .withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
-          )
+          ),
         ],
       ),
       child: AnimatedSwitcher(
@@ -666,13 +1029,24 @@ class _RnplSliderWidgetState extends State<_RnplSliderWidget> {
                     children: [
                       Icon(Icons.bolt, color: Colors.amberAccent, size: 24),
                       SizedBox(width: 8),
-                      Text('RNPL Activated', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(
+                        'RNPL Activated',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Instead of ${CurrencyFormatter.formatCFA(totalUpfront)} today,\npay only ${CurrencyFormatter.formatCFA(rnplMonthly)}/mo via Orange Money.',
-                    style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.4),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      height: 1.4,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   SliderTheme(
@@ -695,7 +1069,11 @@ class _RnplSliderWidgetState extends State<_RnplSliderWidget> {
                 children: [
                   Text(
                     'Standard Upfront: ${CurrencyFormatter.formatCFA(totalUpfront)}',
-                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -705,9 +1083,19 @@ class _RnplSliderWidgetState extends State<_RnplSliderWidget> {
                   const SizedBox(height: 16),
                   const Row(
                     children: [
-                      Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 14),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white54,
+                        size: 14,
+                      ),
                       SizedBox(width: 8),
-                      Text('Slide to activate Pay Later', style: TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.w600)),
+                      Text(
+                        'Slide to activate Pay Later',
+                        style: TextStyle(
+                          color: Colors.amberAccent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                   SliderTheme(
@@ -750,12 +1138,18 @@ class _MapSection extends StatelessWidget {
         child: SizedBox(
           height: 220,
           child: GoogleMap(
-            initialCameraPosition: CameraPosition(target: LatLng(lat, lng), zoom: 15),
+            initialCameraPosition: CameraPosition(
+              target: LatLng(lat, lng),
+              zoom: 15,
+            ),
             markers: {
               Marker(
                 markerId: MarkerId(property.property.id),
                 position: LatLng(lat, lng),
-                infoWindow: InfoWindow(title: property.property.title, snippet: property.property.location),
+                infoWindow: InfoWindow(
+                  title: property.property.title,
+                  snippet: property.property.location,
+                ),
               ),
             },
             zoomControlsEnabled: false,
@@ -778,12 +1172,18 @@ class _MapSection extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.15)),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+        ),
       ),
       child: Stack(
         children: [
           // Decorative grid lines to suggest a map
-          CustomPaint(painter: _MapGridPainter(color: theme.colorScheme.primary.withValues(alpha: 0.06))),
+          CustomPaint(
+            painter: _MapGridPainter(
+              color: theme.colorScheme.primary.withValues(alpha: 0.06),
+            ),
+          ),
           // Center content
           Center(
             child: Column(
@@ -795,7 +1195,11 @@ class _MapSection extends StatelessWidget {
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.location_on, color: theme.colorScheme.primary, size: 32),
+                  child: Icon(
+                    Icons.location_on,
+                    color: theme.colorScheme.primary,
+                    size: 32,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -814,20 +1218,33 @@ class _MapSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.map_outlined, size: 14, color: theme.colorScheme.primary),
+                      Icon(
+                        Icons.map_outlined,
+                        size: 14,
+                        color: theme.colorScheme.primary,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         'Interactive Map Coming Soon',
-                        style: TextStyle(fontSize: 12, color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -847,7 +1264,9 @@ class _MapGridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color..strokeWidth = 1;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
     const step = 30.0;
     for (double x = 0; x < size.width; x += step) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
@@ -885,7 +1304,9 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final reviews = ref.watch(propertyReviewsProvider(widget.propertyId));
-    final avgRating = ref.watch(propertyAverageRatingProvider(widget.propertyId));
+    final avgRating = ref.watch(
+      propertyAverageRatingProvider(widget.propertyId),
+    );
     final user = ref.watch(authProvider);
 
     return Column(
@@ -896,18 +1317,34 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
           children: [
             Row(
               children: [
-                const Text('Reviews', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Reviews',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                ),
                 if (reviews.isNotEmpty) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.star, size: 13, color: Colors.amber),
                         const SizedBox(width: 3),
-                        Text('$avgRating (${reviews.length})', style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12)),
+                        Text(
+                          '$avgRating (${reviews.length})',
+                          style: const TextStyle(
+                            color: Colors.amber,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -917,9 +1354,22 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
             GestureDetector(
               onTap: () => setState(() => _showForm = !_showForm),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-                child: Text(_showForm ? 'Cancel' : '+ Review', style: TextStyle(color: theme.colorScheme.primary, fontSize: 13, fontWeight: FontWeight.bold)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _showForm ? 'Cancel' : '+ Review',
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ],
@@ -933,18 +1383,33 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Your Rating', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const Text(
+                  'Your Rating',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
                 const SizedBox(height: 8),
                 Row(
-                  children: List.generate(5, (i) => GestureDetector(
-                    onTap: () => setState(() => _selectedStars = i + 1),
-                    child: Icon(i < _selectedStars ? Icons.star : Icons.star_border, color: Colors.amber, size: 32),
-                  )),
+                  children: List.generate(
+                    5,
+                    (i) => GestureDetector(
+                      onTap: () => setState(() => _selectedStars = i + 1),
+                      child: Icon(
+                        i < _selectedStars ? Icons.star : Icons.star_border,
+                        color: Colors.amber,
+                        size: 32,
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -954,9 +1419,18 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
                     hintText: 'Share your experience with this property...',
                     filled: true,
                     fillColor: Colors.grey.shade50,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.colorScheme.primary)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: theme.colorScheme.primary),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -965,23 +1439,39 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
                     minimumSize: const Size.fromHeight(44),
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  onPressed: _selectedStars == 0 || _commentCtrl.text.trim().isEmpty ? null : () {
-                    final review = ReviewModel(
-                      id: 'rev_${DateTime.now().millisecondsSinceEpoch}',
-                      propertyId: widget.propertyId,
-                      tenantId: user.session!.userId,
-                      tenantName: user.session?.fullName ?? "Unknown",
-                      rating: _selectedStars.toDouble(),
-                      comment: _commentCtrl.text.trim(),
-                      createdAt: DateTime.now(),
-                    );
-                    ref.read(reviewsNotifierProvider.notifier).addReview(review);
-                    setState(() { _showForm = false; _selectedStars = 0; _commentCtrl.clear(); });
-                    context.showSuccessToast('Review submitted! Thank you 🌟');
-                  },
-                  child: const Text('Submit Review', style: TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed:
+                      _selectedStars == 0 || _commentCtrl.text.trim().isEmpty
+                      ? null
+                      : () {
+                          final review = ReviewModel(
+                            id: 'rev_${DateTime.now().millisecondsSinceEpoch}',
+                            propertyId: widget.propertyId,
+                            tenantId: user.session!.userId,
+                            tenantName: user.session?.fullName ?? "Unknown",
+                            rating: _selectedStars.toDouble(),
+                            comment: _commentCtrl.text.trim(),
+                            createdAt: DateTime.now(),
+                          );
+                          ref
+                              .read(reviewsNotifierProvider.notifier)
+                              .addReview(review);
+                          setState(() {
+                            _showForm = false;
+                            _selectedStars = 0;
+                            _commentCtrl.clear();
+                          });
+                          context.showSuccessToast(
+                            'Review submitted! Thank you',
+                          );
+                        },
+                  child: const Text(
+                    'Submit Review',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -992,14 +1482,32 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
         if (reviews.isEmpty)
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: const Center(
-              child: Column(children: [
-                Icon(Icons.rate_review_outlined, size: 40, color: Colors.grey),
-                SizedBox(height: 8),
-                Text('No reviews yet', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
-                Text('Be the first to review!', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              ]),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.rate_review_outlined,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'No reviews yet',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    'Be the first to review!',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
           )
         else
@@ -1024,7 +1532,9 @@ class _ReviewCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1033,33 +1543,65 @@ class _ReviewCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                child: Text(review.tenantName.isNotEmpty ? review.tenantName[0].toUpperCase() : '?', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.15,
+                ),
+                child: Text(
+                  review.tenantName.isNotEmpty
+                      ? review.tenantName[0].toUpperCase()
+                      : '?',
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(review.tenantName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    Text('${review.createdAt.day}/${review.createdAt.month}/${review.createdAt.year}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                    Text(
+                      review.tenantName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '${review.createdAt.day}/${review.createdAt.month}/${review.createdAt.year}',
+                      style: const TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
                   ],
                 ),
               ),
               Row(
-                children: List.generate(5, (i) => Icon(
-                  i < review.rating.floor() ? Icons.star : (i < review.rating ? Icons.star_half : Icons.star_border),
-                  color: Colors.amber, size: 14,
-                )),
+                children: List.generate(
+                  5,
+                  (i) => Icon(
+                    i < review.rating.floor()
+                        ? Icons.star
+                        : (i < review.rating
+                              ? Icons.star_half
+                              : Icons.star_border),
+                    color: Colors.amber,
+                    size: 14,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          Text(review.comment, style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.black87)),
+          Text(
+            review.comment,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: Colors.black87,
+            ),
+          ),
         ],
       ),
     );
   }
 }
-
-

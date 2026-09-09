@@ -5,6 +5,7 @@ import { fapshiPaymentService } from '../services/FapshiPaymentService';
 import { transactionRepository } from '../repositories/TransactionRepository';
 import { redisClient } from '../config/redis';
 import { prisma } from '../lib/prisma';
+import { hasVerifiedLandlordAccess } from '../middleware/authMiddleware';
 
 const handle = (res: Response, err: any) => {
   const status = err?.status || 500;
@@ -15,6 +16,9 @@ const handle = (res: Response, err: any) => {
 // POST /api/payments/initiate
 export const initiatePayment = async (req: AuthRequest, res: Response) => {
   try {
+    if (req.user!.role === 'landlord' && !(await hasVerifiedLandlordAccess(req.user!))) {
+      return res.status(403).json({ message: 'Approved landlord verification is required before initiating payments.' });
+    }
     const idempotencyKey = req.headers['idempotency-key'] as string;
     if (idempotencyKey) {
       const cached = await redisClient.get(`idempotency:payment:${idempotencyKey}`);
@@ -85,6 +89,9 @@ export const initiatePayment = async (req: AuthRequest, res: Response) => {
 // POST /api/payments/payout
 export const initiatePayout = async (req: AuthRequest, res: Response) => {
   try {
+    if (req.user!.role === 'landlord' && !(await hasVerifiedLandlordAccess(req.user!))) {
+      return res.status(403).json({ message: 'Approved landlord verification is required before requesting a payout.' });
+    }
     const idempotencyKey = req.headers['idempotency-key'] as string;
     if (idempotencyKey) {
       const cached = await redisClient.get(`idempotency:payout:${idempotencyKey}`);
@@ -136,6 +143,9 @@ export const getLandlordTransactions = async (req: AuthRequest, res: Response) =
   try {
     if (req.user!.role !== 'landlord' && req.user!.role !== 'admin') {
       return res.status(403).json({ message: 'Only landlords can view landlord payments.' });
+    }
+    if (!(await hasVerifiedLandlordAccess(req.user!))) {
+      return res.status(403).json({ message: 'Approved landlord verification is required before viewing landlord payments.' });
     }
     return res.json(await transactionRepository.findByLandlordId(req.user!.userId));
   } catch (err) { return handle(res, err); }

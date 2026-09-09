@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { authenticate, requireAdmin, requireAgent } from '../middleware/authMiddleware';
+import {
+  authenticate,
+  requireAdmin,
+  requireAgent,
+  requireVerifiedAgent,
+} from '../middleware/authMiddleware';
 import {
   listAgents,
   getAgentProfile,
@@ -33,12 +38,12 @@ router.patch('/kyc/:id/approve', authenticate, requireAdmin, approveKyc);
 router.patch('/kyc/:id/reject',  authenticate, requireAdmin, rejectKyc);
 
 // Wallet
-router.get('/wallet',              authenticate, requireAgent, getWallet);
-router.post('/wallet/withdraw',    authenticate, requireAgent, requestWithdrawal);
-router.get('/wallet/withdrawals',  authenticate, requireAgent, getWithdrawals);
+router.get('/wallet',              authenticate, requireVerifiedAgent, getWallet);
+router.post('/wallet/withdraw',    authenticate, requireVerifiedAgent, requestWithdrawal);
+router.get('/wallet/withdrawals',  authenticate, requireVerifiedAgent, getWithdrawals);
 
 // Commissions
-router.get('/commissions',      authenticate, requireAgent, getMyCommissions);
+router.get('/commissions',      authenticate, requireVerifiedAgent, getMyCommissions);
 router.get('/commissions/all',  authenticate, requireAdmin, getAllCommissions);
 
 export default router;

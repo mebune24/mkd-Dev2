@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import { prisma } from './lib/prisma';
+import { supabaseService } from './services/SupabaseService';
 
 export const startBackgroundWorkers = () => {
   // ─── Worker 1: Auto-unpublish stale properties (every day at midnight) ───
@@ -30,7 +31,49 @@ export const startBackgroundWorkers = () => {
     }
   });
 
-  // ─── Worker 3: Overdue payment reminders (every day at 09:00) ────────────
+  // ─── Worker 3: Remove abandoned landlord-KYC uploads (every hour) ───────
+  // Uploads are only retained once referenced by a LandlordVerification row.
+  // The one-hour grace period permits a normal multi-file submission/retry.
+  cron.schedule('15 * * * *', async () => {
+    try {
+      const cutoff = new Date(Date.now() - 60 * 60 * 1000);
+      const [landlords, verifications] = await Promise.all([
+        prisma.user.findMany({ where: { role: 'landlord' }, select: { id: true } }),
+        prisma.landlordVerification.findMany({ select: { landlordId: true, documents: true } }),
+      ]);
+      const referenced = new Set<string>();
+      const protectedLandlords = new Set<string>();
+      for (const verification of verifications) {
+        try {
+          for (const path of Object.values(JSON.parse(verification.documents))) {
+            if (typeof path === 'string') referenced.add(path);
+          }
+        } catch {
+          // Preserve every file for this landlord when legacy data is malformed.
+          protectedLandlords.add(verification.landlordId);
+        }
+      }
+
+      let deleted = 0;
+      for (const landlord of landlords) {
+        if (protectedLandlords.has(landlord.id)) continue;
+        const files = await supabaseService.listFiles('kyc-documents', landlord.id);
+        for (const file of files) {
+          const createdAt = new Date(file.created_at ?? file.updated_at ?? Date.now());
+          const path = `${landlord.id}/${file.name}`;
+          if (createdAt < cutoff && !referenced.has(path)) {
+            await supabaseService.deleteFile('kyc-documents', path);
+            deleted += 1;
+          }
+        }
+      }
+      if (deleted > 0) console.log(`[Worker] Removed ${deleted} abandoned landlord KYC upload(s).`);
+    } catch (error) {
+      console.error('[Worker] Failed abandoned KYC upload cleanup:', error);
+    }
+  });
+
+  // ─── Worker 4: Overdue payment reminders (every day at 09:00) ────────────
   cron.schedule('0 9 * * *', async () => {
     console.log('[Worker] Checking for overdue payments...');
     try {
@@ -49,7 +92,7 @@ export const startBackgroundWorkers = () => {
     }
   });
 
-  // ─── Worker 4: Lease expiry alerts (every day at 07:00) ─────────────────
+  // ─── Worker 5: Lease expiry alerts (every day at 07:00) ─────────────────
   cron.schedule('0 7 * * *', async () => {
     console.log('[Worker] Checking for soon-to-expire rentals...');
     try {

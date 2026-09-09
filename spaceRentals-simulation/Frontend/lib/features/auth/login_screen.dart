@@ -79,9 +79,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         if (user.role == Role.tenant) {
           context.go('/tenant');
         } else if (user.role == Role.landlord) {
-          // We don't have KYC status in UserSession anymore, that's in UserModel,
-          // but for routing purposes, just route to landlord dashboard for now.
-          context.go('/landlord');
+          context.go(user.isKycVerified
+              ? '/landlord'
+              : (user.kycStatus == 'pending'
+                  ? '/landlord/pending'
+                  : '/landlord/kyc'));
         } else if (user.role == Role.admin) {
           context.go('/admin');
         } else if (user.role == Role.agent) {

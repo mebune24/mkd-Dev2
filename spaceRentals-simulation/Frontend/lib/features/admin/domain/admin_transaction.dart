@@ -150,6 +150,124 @@ class AdminReportsSummary {
   }
 }
 
+class AdminPlatformFee {
+  final String id;
+  final String landlordId;
+  final String? landlordName;
+  final String? landlordEmail;
+  final String? rentalId;
+  final String? propertyTitle;
+  final int amount;
+  final String type;
+  final String status;
+  final String? referenceId;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+
+  const AdminPlatformFee({
+    required this.id,
+    required this.landlordId,
+    this.landlordName,
+    this.landlordEmail,
+    this.rentalId,
+    this.propertyTitle,
+    required this.amount,
+    required this.type,
+    required this.status,
+    this.referenceId,
+    required this.createdAt,
+    this.updatedAt,
+  });
+
+  factory AdminPlatformFee.fromJson(Map<String, dynamic> json) {
+    final landlord = json['landlord'] is Map
+        ? Map<String, dynamic>.from(json['landlord'] as Map)
+        : const <String, dynamic>{};
+    final rental = json['rental'] is Map
+        ? Map<String, dynamic>.from(json['rental'] as Map)
+        : const <String, dynamic>{};
+    final property = rental['property'] is Map
+        ? Map<String, dynamic>.from(rental['property'] as Map)
+        : const <String, dynamic>{};
+
+    return AdminPlatformFee(
+      id: json['id']?.toString() ?? '',
+      landlordId:
+          json['landlordId']?.toString() ?? landlord['id']?.toString() ?? '',
+      landlordName: landlord['name']?.toString(),
+      landlordEmail: landlord['email']?.toString(),
+      rentalId: rental['id']?.toString(),
+      propertyTitle: property['title']?.toString(),
+      amount: (json['amount'] as num?)?.toInt() ?? 0,
+      type: json['type']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'due',
+      referenceId: json['referenceId']?.toString(),
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'].toString())
+          : null,
+    );
+  }
+}
+
+class AdminSubscription {
+  final String id;
+  final String landlordId;
+  final String? landlordName;
+  final String? landlordEmail;
+  final String planId;
+  final String status;
+  final int activeListingCount;
+  final DateTime startedAt;
+  final DateTime expiresAt;
+  final DateTime? cancelledAt;
+  final DateTime createdAt;
+
+  const AdminSubscription({
+    required this.id,
+    required this.landlordId,
+    this.landlordName,
+    this.landlordEmail,
+    required this.planId,
+    required this.status,
+    required this.activeListingCount,
+    required this.startedAt,
+    required this.expiresAt,
+    this.cancelledAt,
+    required this.createdAt,
+  });
+
+  factory AdminSubscription.fromJson(Map<String, dynamic> json) {
+    final landlord = json['landlord'] is Map
+        ? Map<String, dynamic>.from(json['landlord'] as Map)
+        : const <String, dynamic>{};
+    return AdminSubscription(
+      id: json['id']?.toString() ?? '',
+      landlordId:
+          json['landlordId']?.toString() ?? landlord['id']?.toString() ?? '',
+      landlordName: landlord['name']?.toString(),
+      landlordEmail: landlord['email']?.toString(),
+      planId: json['planId']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'active',
+      activeListingCount: (json['activeListingCount'] as num?)?.toInt() ?? 0,
+      startedAt:
+          DateTime.tryParse(json['startedAt']?.toString() ?? '') ??
+          DateTime.now(),
+      expiresAt:
+          DateTime.tryParse(json['expiresAt']?.toString() ?? '') ??
+          DateTime.now(),
+      cancelledAt: json['cancelledAt'] != null
+          ? DateTime.tryParse(json['cancelledAt'].toString())
+          : null,
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+    );
+  }
+}
+
 class AdminOverviewSnapshot {
   final DateTime generatedAt;
   final int totalUsers;

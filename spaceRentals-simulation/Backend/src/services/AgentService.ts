@@ -2,6 +2,7 @@ import { prisma } from '../lib/prisma';
 import { userRepository } from '../repositories/UserRepository';
 import { v4 as uuidv4 } from 'uuid';
 import { auditLogService } from './AuditLogService';
+import { supabaseService } from './SupabaseService';
 
 export class AgentService {
   // ── KYC ──────────────────────────────────────────────────────────────────
@@ -10,11 +11,27 @@ export class AgentService {
     nationalIdUrl?: string;
     selfieUrl?: string;
     businessDocUrl?: string;
+    taxCardUrl?: string;
     phone?: string;
   }) {
     const user = await userRepository.findById(agentId);
     if (!user) throw { status: 404, message: 'User not found.' };
     if (user.role !== 'agent') throw { status: 403, message: 'Only agents can submit KYC.' };
+
+    const documentPaths = Object.entries(data).filter(
+      ([key, value]) => key.endsWith('Url') && typeof value === 'string' && value.length > 0,
+    ) as Array<[string, string]>;
+    if (!data.nationalIdUrl) {
+      throw { status: 400, message: 'A national ID document is required.' };
+    }
+    if (documentPaths.some(([, path]) => !path.startsWith(`${agentId}/`) || path.slice(`${agentId}/`.length).includes('/'))) {
+      throw { status: 400, message: 'Invalid KYC document path.' };
+    }
+    for (const [, path] of documentPaths) {
+      if (!(await supabaseService.fileExists('kyc-documents', path))) {
+        throw { status: 400, message: 'One or more KYC documents could not be found. Please upload them again.' };
+      }
+    }
 
     const existing = await prisma.agentVerification.findUnique({ where: { agentId } });
     if (existing && existing.status === 'approved') {
@@ -22,7 +39,7 @@ export class AgentService {
     }
 
     if (existing) {
-      return prisma.agentVerification.update({
+      const updated = await prisma.agentVerification.update({
         where: { agentId },
         data: {
           ...data,
@@ -31,9 +48,11 @@ export class AgentService {
           adminNotes: 'Submitted for manual review.',
         },
       });
+      await userRepository.update(agentId, { status: 'pending_verification' });
+      return updated;
     }
 
-    return prisma.agentVerification.create({
+    const created = await prisma.agentVerification.create({
       data: {
         agent: { connect: { id: agentId } },
         ...data,
@@ -42,6 +61,8 @@ export class AgentService {
         adminNotes: 'Submitted for manual review.',
       },
     });
+    await userRepository.update(agentId, { status: 'pending_verification' });
+    return created;
   }
 
   async getMyKyc(agentId: string) {
@@ -73,6 +94,7 @@ export class AgentService {
       where: { id: kycId },
       data: { status: 'approved' },
     });
+    await userRepository.update(kyc.agentId, { status: 'active' });
     await auditLogService.log({
       userId: adminId,
       action: 'kyc.approved',
@@ -91,6 +113,7 @@ export class AgentService {
       where: { id: kycId },
       data: { status: 'rejected', adminNotes: adminNote },
     });
+    await userRepository.update(kyc.agentId, { status: 'kyc_rejected' });
     await auditLogService.log({
       userId: adminId,
       action: 'kyc.rejected',

@@ -22,7 +22,9 @@ export type AuditAction =
   | 'users.bulk_suspended'
   | 'kyc.submitted'
   | 'kyc.approved'
-  | 'kyc.rejected';
+  | 'kyc.rejected'
+  | 'agent_agreement.requested'
+  | 'agent_agreement.decided';
 
 export interface AuditLogEntry {
   userId: string;

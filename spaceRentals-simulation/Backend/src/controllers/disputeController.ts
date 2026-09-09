@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { disputeService } from '../services/DisputeService';
+import { hasVerifiedLandlordAccess } from '../middleware/authMiddleware';
 
 const handle = (res: Response, err: any) => {
   const status = err?.status || 500;
@@ -23,6 +24,9 @@ export const getDisputeById = async (req: AuthRequest, res: Response) => {
 // POST /api/disputes
 export const createDispute = async (req: AuthRequest, res: Response) => {
   try {
+    if (req.user!.role === 'landlord' && !(await hasVerifiedLandlordAccess(req.user!))) {
+      return res.status(403).json({ message: 'Approved landlord verification is required before opening a dispute.' });
+    }
     const { rentalId, title, description } = req.body;
     return res.status(201).json(await disputeService.create(rentalId, title, description, req.user!.userId));
   } catch (err) { return handle(res, err); }

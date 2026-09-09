@@ -9,7 +9,8 @@ class AgentKycPendingScreen extends ConsumerStatefulWidget {
   const AgentKycPendingScreen({super.key});
 
   @override
-  ConsumerState<AgentKycPendingScreen> createState() => _AgentKycPendingScreenState();
+  ConsumerState<AgentKycPendingScreen> createState() =>
+      _AgentKycPendingScreenState();
 }
 
 class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
@@ -32,7 +33,10 @@ class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
     )..forward();
 
     // Poll every 30 seconds for KYC status update
-    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _checkKycStatus());
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _checkKycStatus(),
+    );
     // Also check immediately
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkKycStatus());
   }
@@ -53,10 +57,18 @@ class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
       final repo = ref.read(authRepositoryProvider);
       final refreshed = await repo.refreshSession();
       if (!mounted) return;
+      await ref
+          .read(authProvider.notifier)
+          .updateSessionKycStatus(
+            isVerified: refreshed.isKycVerified,
+            kycStatus: refreshed.kycStatus,
+          );
+      if (!mounted) return;
       if (refreshed.isKycVerified) {
         // Admin has approved! Update state and navigate.
-        ref.read(authProvider.notifier).updateSessionKycStatus(isVerified: true);
         _showApprovalCelebration();
+      } else if (refreshed.kycStatus == 'rejected') {
+        context.go('/agent/kyc');
       }
     } catch (_) {
       // Silently fail — we'll try again next cycle
@@ -82,11 +94,15 @@ class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
                   color: Colors.green.shade50,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.verified_rounded, size: 72, color: Colors.green),
+                child: const Icon(
+                  Icons.verified_rounded,
+                  size: 72,
+                  color: Colors.green,
+                ),
               ),
               const SizedBox(height: 24),
               const Text(
-                '🎉 You\'re Approved!',
+                'You\'re Approved!',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
@@ -106,9 +122,14 @@ class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
                   minimumSize: const Size(double.infinity, 52),
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
-                child: const Text('Go to My Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                child: const Text(
+                  'Go to My Dashboard',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ),
             ],
           ),
@@ -133,8 +154,10 @@ class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
       appBar: AppBar(
-        title: const Text('Verification Status',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        title: const Text(
+          'Verification Status',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+        ),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -187,16 +210,20 @@ class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
                           child: child,
                         );
                       },
-                      child: const Icon(Icons.hourglass_top_rounded,
-                          size: 60, color: Colors.orange),
+                      child: const Icon(
+                        Icons.hourglass_top_rounded,
+                        size: 60,
+                        color: Colors.orange,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     const Text(
                       'Profile Under Review',
                       style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5),
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -205,18 +232,44 @@ class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
                           ? 'Hi ${session.firstName}, our team is reviewing your submitted documents. This usually takes 24–48 hours.'
                           : 'Our team is reviewing your submitted documents. This usually takes 24–48 hours.',
                       style: const TextStyle(
-                          fontSize: 14, color: Colors.grey, height: 1.6),
+                        fontSize: 14,
+                        color: Colors.grey,
+                        height: 1.6,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
                     // Progress indicator
                     Row(
                       children: [
-                        const _StepDot(label: 'Submitted', isComplete: true, color: Colors.green),
-                        Expanded(child: Container(height: 2, color: Colors.orange.shade200)),
-                        const _StepDot(label: 'In Review', isComplete: false, color: Colors.orange, isActive: true),
-                        Expanded(child: Container(height: 2, color: Colors.grey.shade200)),
-                        const _StepDot(label: 'Approved', isComplete: false, color: Colors.grey),
+                        const _StepDot(
+                          label: 'Submitted',
+                          isComplete: true,
+                          color: Colors.green,
+                        ),
+                        Expanded(
+                          child: Container(
+                            height: 2,
+                            color: Colors.orange.shade200,
+                          ),
+                        ),
+                        const _StepDot(
+                          label: 'In Review',
+                          isComplete: false,
+                          color: Colors.orange,
+                          isActive: true,
+                        ),
+                        Expanded(
+                          child: Container(
+                            height: 2,
+                            color: Colors.grey.shade200,
+                          ),
+                        ),
+                        const _StepDot(
+                          label: 'Approved',
+                          isComplete: false,
+                          color: Colors.grey,
+                        ),
                       ],
                     ),
                   ],
@@ -236,8 +289,11 @@ class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline_rounded,
-                        color: theme.colorScheme.primary, size: 22),
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 22,
+                    ),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
@@ -291,7 +347,8 @@ class _AgentKycPendingScreenState extends ConsumerState<AgentKycPendingScreen>
                   side: BorderSide(color: theme.colorScheme.primary),
                   minimumSize: const Size.fromHeight(50),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ],
@@ -325,22 +382,23 @@ class _StepDot extends StatelessWidget {
           decoration: BoxDecoration(
             color: isComplete || isActive ? color : Colors.grey.shade200,
             shape: BoxShape.circle,
-            border: isActive
-                ? Border.all(color: color, width: 2)
-                : null,
+            border: isActive ? Border.all(color: color, width: 2) : null,
           ),
           child: isComplete
               ? const Icon(Icons.check, color: Colors.white, size: 16)
               : isActive
-                  ? Icon(Icons.circle, color: color, size: 10)
-                  : null,
+              ? Icon(Icons.circle, color: color, size: 10)
+              : null,
         ),
         const SizedBox(height: 4),
-        Text(label,
-            style: TextStyle(
-                fontSize: 10,
-                color: isComplete || isActive ? color : Colors.grey,
-                fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: isComplete || isActive ? color : Colors.grey,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
@@ -386,18 +444,26 @@ class _ActionTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(subtitle,
-                        style: const TextStyle(
-                            color: Colors.grey, fontSize: 12)),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded,
-                  color: Colors.grey.shade400, size: 20),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.grey.shade400,
+                size: 20,
+              ),
             ],
           ),
         ),

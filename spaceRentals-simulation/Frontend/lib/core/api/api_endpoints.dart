@@ -11,6 +11,7 @@ class ApiEndpoints {
   static String get signIn => '$_base/auth/login';
   static String get signUp => '$_base/auth/register';
   static String get signOut => '$_base/auth/signout';
+  static String get acceptTerms => '$_base/auth/terms/accept';
   static String get refreshToken => '$_base/auth/refresh';
   static String get me => '$_base/auth/me';
   static String get passwordReset => '$_base/auth/password-reset';
@@ -33,8 +34,9 @@ class ApiEndpoints {
   static String propertyComments(String id) => '$_base/properties/$id/comments';
   static String propertyVerification(String id) =>
       '$_base/properties/$id/verification';
-    static String publishProperty(String id) => '$_base/properties/$id/publish';
-    static String unpublishProperty(String id) => '$_base/properties/$id/unpublish';
+  static String publishProperty(String id) => '$_base/properties/$id/publish';
+  static String unpublishProperty(String id) =>
+      '$_base/properties/$id/unpublish';
   static String confirmAvailability(String id) =>
       '$_base/properties/$id/confirm-availability';
 
@@ -69,6 +71,7 @@ class ApiEndpoints {
   static String paymentStatus(String id) => '$_base/payments/$id/status';
   static String get landlordTransactions =>
       '$_base/payments/landlord-transactions';
+  static String get landlordDashboard => '$_base/dashboard/landlord';
 
   // Subscriptions
   static String get subscriptions => '$_base/subscriptions';
@@ -127,6 +130,9 @@ class ApiEndpoints {
   static String get adminReportsSummary => '$_base/admin/reports/summary';
   static String get adminOverview => '$_base/admin/overview';
   static String get adminProperties => '$_base/admin/properties';
+  static String get adminPlatformFees => '$_base/admin/platform-fees';
+  static String get adminSubscriptions => '$_base/admin/subscriptions';
+  static String get adminLandlordVerification => '$_base/landlord-verification';
   static String get adminAgents => '$_base/admin/agents';
   static String get agents => '$_base/agents';
   static String get agentProfile => '$_base/agents/profile';
@@ -136,6 +142,9 @@ class ApiEndpoints {
   static String get agentWithdrawals => '$_base/agents/wallet/withdrawals';
   static String get agentCommissions => '$_base/agents/commissions';
   static String get agentWithdraw => '$_base/agents/wallet/withdraw';
+  static String get agentAgreements => '$_base/agent-agreements';
+  static String agentAgreementDecision(String id) =>
+      '$_base/agent-agreements/$id/decision';
   static String get tenantWallet => '$_base/tenant-wallet';
   static String get tenantWalletApplyToRent =>
       '$_base/tenant-wallet/apply-to-rent';

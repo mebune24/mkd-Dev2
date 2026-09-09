@@ -8,8 +8,8 @@ datasource db {
 }
 
 model User {
-  id                       String   @id @default(uuid())
-  email                    String   @unique
+  id                       String    @id @default(uuid())
+  email                    String    @unique
   passwordHash             String
   name                     String
   firstName                String?
@@ -17,41 +17,46 @@ model User {
   phone                    String?
   bio                      String?
   avatarUrl                String? // Base64 or external URL
-  twoFactorEnabled         Boolean  @default(false)
-  pushNotificationsEnabled Boolean  @default(true)
+  twoFactorEnabled         Boolean   @default(false)
+  pushNotificationsEnabled Boolean   @default(true)
   role                     String // "admin", "landlord", "tenant", "agent"
-  status                   String   @default("active") // "active", "suspended"
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @default(now()) @updatedAt
+  status                   String    @default("active") // "pending_verification", "kyc_rejected", "active", "suspended"
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @default(now()) @updatedAt
+  termsAcceptedAt          DateTime?
+  termsVersion             String?
 
-  properties          Property[]           @relation("LandlordProperties")
-  applications        Application[]        @relation("TenantApplications")
-  agentVerification   AgentVerification?
-  agentTransactions   AgentTransaction[]   @relation("AgentLedger")
-  platformFees        PlatformFee[]        @relation("LandlordFees")
-  transactions        Transaction[]        @relation("UserTransactions")
-  tenantLeases        Lease[]              @relation("TenantLeases")
-  landlordLeases      Lease[]              @relation("LandlordLeases")
-  tenantRentals       Rental[]             @relation("TenantRentals")
-  rnlpContracts       RnlpContract[]       @relation("TenantRnlpContracts")
-  landlordRentals     Rental[]             @relation("LandlordRentals")
-  subscriptions       Subscription[]
-  openedDisputes      Dispute[]            @relation("OpenedDisputes")
-  passwordResetToken  PasswordResetToken?
-  notifications       Notification[]
-  maintenanceRequests MaintenanceRequest[] @relation("TenantMaintenanceRequests")
-  reviewsGiven        Review[]             @relation("TenantReviews")
-  reviewsReceived     Review[]             @relation("LandlordReviews")
-  followers           Follow[]             @relation("UserFollowing")
-  following           Follow[]             @relation("UserFollowers")
-  comments            Comment[]            @relation("UserComments")
-  propertyLikes       PropertyLike[]
-  propertyReshares    PropertyReshare[]
-  tenantWallet        TenantWallet?
-  tenantWalletEntries TenantWalletEntry[]
-  sentMessages        Message[]            @relation("SentMessages")
-  receivedMessages    Message[]            @relation("ReceivedMessages")
-  auditLogs           AuditLog[]
+  properties           Property[]              @relation("LandlordProperties")
+  applications         Application[]           @relation("TenantApplications")
+  agentVerification    AgentVerification?
+  landlordVerification LandlordVerification?
+  agentTransactions    AgentTransaction[]      @relation("AgentLedger")
+  platformFees         PlatformFee[]           @relation("LandlordFees")
+  transactions         Transaction[]           @relation("UserTransactions")
+  tenantLeases         Lease[]                 @relation("TenantLeases")
+  landlordLeases       Lease[]                 @relation("LandlordLeases")
+  tenantRentals        Rental[]                @relation("TenantRentals")
+  rnlpContracts        RnlpContract[]          @relation("TenantRnlpContracts")
+  landlordRentals      Rental[]                @relation("LandlordRentals")
+  subscriptions        Subscription[]
+  openedDisputes       Dispute[]               @relation("OpenedDisputes")
+  passwordResetToken   PasswordResetToken?
+  notifications        Notification[]
+  maintenanceRequests  MaintenanceRequest[]    @relation("TenantMaintenanceRequests")
+  reviewsGiven         Review[]                @relation("TenantReviews")
+  reviewsReceived      Review[]                @relation("LandlordReviews")
+  followers            Follow[]                @relation("UserFollowing")
+  following            Follow[]                @relation("UserFollowers")
+  comments             Comment[]               @relation("UserComments")
+  propertyLikes        PropertyLike[]
+  propertyReshares     PropertyReshare[]
+  tenantWallet         TenantWallet?
+  tenantWalletEntries  TenantWalletEntry[]
+  sentMessages         Message[]               @relation("SentMessages")
+  receivedMessages     Message[]               @relation("ReceivedMessages")
+  auditLogs            AuditLog[]
+  landlordAgreements   AgentServiceAgreement[] @relation("LandlordAgreements")
+  agentAgreements      AgentServiceAgreement[] @relation("AgentAgreements")
 }
 
 model AuditLog {
@@ -81,9 +86,38 @@ model AgentVerification {
   nationalIdUrl  String?
   selfieUrl      String?
   businessDocUrl String?
+  taxCardUrl     String?
   adminNotes     String?
   submittedAt    DateTime @default(now())
   updatedAt      DateTime @default(now()) @updatedAt
+}
+
+model AgentServiceAgreement {
+  id           String    @id @default(uuid())
+  landlordId   String
+  landlord     User      @relation("LandlordAgreements", fields: [landlordId], references: [id], onDelete: Cascade)
+  agentId      String
+  agent        User      @relation("AgentAgreements", fields: [agentId], references: [id], onDelete: Cascade)
+  status       String    @default("pending") // pending, accepted, active, suspended, terminated
+  serviceTerms String
+  requestedAt  DateTime  @default(now())
+  acceptedAt   DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([landlordId, agentId])
+  @@index([agentId, status])
+}
+
+model LandlordVerification {
+  id          String   @id @default(uuid())
+  landlordId  String   @unique
+  landlord    User     @relation(fields: [landlordId], references: [id])
+  tier        String   @default("basic") // "basic", "premium"
+  status      String   @default("pending") // "pending", "approved", "rejected"
+  documents   String
+  adminNotes  String?
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model Property {
@@ -265,15 +299,19 @@ model Subscription {
 }
 
 model Payment {
-  id             String   @id @default(uuid())
+  id             String    @id @default(uuid())
   leaseId        String
-  lease          Lease    @relation(fields: [leaseId], references: [id])
+  lease          Lease     @relation(fields: [leaseId], references: [id])
   type           String // "rent", "deposit", "application_fee"
   amount         Int
-  status         String   @default("pending") // "created", "pending", "processing", "successful", "failed"
-  idempotencyKey String   @unique
-  providerTxId   String?  @unique
-  createdAt      DateTime @default(now())
+  status         String    @default("pending") // "created", "pending", "processing", "successful", "failed"
+  idempotencyKey String    @unique
+  providerTxId   String?   @unique
+  dueDate        DateTime?
+  periodStart    DateTime?
+  periodEnd      DateTime?
+  paidAt         DateTime?
+  createdAt      DateTime  @default(now())
 }
 
 model PlatformFee {

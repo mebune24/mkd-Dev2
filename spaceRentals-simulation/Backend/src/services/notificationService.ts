@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma';
+import { emitUserNotification } from '../socket';
 
 export interface NotificationPayload {
   userId: string;
@@ -14,7 +15,7 @@ export interface NotificationPayload {
  */
 export const sendNotification = async (payload: NotificationPayload): Promise<void> => {
   try {
-    await prisma.notification.create({
+    const notification = await prisma.notification.create({
       data: {
         userId: payload.userId,
         type: payload.type,
@@ -22,6 +23,14 @@ export const sendNotification = async (payload: NotificationPayload): Promise<vo
         body: payload.body,
         metadata: payload.metadata ? JSON.stringify(payload.metadata) : undefined,
       },
+    });
+    emitUserNotification(payload.userId, {
+      id: notification.id,
+      type: notification.type,
+      title: notification.title,
+      body: notification.body,
+      metadata: payload.metadata,
+      createdAt: notification.createdAt.toISOString(),
     });
   } catch (e) {
     console.error('[NotificationService] Failed to send notification:', e);

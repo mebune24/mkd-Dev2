@@ -213,6 +213,55 @@ class ApiPropertyRepository implements PropertyRepository {
   }
 
   @override
+  Future<PropertyWithListing> updateProperty({
+    required String propertyId,
+    required String title,
+    required String description,
+    required String location,
+    required int bedrooms,
+    required int bathrooms,
+    required int monthlyRentUnits,
+    required int depositUnits,
+    required String category,
+    required bool furnished,
+    required double areaSqM,
+    required int parkingSpaces,
+    required bool hasWater,
+    required bool hasElectricity,
+    required bool isFenced,
+    required bool closeToRoad,
+    required String securityMeans,
+    required List<String> amenities,
+  }) async {
+    final response = await _apiClient.patch(
+      ApiEndpoints.property(propertyId),
+      data: {
+        'title': title,
+        'description': description,
+        'location': location,
+        'bedrooms': bedrooms,
+        'bathrooms': bathrooms,
+        'monthlyRent': monthlyRentUnits,
+        'deposit': depositUnits,
+        'category': category,
+        'furnished': furnished,
+        'areaSqM': areaSqM,
+        'parkingSpaces': parkingSpaces,
+        'hasWater': hasWater,
+        'hasElectricity': hasElectricity,
+        'isFenced': isFenced,
+        'closeToRoad': closeToRoad,
+        'securityMeans': securityMeans,
+        'amenities': amenities,
+      },
+    );
+    return _unwrap(
+      response,
+      (data) => _parsePropertyMap(data as Map<String, dynamic>),
+    );
+  }
+
+  @override
   Future<PropertyListing> confirmAvailability(String propertyId) async {
     final response = await _apiClient.patch(
       ApiEndpoints.confirmAvailability(propertyId),

@@ -249,3 +249,33 @@ export const getAdminProperties = async (_req: AuthRequest, res: Response) => {
     return res.json(properties);
   } catch (err) { return handle(res, err); }
 };
+
+// GET /api/admin/platform-fees
+export const getAdminPlatformFees = async (_req: AuthRequest, res: Response) => {
+  try {
+    const fees = await prisma.platformFee.findMany({
+      include: {
+        landlord: { select: { id: true, name: true, email: true } },
+        rental: {
+          select: {
+            id: true,
+            property: { select: { id: true, title: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return res.json(fees);
+  } catch (err) { return handle(res, err); }
+};
+
+// GET /api/admin/subscriptions
+export const getAdminSubscriptions = async (_req: AuthRequest, res: Response) => {
+  try {
+    const subscriptions = await prisma.subscription.findMany({
+      include: { landlord: { select: { id: true, name: true, email: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    return res.json(subscriptions);
+  } catch (err) { return handle(res, err); }
+};

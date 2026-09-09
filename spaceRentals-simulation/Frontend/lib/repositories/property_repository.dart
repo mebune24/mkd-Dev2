@@ -23,6 +23,26 @@ abstract class PropertyRepository {
     required String category,
     required Map<String, dynamic> amenities,
   });
+  Future<PropertyWithListing> updateProperty({
+    required String propertyId,
+    required String title,
+    required String description,
+    required String location,
+    required int bedrooms,
+    required int bathrooms,
+    required int monthlyRentUnits,
+    required int depositUnits,
+    required String category,
+    required bool furnished,
+    required double areaSqM,
+    required int parkingSpaces,
+    required bool hasWater,
+    required bool hasElectricity,
+    required bool isFenced,
+    required bool closeToRoad,
+    required String securityMeans,
+    required List<String> amenities,
+  });
   Future<void> publishProperty(String propertyId);
   Future<PropertyListing> confirmAvailability(String propertyId);
   Future<PropertyVerificationInfo> updateVerificationLevel(

@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticate, requireAdmin } from '../middleware/authMiddleware';
+import { authenticate, requireAdmin, requireLandlordVerificationIfApplicable, requireVerifiedLandlord } from '../middleware/authMiddleware';
 import { getAllRentals, getTenantRentals, getLandlordRentals, getRentalById, endRental } from '../controllers/rentalController';
 
 const router = Router();
+router.use(authenticate, requireLandlordVerificationIfApplicable);
 
-router.get('/',            authenticate, requireAdmin, getAllRentals);
-router.get('/tenant',      authenticate, getTenantRentals);
-router.get('/landlord',    authenticate, getLandlordRentals);
-router.get('/:id',         authenticate, getRentalById);
-router.patch('/:id/end',   authenticate, endRental);
+router.get('/',            requireAdmin, getAllRentals);
+router.get('/tenant',      getTenantRentals);
+router.get('/landlord',    requireVerifiedLandlord, getLandlordRentals);
+router.get('/:id',         getRentalById);
+router.patch('/:id/end',   requireVerifiedLandlord, endRental);
 
 export default router;

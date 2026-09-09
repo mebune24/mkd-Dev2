@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../providers/domain_providers.dart';
-import '../../../providers/di_providers.dart';
-import '../../../features/landlord/domain/kyc_submission.dart';
-import '../../../core/utils/ui_helpers.dart';
+import '../../providers/domain_providers.dart';
+import '../../providers/di_providers.dart';
+import '../landlord/domain/kyc_submission.dart';
+import '../../core/utils/ui_helpers.dart';
+import '../../core/api/storage_service.dart';
 
 class AdminKYCManagementScreen extends ConsumerWidget {
   const AdminKYCManagementScreen({super.key});
@@ -112,6 +113,47 @@ class _KYCCard extends ConsumerStatefulWidget {
 class _KYCCardState extends ConsumerState<_KYCCard> {
   bool _isLoading = false;
 
+  Future<void> _openDocument(String label, String path) async {
+    try {
+      final bytes = await StorageService.instance.downloadFile(
+        path,
+        'kyc-documents',
+      );
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (_) => Dialog(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 600, maxWidth: 500),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppBar(
+                  title: Text(label),
+                  automaticallyImplyLeading: false,
+                  actions: [
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                Flexible(
+                  child: InteractiveViewer(
+                    child: Image.memory(bytes, fit: BoxFit.contain),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (error) {
+      if (mounted) context.showErrorToast(error.toString());
+    }
+  }
+
   Future<void> _handleDecision(bool approve) async {
     setState(() => _isLoading = true);
     try {
@@ -121,13 +163,13 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
             .approveKyc(widget.submission.id);
         if (mounted) {
           context.showSuccessToast(
-            '✅ ${widget.submission.userName} has been approved!',
+            '${widget.submission.userName} has been approved!',
           );
         }
       } else {
         await ref.read(agentRepositoryProvider).rejectKyc(widget.submission.id);
         if (mounted) {
-          context.showErrorToast('❌ ${widget.submission.userName} rejected.');
+          context.showErrorToast('${widget.submission.userName} rejected.');
         }
       }
       ref.invalidate(kycSubmissionsProvider);
@@ -233,18 +275,13 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
                 runSpacing: 6,
                 children: sub.documents.entries
                     .map(
-                      (e) => Chip(
+                      (e) => ActionChip(
                         label: Text(
                           e.key,
                           style: const TextStyle(fontSize: 12),
                         ),
-                        backgroundColor: Colors.grey.shade100,
-                        avatar: const Icon(
-                          Icons.check_circle,
-                          color: Colors.green,
-                          size: 16,
-                        ),
-                        padding: const EdgeInsets.all(4),
+                        avatar: const Icon(Icons.visibility_outlined, size: 16),
+                        onPressed: () => _openDocument(e.key, e.value),
                       ),
                     )
                     .toList(),

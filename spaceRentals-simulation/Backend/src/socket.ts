@@ -14,6 +14,10 @@ export function emitPropertyEngagementUpdated(payload: { propertyId: string; lik
   if (io) io.emit('property_engagement_updated', payload);
 }
 
+export function emitUserNotification(userId: string, payload: Record<string, unknown>) {
+  if (io) io.to(`user:${userId}`).emit('notification', payload);
+}
+
 interface SocketUser {
   userId: string;
   role: UserRole;

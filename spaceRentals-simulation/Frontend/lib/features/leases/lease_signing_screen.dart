@@ -14,7 +14,10 @@ import 'package:signature/signature.dart';
 import 'package:flutter/services.dart';
 
 // ── Provider: load a lease by its own ID ─────────────────────────────────────
-final leaseByIdProvider = FutureProvider.family<Lease?, String>((ref, leaseId) async {
+final leaseByIdProvider = FutureProvider.family<Lease?, String>((
+  ref,
+  leaseId,
+) async {
   final repo = ref.watch(leaseRepositoryProvider);
   try {
     return await repo.getLease(leaseId);
@@ -24,7 +27,10 @@ final leaseByIdProvider = FutureProvider.family<Lease?, String>((ref, leaseId) a
 });
 
 // ── Provider: load a lease by applicationId (used from application cards) ────
-final leaseByApplicationIdProvider = FutureProvider.family<Lease?, String>((ref, applicationId) async {
+final leaseByApplicationIdProvider = FutureProvider.family<Lease?, String>((
+  ref,
+  applicationId,
+) async {
   final repo = ref.watch(leaseRepositoryProvider);
   try {
     return await repo.getLeaseByApplicationId(applicationId);
@@ -60,7 +66,9 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final leaseAsync = ref.watch(leaseByApplicationIdProvider(widget.applicationId));
+    final leaseAsync = ref.watch(
+      leaseByApplicationIdProvider(widget.applicationId),
+    );
     final session = ref.watch(authProvider).session;
     final theme = Theme.of(context);
 
@@ -84,7 +92,8 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _buildError(e.toString()),
         data: (lease) {
-          if (lease == null) return _buildError('No lease found for this application yet.');
+          if (lease == null)
+            return _buildError('No lease found for this application yet.');
           return _buildContent(context, lease, session, theme);
         },
       ),
@@ -101,7 +110,9 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
           Text(msg, style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 16),
           TextButton(
-            onPressed: () => ref.invalidate(leaseByApplicationIdProvider(widget.applicationId)),
+            onPressed: () => ref.invalidate(
+              leaseByApplicationIdProvider(widget.applicationId),
+            ),
             child: const Text('Retry'),
           ),
         ],
@@ -109,7 +120,12 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
     );
   }
 
-  Widget _buildContent(BuildContext context, Lease lease, dynamic session, ThemeData theme) {
+  Widget _buildContent(
+    BuildContext context,
+    Lease lease,
+    dynamic session,
+    ThemeData theme,
+  ) {
     final myRole = session?.role ?? Role.tenant;
     final canSign = lease.needsSignatureFrom(myRole);
     final alreadySigned = myRole == Role.tenant
@@ -150,7 +166,10 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
 
           // ── Signature Canvas ─────────────────────────────────────────
           if (canSign && !alreadySigned) ...[
-            if (!_hasReadDocument) _buildConsentCheckbox(theme) else _buildSignaturePad(lease, session, theme),
+            if (!_hasReadDocument)
+              _buildConsentCheckbox(theme)
+            else
+              _buildSignaturePad(lease, session, theme),
           ],
 
           // ── Already Signed ───────────────────────────────────────────
@@ -163,14 +182,17 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
           if (lease.isFullySigned) ...[
             const SizedBox(height: 8),
             ElevatedButton.icon(
-              onPressed: () => _initiateLeasePayment(context, ref, lease, session),
+              onPressed: () =>
+                  _initiateLeasePayment(context, ref, lease, session),
               icon: const Icon(Icons.payments_outlined),
               label: const Text('Proceed to First Payment'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ],
@@ -203,9 +225,19 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Lease Agreement', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const Text(
+                  'Lease Agreement',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
                 const SizedBox(height: 2),
-                Text(label, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),
@@ -222,12 +254,21 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
           const Divider(height: 16),
           ...children,
         ],
@@ -237,26 +278,54 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
 
   Widget _buildSignatureStatus(Lease lease, ThemeData theme) {
     return _buildSection('Signature Status', theme, [
-      _signatureRow('Tenant Signature', lease.tenantSignature?.status, lease.tenantSignature?.signedAt, theme),
+      _signatureRow(
+        'Tenant Signature',
+        lease.tenantSignature?.status,
+        lease.tenantSignature?.signedAt,
+        theme,
+      ),
       const SizedBox(height: 10),
-      _signatureRow('Landlord Signature', lease.landlordSignature?.status, lease.landlordSignature?.signedAt, theme),
+      _signatureRow(
+        'Landlord Signature',
+        lease.landlordSignature?.status,
+        lease.landlordSignature?.signedAt,
+        theme,
+      ),
     ]);
   }
 
-  Widget _signatureRow(String label, SignatureStatus? status, DateTime? signedAt, ThemeData theme) {
+  Widget _signatureRow(
+    String label,
+    SignatureStatus? status,
+    DateTime? signedAt,
+    ThemeData theme,
+  ) {
     final signed = status == SignatureStatus.signed;
-    final color = signed ? Colors.green : (status == SignatureStatus.declined ? Colors.red : Colors.orange);
-    final icon = signed ? Icons.check_circle : (status == SignatureStatus.declined ? Icons.cancel : Icons.pending);
+    final color = signed
+        ? Colors.green
+        : (status == SignatureStatus.declined ? Colors.red : Colors.orange);
+    final icon = signed
+        ? Icons.check_circle
+        : (status == SignatureStatus.declined ? Icons.cancel : Icons.pending);
     final text = signed
         ? 'Signed${signedAt != null ? ' · ${_formatDate(signedAt)}' : ''}'
-        : (status == SignatureStatus.declined ? 'Declined' : 'Awaiting signature');
+        : (status == SignatureStatus.declined
+              ? 'Declined'
+              : 'Awaiting signature');
 
     return Row(
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 10),
         Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
-        Text(text, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600)),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
@@ -297,13 +366,20 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Lease Document', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          const Text(
+            'Lease Document',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () {/* open in browser or PDF viewer */},
+            onPressed: () {
+              /* open in browser or PDF viewer */
+            },
             icon: const Icon(Icons.open_in_new, size: 16),
             label: const Text('View / Download Lease PDF'),
-            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(44),
+            ),
           ),
         ],
       ),
@@ -319,7 +395,9 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
           decoration: BoxDecoration(
             color: theme.colorScheme.primary.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.2),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +430,9 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
           label: const Text('Proceed to Sign'),
           style: ElevatedButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
         ),
       ],
@@ -363,15 +443,26 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Draw your signature below', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Draw your signature below',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
         Container(
           height: 200,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3), width: 2),
-            boxShadow: [BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.1), blurRadius: 10)],
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                blurRadius: 10,
+              ),
+            ],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(14),
@@ -402,7 +493,9 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
               : () async {
                   if (_signatureController.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please draw your signature')),
+                      const SnackBar(
+                        content: Text('Please draw your signature'),
+                      ),
                     );
                     return;
                   }
@@ -410,12 +503,21 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
                   await _signLease(lease, session);
                 },
           icon: _isSigning
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
               : const Icon(Icons.draw),
           label: Text(_isSigning ? 'Signing securely…' : 'Sign Electronically'),
           style: ElevatedButton.styleFrom(
             minimumSize: const Size.fromHeight(56),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
             backgroundColor: theme.colorScheme.primary,
             foregroundColor: Colors.white,
             elevation: 8,
@@ -443,7 +545,11 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
               lease.isFullySigned
                   ? 'Both parties have signed. The lease is fully executed.'
                   : 'You have signed. Waiting for the other party to sign.',
-              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w600, fontSize: 13),
+              style: const TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -456,7 +562,8 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
     setState(() => _isSigning = true);
 
     // Build SHA-256 signature hash (OHADA-aligned)
-    final rawData = '${lease.id}|${session?.userId ?? ''}|${DateTime.now().toIso8601String()}';
+    final rawData =
+        '${lease.id}|${session?.userId ?? ''}|${DateTime.now().toIso8601String()}';
     final signatureHash = sha256.convert(utf8.encode(rawData)).toString();
 
     // Also send audit log to backend before signing
@@ -479,41 +586,54 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
       // Non-blocking — backend will also record on its side
     }
 
-    final ok = await ref.read(leaseSignatureProvider.notifier).signLease(lease.id);
+    final ok = await ref
+        .read(leaseSignatureProvider.notifier)
+        .signLease(lease.id);
 
     if (mounted) {
       setState(() => _isSigning = false);
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('✓ Lease signed electronically'),
+            content: const Text('Lease signed electronically'),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
         ref.invalidate(leaseByApplicationIdProvider(widget.applicationId));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Signing failed. Please try again.'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Signing failed. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
   }
 
   // ── Payment Action ─────────────────────────────────────────────────────────
-  Future<void> _initiateLeasePayment(BuildContext context, WidgetRef ref, Lease lease, dynamic session) async {
+  Future<void> _initiateLeasePayment(
+    BuildContext context,
+    WidgetRef ref,
+    Lease lease,
+    dynamic session,
+  ) async {
     showDialog(
-      context: context, 
-      barrierDismissible: false, 
-      builder: (_) => const Center(child: CircularProgressIndicator())
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
     try {
       // 1. Get the property to know the rent & deposit
       final propRepo = ref.read(propertyRepositoryProvider);
       final prop = await propRepo.getProperty(lease.propertyId);
-      final totalAmount = prop.property.monthlyRentUnits + prop.property.depositUnits;
+      final totalAmount =
+          prop.property.monthlyRentUnits + prop.property.depositUnits;
 
       // 2. Initiate Fapshi Payment
       final paymentRepo = ref.read(paymentRepositoryProvider);
@@ -548,27 +668,41 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
   // ── Helpers ──────────────────────────────────────────────────────────────
   String _statusLabel(LeaseStatus s) {
     switch (s) {
-      case LeaseStatus.generated: return 'Ready to Sign';
-      case LeaseStatus.pendingTenantSignature: return 'Awaiting Tenant Signature';
-      case LeaseStatus.pendingLandlordSignature: return 'Awaiting Landlord Signature';
-      case LeaseStatus.partiallySigned: return 'Partially Signed';
-      case LeaseStatus.signed: return 'Fully Signed';
-      case LeaseStatus.expired: return 'Expired';
-      case LeaseStatus.cancelled: return 'Cancelled';
-      default: return 'Draft';
+      case LeaseStatus.generated:
+        return 'Ready to Sign';
+      case LeaseStatus.pendingTenantSignature:
+        return 'Awaiting Tenant Signature';
+      case LeaseStatus.pendingLandlordSignature:
+        return 'Awaiting Landlord Signature';
+      case LeaseStatus.partiallySigned:
+        return 'Partially Signed';
+      case LeaseStatus.signed:
+        return 'Fully Signed';
+      case LeaseStatus.expired:
+        return 'Expired';
+      case LeaseStatus.cancelled:
+        return 'Cancelled';
+      default:
+        return 'Draft';
     }
   }
 
   (Color, IconData, String) _statusDecor(LeaseStatus s) {
     switch (s) {
-      case LeaseStatus.signed: return (Colors.green.shade600, Icons.verified, 'Lease Fully Signed');
-      case LeaseStatus.partiallySigned: return (Colors.orange.shade600, Icons.draw, 'Partially Signed');
+      case LeaseStatus.signed:
+        return (Colors.green.shade600, Icons.verified, 'Lease Fully Signed');
+      case LeaseStatus.partiallySigned:
+        return (Colors.orange.shade600, Icons.draw, 'Partially Signed');
       case LeaseStatus.pendingTenantSignature:
       case LeaseStatus.pendingLandlordSignature:
-      case LeaseStatus.generated: return (Colors.blue.shade600, Icons.description, 'Awaiting Signatures');
-      case LeaseStatus.expired: return (Colors.grey, Icons.timer_off, 'Lease Expired');
-      case LeaseStatus.cancelled: return (Colors.red, Icons.cancel, 'Lease Cancelled');
-      default: return (Colors.grey, Icons.edit_document, 'Draft');
+      case LeaseStatus.generated:
+        return (Colors.blue.shade600, Icons.description, 'Awaiting Signatures');
+      case LeaseStatus.expired:
+        return (Colors.grey, Icons.timer_off, 'Lease Expired');
+      case LeaseStatus.cancelled:
+        return (Colors.red, Icons.cancel, 'Lease Cancelled');
+      default:
+        return (Colors.grey, Icons.edit_document, 'Draft');
     }
   }
 
@@ -580,7 +714,13 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-        Flexible(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), textAlign: TextAlign.end)),
+        Flexible(
+          child: Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            textAlign: TextAlign.end,
+          ),
+        ),
       ],
     ),
   );

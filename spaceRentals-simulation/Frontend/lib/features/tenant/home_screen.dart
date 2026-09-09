@@ -114,11 +114,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Text(
                       [
                         '',
-                        'Poor 😞',
-                        'Fair 😐',
-                        'Good 🙂',
-                        'Great 😊',
-                        'Excellent 🌟',
+                        'Poor',
+                        'Fair',
+                        'Good',
+                        'Great',
+                        'Excellent',
                       ][selectedRating],
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -229,8 +229,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   children: [
                                     Text(
                                       isFr
-                                          ? 'Bonjour, ${user.session?.fullName.split(' ').first ?? 'Invité'} 👋'
-                                          : 'Hello, ${user.session?.fullName.split(' ').first ?? 'Guest'} 👋',
+                                          ? 'Bonjour, ${user.session?.fullName.split(' ').first ?? 'Invité'}'
+                                          : 'Hello, ${user.session?.fullName.split(' ').first ?? 'Guest'}',
                                       style: const TextStyle(
                                         color: Colors.white70,
                                         fontSize: 16,
@@ -2770,7 +2770,7 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    isFr ? '📱 Application Mobile' : '📱 Mobile Application',
+                    isFr ? 'Application Mobile' : 'Mobile Application',
                     style: TextStyle(
                       color: theme.colorScheme.primary,
                       fontSize: 12,

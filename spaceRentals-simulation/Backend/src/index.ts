@@ -63,6 +63,8 @@ import rnlpRoutes          from './routes/rnlp';
 import { globalErrorHandler } from './middleware/errorMiddleware';
 import { startBackgroundWorkers } from './workers';
 import tenantWalletRoutes from './routes/tenantWallet';
+import landlordVerificationRoutes from './routes/landlordVerification';
+import agentAgreementRoutes from './routes/agentAgreements';
 
 const BASE = '/api';
 
@@ -90,6 +92,8 @@ app.use(`${BASE}/reviews`,       reviewRoutes);
 app.use(`${BASE}/messages`,      messageRoutes);
 app.use(`${BASE}/rnlp`,          rnlpRoutes);
 app.use(`${BASE}/tenant-wallet`, tenantWalletRoutes);
+app.use(`${BASE}/landlord-verification`, landlordVerificationRoutes);
+app.use(`${BASE}/agent-agreements`, agentAgreementRoutes);
 
 // ── Health ────────────────────────────────────────────────────
 app.get(`${BASE}/health`, (_req, res) => {
@@ -122,12 +126,12 @@ initSocketServer(server);
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[Server] Space Rentals API running on port ${PORT}`);
   startBackgroundWorkers();
-  console.log(`📐  Architecture : MVC (Controller → Service → Repository)`);
-  console.log(`💳  Payments     : Fapshi (MTN / Orange Money)`);
-  console.log(`🗄️   Database     : PostgreSQL (Prisma ORM)`);
-  console.log(`🔒  Security     : Helmet + Rate Limiting`);
-  console.log(`🔌  WebSockets   : Enabled for Chat & Notifications`);
-  console.log(`📦  Routes       : 15 feature groups registered (incl. storage + audit)\n`);
+  console.log(`Architecture : MVC (Controller -> Service -> Repository)`);
+  console.log(`Payments     : Fapshi (MTN / Orange Money)`);
+  console.log(`Database     : PostgreSQL (Prisma ORM)`);
+  console.log(`Security     : Helmet + Rate Limiting`);
+  console.log(`WebSockets   : Enabled for Chat & Notifications`);
+  console.log(`Routes       : 15 feature groups registered (incl. storage + audit)\n`);
 });
 
 export { app, server };

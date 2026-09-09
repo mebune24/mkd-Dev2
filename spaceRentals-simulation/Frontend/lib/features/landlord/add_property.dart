@@ -172,7 +172,7 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
                               )
                             : Text(
                                 _currentStep == 4
-                                    ? 'Publish Property 🚀'
+                                    ? 'Publish Property'
                                     : 'Continue',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -559,7 +559,7 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
                 Text(
                   _videoFiles.isEmpty
                       ? 'Tap to Upload Video Tour'
-                      : '${_videoFiles.length} video(s) selected ✓',
+                      : '${_videoFiles.length} video(s) selected',
                   style: TextStyle(
                     color: _videoFiles.isEmpty ? Colors.grey : Colors.green,
                     fontWeight: FontWeight.w600,

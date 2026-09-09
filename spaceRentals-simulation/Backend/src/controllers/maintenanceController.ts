@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { hasVerifiedLandlordAccess } from '../middleware/authMiddleware';
 
 // POST /api/maintenance — tenant submits a request
 export const createMaintenanceRequest = async (req: Request, res: Response) => {
@@ -31,6 +32,9 @@ export const createMaintenanceRequest = async (req: Request, res: Response) => {
 export const getMaintenanceRequests = async (req: Request, res: Response) => {
   try {
     const { userId, role } = (req as any).user;
+    if (role === 'landlord' && !(await hasVerifiedLandlordAccess({ userId, role }))) {
+      return res.status(403).json({ message: 'Approved landlord verification is required before using maintenance operations.' }) as any;
+    }
     const { status, limit = '20', page = '1' } = req.query;
     const take = Math.min(parseInt(limit as string), 50);
     const skip = (parseInt(page as string) - 1) * take;
@@ -74,6 +78,9 @@ export const getMaintenanceRequestById = async (req: Request, res: Response) => 
     });
     if (!request) return res.status(404).json({ message: 'Not found' }) as any;
     const user = (req as any).user;
+    if (user.role === 'landlord' && !(await hasVerifiedLandlordAccess(user))) {
+      return res.status(403).json({ message: 'Approved landlord verification is required before using maintenance operations.' }) as any;
+    }
     if (user.role !== 'admin' && request.tenantId !== user.userId && request.rental.landlordId !== user.userId) {
       return res.status(403).json({ message: 'Forbidden' }) as any;
     }
@@ -89,6 +96,9 @@ export const updateMaintenanceRequest = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     const { status, landlordNote } = req.body;
     const user = (req as any).user;
+    if (user.role === 'landlord' && !(await hasVerifiedLandlordAccess(user))) {
+      return res.status(403).json({ message: 'Approved landlord verification is required before using maintenance operations.' }) as any;
+    }
     const existing = await prisma.maintenanceRequest.findUnique({ where: { id }, include: { rental: true } });
     if (!existing) return res.status(404).json({ message: 'Not found' }) as any;
     if (user.role !== 'admin' && existing.rental.landlordId !== user.userId) {

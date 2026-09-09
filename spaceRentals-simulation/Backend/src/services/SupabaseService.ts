@@ -51,6 +51,26 @@ export const supabaseService = {
     return Buffer.from(arrayBuffer);
   },
 
+  async fileExists(bucket: string, path: string): Promise<boolean> {
+    const separator = path.lastIndexOf('/');
+    if (separator <= 0 || separator === path.length - 1) return false;
+    const folder = path.slice(0, separator);
+    const filename = path.slice(separator + 1);
+    const { data, error } = await this.client.storage.from(bucket).list(folder, { search: filename });
+    if (error) {
+      throw { status: 500, message: `Failed to verify uploaded document: ${error.message}` };
+    }
+    return data?.some((file) => file.name === filename) ?? false;
+  },
+
+  async listFiles(bucket: string, folder: string) {
+    const { data, error } = await this.client.storage.from(bucket).list(folder, { limit: 1000 });
+    if (error) {
+      throw { status: 500, message: `Failed to list storage files: ${error.message}` };
+    }
+    return data ?? [];
+  },
+
   async deleteFile(bucket: string, path: string) {
     const { error } = await this.client.storage
       .from(bucket)

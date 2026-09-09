@@ -40,7 +40,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           .read(authProvider.notifier)
           .updateSessionProfile(avatarUrl: base64Str);
 
-      if (mounted) context.showToast('Profile picture updated ✓');
+      if (mounted) context.showToast('Profile picture updated');
     } catch (e) {
       if (mounted) context.showErrorToast('Failed to update picture: $e');
     } finally {
@@ -100,7 +100,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 await ref
                     .read(authProvider.notifier)
                     .updateSessionProfile(firstName: fn, lastName: ln);
-                if (mounted) context.showToast('Name updated ✓');
+                if (mounted) context.showToast('Name updated');
               } catch (e) {
                 if (mounted) context.showErrorToast('Failed: $e');
               } finally {
@@ -151,7 +151,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 await ref
                     .read(authProvider.notifier)
                     .updateSessionProfile(phone: phone);
-                if (mounted) context.showToast('Phone updated ✓');
+                if (mounted) context.showToast('Phone updated');
               } catch (e) {
                 if (mounted) context.showErrorToast('Failed: $e');
               } finally {
@@ -265,7 +265,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   final repo = ref.read(authRepositoryProvider);
                   await repo.changePassword(currentCtrl.text, newCtrl.text);
                   if (mounted) {
-                    context.showToast('Password changed successfully ✓');
+                    context.showToast('Password changed successfully');
                   }
                 } catch (e) {
                   if (mounted) context.showErrorToast('Failed: $e');
@@ -560,8 +560,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 _listTile(
                                   icon: Icons.star,
                                   title: 'Top Ratings Bonus',
-                                  subtitle:
-                                      'Bonus when your score exceeds 4.8★',
+                                  subtitle: 'Bonus when your score exceeds 4.8',
                                   trailing: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
@@ -575,7 +574,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       ),
                                     ),
                                     child: const Text(
-                                      '4.8 ★',
+                                      '4.8',
                                       style: TextStyle(
                                         color: Colors.amber,
                                         fontWeight: FontWeight.bold,

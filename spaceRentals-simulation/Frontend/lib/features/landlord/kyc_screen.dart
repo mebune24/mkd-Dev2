@@ -5,7 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
-import 'package:space_rentals/features/landlord/domain/kyc_submission.dart';
+import '../../providers/di_providers.dart';
+import '../../core/api/storage_service.dart';
 import '../../widgets/animated_loading_button.dart';
 
 class LandlordKYCScreen extends ConsumerStatefulWidget {
@@ -17,7 +18,6 @@ class LandlordKYCScreen extends ConsumerStatefulWidget {
 
 class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
   String _selectedTier = 'basic';
-  bool _isLoading = false;
 
   final Map<String, String?> _uploadedDocs = {
     'id_card': null,
@@ -30,8 +30,11 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
 
   Future<void> _pickImage(String docKey) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
     if (pickedFile != null) {
       setState(() {
         _uploadedDocs[docKey] = pickedFile.path;
@@ -41,11 +44,12 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
 
   bool _canSubmit() {
     if (_selectedTier == 'basic') {
-      return _uploadedDocs['id_card'] != null && _uploadedDocs['land_doc'] != null;
+      return _uploadedDocs['id_card'] != null &&
+          _uploadedDocs['land_doc'] != null;
     } else {
       return _uploadedDocs['land_title'] != null &&
-             _uploadedDocs['site_plan'] != null &&
-             _uploadedDocs['cni'] != null;
+          _uploadedDocs['site_plan'] != null &&
+          _uploadedDocs['cni'] != null;
       // Tax card is optional
     }
   }
@@ -57,7 +61,12 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isFr ? 'Étape 1: Vérification Propriétaire' : 'Step 1: Landlord Verification', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(
+          isFr
+              ? 'Étape 1: Vérification Propriétaire'
+              : 'Step 1: Landlord Verification',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         centerTitle: true,
         automaticallyImplyLeading: false, // Force them to complete or logout
         actions: [
@@ -67,7 +76,7 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
               ref.read(authProvider.notifier).signOut();
               context.go('/login');
             },
-          )
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -88,7 +97,7 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      isFr 
+                      isFr
                           ? 'En tant que propriétaire, vous devez vérifier votre identité et vos propriétés avant de pouvoir utiliser la plateforme.'
                           : 'As a landlord, you must verify your identity and properties before using the platform.',
                       style: const TextStyle(fontSize: 13, color: Colors.blue),
@@ -98,7 +107,10 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text(isFr ? 'Niveau de vérification' : 'Verification Tier', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              isFr ? 'Niveau de vérification' : 'Verification Tier',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -120,7 +132,10 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
               ],
             ),
             const SizedBox(height: 32),
-            Text(isFr ? 'Documents Requis' : 'Required Documents', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              isFr ? 'Documents Requis' : 'Required Documents',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 16),
 
             if (_selectedTier == 'basic') ...[
@@ -130,7 +145,9 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
                 isOptional: false,
               ),
               _uploadTile(
-                title: isFr ? 'Document de Propriété' : 'Land Property Document',
+                title: isFr
+                    ? 'Document de Propriété'
+                    : 'Land Property Document',
                 docKey: 'land_doc',
                 isOptional: false,
               ),
@@ -146,12 +163,16 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
                 isOptional: false,
               ),
               _uploadTile(
-                title: isFr ? 'Carte d\'Identité (CNI)' : 'National ID Card (CNI)',
+                title: isFr
+                    ? 'Carte d\'Identité (CNI)'
+                    : 'National ID Card (CNI)',
                 docKey: 'cni',
                 isOptional: false,
               ),
               _uploadTile(
-                title: isFr ? 'Carte de Contribuable / Quittance' : 'Taxpayer Card / Tax Receipts',
+                title: isFr
+                    ? 'Carte de Contribuable / Quittance'
+                    : 'Taxpayer Card / Tax Receipts',
                 docKey: 'tax_card',
                 isOptional: true,
               ),
@@ -159,46 +180,72 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
 
             const SizedBox(height: 40),
             AnimatedLoadingButton(
-              onPressed: _canSubmit() ? () async {
-                setState(() => _isLoading = true);
-                await Future.delayed(const Duration(seconds: 1));
-                
-                final user = ref.read(authProvider);
-                Map<String, String> docs = {};
-                if (_selectedTier == 'basic') {
-                  docs['ID Card'] = _uploadedDocs['id_card']!;
-                  docs['Land Property Document'] = _uploadedDocs['land_doc']!;
-                } else {
-                  docs['Land Title'] = _uploadedDocs['land_title']!;
-                  docs['Site Plan'] = _uploadedDocs['site_plan']!;
-                  docs['National ID Card (CNI)'] = _uploadedDocs['cni']!;
-                  if (_uploadedDocs['tax_card'] != null) {
-                    docs['Taxpayer Card'] = _uploadedDocs['tax_card']!;
-                  }
-                }
-                
-                final submission = KYCSubmission(
-                  userId: user.session?.userId ?? 'unknown',
-                  userName: user.session?.fullName ?? 'Unknown',
-                  userEmail: user.session?.email ?? '',
-                  isPremium: _selectedTier == 'premium',
-                  status: 'pending',
-                  submittedAt: DateTime.now(),
-                  documents: docs,
-                );
-                
-                // ref.read(kycSubmissionsProvider.notifier).submit(submission);
-                              
-                if (mounted) context.go('/landlord/pending');
-              } : () async {},
+              onPressed: _canSubmit()
+                  ? () async {
+                      final uploaded = <String, String>{};
+                      try {
+                        final documentKeys = _selectedTier == 'premium'
+                            ? ['land_title', 'site_plan', 'cni', 'tax_card']
+                            : ['id_card', 'land_doc'];
+                        for (final key in documentKeys) {
+                          final path = _uploadedDocs[key];
+                          if (path == null) continue;
+                          uploaded[key] = await StorageService.instance
+                              .uploadFile(XFile(path), 'kyc-documents');
+                        }
+                        final response = await ref
+                            .read(apiClientProvider)
+                            .post(
+                              '/api/landlord-verification',
+                              data: {
+                                'tier': _selectedTier,
+                                'documents': uploaded,
+                              },
+                            );
+                        if (!response.isSuccess) {
+                          throw Exception(
+                            response.error?.message ?? 'KYC submission failed',
+                          );
+                        }
+                        await ref.read(authProvider.notifier).updateSessionKycStatus(
+                          isVerified: false,
+                          kycStatus: 'pending',
+                        );
+                        if (mounted) context.go('/landlord/pending');
+                      } catch (error) {
+                        try {
+                          await StorageService.instance.cleanupFailedKycUploads(
+                            uploaded.values.toList(),
+                          );
+                        } catch (_) {
+                          // The backend's scheduled cleanup is the fallback.
+                        }
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(error.toString())),
+                          );
+                        }
+                      }
+                    }
+                  : () async {},
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
-                backgroundColor: _canSubmit() ? theme.colorScheme.primary : Colors.grey,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                backgroundColor: _canSubmit()
+                    ? theme.colorScheme.primary
+                    : Colors.grey,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Text(
-                isFr ? 'Soumettre pour vérification' : 'Submit for Verification',
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                isFr
+                    ? 'Soumettre pour vérification'
+                    : 'Submit for Verification',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -207,25 +254,37 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
     );
   }
 
-  Widget _tierCard({required String title, required String value, required IconData icon}) {
+  Widget _tierCard({
+    required String title,
+    required String value,
+    required IconData icon,
+  }) {
     final isSelected = _selectedTier == value;
     final theme = Theme.of(context);
-    
+
     return GestureDetector(
       onTap: () => setState(() => _selectedTier = value),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : Colors.white,
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+              : Colors.white,
           border: Border.all(
-            color: isSelected ? theme.colorScheme.primary : Colors.grey.shade300,
+            color: isSelected
+                ? theme.colorScheme.primary
+                : Colors.grey.shade300,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? theme.colorScheme.primary : Colors.grey, size: 32),
+            Icon(
+              icon,
+              color: isSelected ? theme.colorScheme.primary : Colors.grey,
+              size: 32,
+            ),
             const SizedBox(height: 8),
             Text(
               title,
@@ -240,10 +299,14 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
     );
   }
 
-  Widget _uploadTile({required String title, required String docKey, required bool isOptional}) {
+  Widget _uploadTile({
+    required String title,
+    required String docKey,
+    required bool isOptional,
+  }) {
     final imagePath = _uploadedDocs[docKey];
     final isUploaded = imagePath != null;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -269,10 +332,7 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
             ),
             child: isUploaded
                 ? null
-                : const Icon(
-                    Icons.upload_file,
-                    color: Colors.grey,
-                  ),
+                : const Icon(Icons.upload_file, color: Colors.grey),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -282,19 +342,40 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                     if (isOptional)
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0),
-                        child: Text('(Optional)', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                        child: Text(
+                          '(Optional)',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                       ),
                   ],
                 ),
                 if (!isUploaded)
-                  Text('Tap to upload document', style: TextStyle(color: Colors.grey.shade500, fontSize: 12))
+                  Text(
+                    'Tap to upload document',
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  )
                 else
-                  Text('Uploaded successfully', style: TextStyle(color: Colors.green.shade600, fontSize: 12)),
+                  Text(
+                    'Uploaded successfully',
+                    style: TextStyle(
+                      color: Colors.green.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
               ],
             ),
           ),

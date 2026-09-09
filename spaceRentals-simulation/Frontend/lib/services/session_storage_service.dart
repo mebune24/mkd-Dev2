@@ -25,6 +25,9 @@ class SessionStorageService {
   SessionStorageService._();
   static final SessionStorageService instance = SessionStorageService._();
 
+  static const String termsAcceptedVersionKey =
+      'spacerentals_terms_accepted_version';
+
   static const _secureStorage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: false),
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
@@ -57,7 +60,9 @@ class SessionStorageService {
     await prefs.setString(_prefKey(uid, 'lastName'), session.lastName);
     await prefs.setString(_prefKey(uid, 'role'), session.role.name);
     await prefs.setString(
-        _prefKey(uid, 'expiresAt'), session.expiresAt.toIso8601String());
+      _prefKey(uid, 'expiresAt'),
+      session.expiresAt.toIso8601String(),
+    );
     if (session.phone != null) {
       await prefs.setString(_prefKey(uid, 'phone'), session.phone!);
     }
@@ -65,9 +70,16 @@ class SessionStorageService {
       await prefs.setString(_prefKey(uid, 'avatarUrl'), session.avatarUrl!);
     }
     await prefs.setBool(
-        _prefKey(uid, 'twoFactorEnabled'), session.twoFactorEnabled);
-    await prefs.setBool(_prefKey(uid, 'pushNotificationsEnabled'),
-        session.pushNotificationsEnabled);
+      _prefKey(uid, 'twoFactorEnabled'),
+      session.twoFactorEnabled,
+    );
+    await prefs.setBool(
+      _prefKey(uid, 'pushNotificationsEnabled'),
+      session.pushNotificationsEnabled,
+    );
+    await prefs.setBool(_prefKey(uid, 'termsAccepted'), session.termsAccepted);
+    await prefs.setBool(_prefKey(uid, 'isKycVerified'), session.isKycVerified);
+    await prefs.setString(_prefKey(uid, 'kycStatus'), session.kycStatus);
   }
 
   // ── LOAD ──────────────────────────────────────────────────────────────────
@@ -117,6 +129,9 @@ class SessionStorageService {
             prefs.getBool(_prefKey(uid, 'twoFactorEnabled')) ?? false,
         pushNotificationsEnabled:
             prefs.getBool(_prefKey(uid, 'pushNotificationsEnabled')) ?? true,
+        termsAccepted: prefs.getBool(_prefKey(uid, 'termsAccepted')) ?? false,
+        isKycVerified: prefs.getBool(_prefKey(uid, 'isKycVerified')) ?? false,
+        kycStatus: prefs.getString(_prefKey(uid, 'kycStatus')) ?? 'not_submitted',
       );
     } catch (e) {
       // Corrupt storage — wipe and require fresh login
@@ -138,19 +153,45 @@ class SessionStorageService {
     bool? pushNotificationsEnabled,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    if (firstName != null) prefs.setString(_prefKey(userId, 'firstName'), firstName);
-    if (lastName != null) prefs.setString(_prefKey(userId, 'lastName'), lastName);
+    if (firstName != null)
+      prefs.setString(_prefKey(userId, 'firstName'), firstName);
+    if (lastName != null)
+      prefs.setString(_prefKey(userId, 'lastName'), lastName);
     if (phone != null) prefs.setString(_prefKey(userId, 'phone'), phone);
-    if (avatarUrl != null) prefs.setString(_prefKey(userId, 'avatarUrl'), avatarUrl);
-    if (twoFactorEnabled != null) prefs.setBool(_prefKey(userId, 'twoFactorEnabled'), twoFactorEnabled);
-    if (pushNotificationsEnabled != null) prefs.setBool(_prefKey(userId, 'pushNotificationsEnabled'), pushNotificationsEnabled);
+    if (avatarUrl != null)
+      prefs.setString(_prefKey(userId, 'avatarUrl'), avatarUrl);
+    if (twoFactorEnabled != null)
+      prefs.setBool(_prefKey(userId, 'twoFactorEnabled'), twoFactorEnabled);
+    if (pushNotificationsEnabled != null)
+      prefs.setBool(
+        _prefKey(userId, 'pushNotificationsEnabled'),
+        pushNotificationsEnabled,
+      );
   }
 
   /// Replace the stored access token (after a token refresh).
-  Future<void> updateToken(String newToken, DateTime newExpiry, String userId) async {
+  Future<void> updateToken(
+    String newToken,
+    DateTime newExpiry,
+    String userId,
+  ) async {
     await _secureStorage.write(key: _kToken, value: newToken);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefKey(userId, 'expiresAt'), newExpiry.toIso8601String());
+    await prefs.setString(
+      _prefKey(userId, 'expiresAt'),
+      newExpiry.toIso8601String(),
+    );
+  }
+
+  Future<void> saveTermsAcceptance(String version) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(termsAcceptedVersionKey, version);
+  }
+
+  Future<bool> hasAcceptedTerms() async {
+    final prefs = await SharedPreferences.getInstance();
+    final version = prefs.getString(termsAcceptedVersionKey);
+    return version != null && version.isNotEmpty;
   }
 
   // ── CLEAR ─────────────────────────────────────────────────────────────────
@@ -164,7 +205,8 @@ class SessionStorageService {
     if (uid != null) {
       final prefs = await SharedPreferences.getInstance();
       // Remove all keys belonging to this user
-      final keysToRemove = prefs.getKeys()
+      final keysToRemove = prefs
+          .getKeys()
           .where((k) => k.startsWith('$_kPrefix${uid}_'))
           .toList();
       for (final k in keysToRemove) {

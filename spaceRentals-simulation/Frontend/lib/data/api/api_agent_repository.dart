@@ -55,6 +55,7 @@ class ApiAgentRepository {
     required String nationalIdUrl,
     String? selfieUrl,
     String? businessDocUrl,
+    String? taxCardUrl,
   }) async {
     final response = await _client.post(
       ApiEndpoints.agentKyc,
@@ -62,6 +63,7 @@ class ApiAgentRepository {
         'nationalIdUrl': nationalIdUrl,
         if (selfieUrl != null) 'selfieUrl': selfieUrl,
         if (businessDocUrl != null) 'businessDocUrl': businessDocUrl,
+        if (taxCardUrl != null) 'taxCardUrl': taxCardUrl,
       },
     );
     if (!response.isSuccess) {
@@ -136,5 +138,53 @@ class ApiAgentRepository {
       response,
       (data) => AgentWallet.fromJson(data as Map<String, dynamic>),
     );
+  }
+
+  Future<List<AgentServiceAgreement>> getAgreements() async {
+    final response = await _client.get(ApiEndpoints.agentAgreements);
+    return _unwrap(response, (data) {
+      final list = data is List ? data : const <dynamic>[];
+      return list.map((item) {
+        final json = Map<String, dynamic>.from(item as Map);
+        final landlord = json['landlord'] is Map
+            ? Map<String, dynamic>.from(json['landlord'])
+            : const <String, dynamic>{};
+        final agent = json['agent'] is Map
+            ? Map<String, dynamic>.from(json['agent'])
+            : const <String, dynamic>{};
+        return AgentServiceAgreement.fromJson({
+          ...json,
+          'landlordName': landlord['name'],
+          'agentId': json['agentId'] ?? agent['id'],
+          'agentName': agent['name'],
+          'requestedAt': json['requestedAt'],
+          'acceptedAt': json['acceptedAt'],
+        });
+      }).toList();
+    });
+  }
+
+  Future<void> requestAgreement({
+    required String agentId,
+    required String serviceTerms,
+  }) async {
+    final response = await _client.post(
+      ApiEndpoints.agentAgreements,
+      data: {'agentId': agentId, 'serviceTerms': serviceTerms},
+    );
+    if (!response.isSuccess)
+      throw Exception(response.error?.message ?? 'Service request failed');
+  }
+
+  Future<void> decideAgreement(
+    String agreementId, {
+    required bool accept,
+  }) async {
+    final response = await _client.patch(
+      ApiEndpoints.agentAgreementDecision(agreementId),
+      data: {'accept': accept},
+    );
+    if (!response.isSuccess)
+      throw Exception(response.error?.message ?? 'Agreement decision failed');
   }
 }

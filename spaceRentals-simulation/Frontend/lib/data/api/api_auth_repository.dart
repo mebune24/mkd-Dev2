@@ -78,6 +78,8 @@ class ApiAuthRepository implements AuthRepository {
             'email': email,
             'password': password,
             'role': role.toLowerCase(),
+            'termsAccepted': true,
+            'termsVersion': '2026-09-09',
           }),
         )
         .timeout(const Duration(seconds: 10));
@@ -95,6 +97,25 @@ class ApiAuthRepository implements AuthRepository {
     await SessionStorageService.instance.saveSession(session);
     _cachedSession = session;
     return session;
+  }
+
+  @override
+  Future<void> acceptTerms(String version) async {
+    final token = await SessionStorageService.instance.getAccessToken();
+    final response = await http.post(
+      Uri.parse(ApiEndpoints.acceptTerms),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'termsVersion': version}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        (json.decode(response.body) as Map<String, dynamic>)['message'] ??
+            'Terms acceptance failed',
+      );
+    }
   }
 
   @override
@@ -142,15 +163,13 @@ class ApiAuthRepository implements AuthRepository {
       role: _parseRole(body['role']),
       isKycVerified:
           body['isKycVerified'] == true || body['kycVerified'] == true,
+      kycStatus: body['kycStatus']?.toString() ?? 'not_submitted',
+      termsAccepted: body['termsAccepted'] == true,
       accessToken: token,
       expiresAt: DateTime.now().add(const Duration(days: 30)),
     );
 
-    await SessionStorageService.instance.updateToken(
-      token,
-      refreshed.expiresAt,
-      refreshed.userId,
-    );
+    await SessionStorageService.instance.saveSession(refreshed);
     _cachedSession = refreshed;
     return refreshed;
   }
@@ -278,6 +297,8 @@ class ApiAuthRepository implements AuthRepository {
       role: _parseRole(user['role']),
       isKycVerified:
           user['isKycVerified'] == true || user['kycVerified'] == true,
+      kycStatus: user['kycStatus']?.toString() ?? 'not_submitted',
+      termsAccepted: user['termsAccepted'] == true,
       accessToken: token,
       expiresAt: expiresAt,
     );

@@ -104,6 +104,7 @@ export class PropertyService {
       acquisitionAgentId: acquisitionAgentId ? String(acquisitionAgentId) : undefined,
     });
     await clearCacheByPattern('properties:*');
+    await clearCacheByPattern(`dashboard:landlord:${landlordId}`);
     emitPropertyFeedUpdated(result.id);
     return result;
   }
@@ -120,15 +121,28 @@ export class PropertyService {
       throw { status: 403, message: 'Forbidden: You do not own this property.' };
     }
     const updateData: Record<string, unknown> = {};
-    const { title, description, location, monthlyRent, deposit, amenities, images, videoUrls, status, latitude, longitude } = data as any;
-    if (title) updateData.title = title as string;
-    if (description) updateData.description = description as string;
-    if (location) updateData.location = String(location);
-    if (monthlyRent) updateData.monthlyRent = Number(monthlyRent);
-    if (deposit) updateData.deposit = Number(deposit);
-    if (amenities) updateData.amenities = JSON.stringify(amenities);
-    if (images) updateData.images = JSON.stringify(images);
-    if (videoUrls) updateData.videoUrls = JSON.stringify(videoUrls);
+    const { title, description, location, monthlyRent, deposit, amenities, images, videoUrls, status, latitude, longitude,
+      bedrooms, bathrooms, areaSqM, furnished, parkingSpaces, hasWater, hasElectricity, isFenced, closeToRoad,
+      securityMeans, category } = data as any;
+    if (title !== undefined) updateData.title = String(title);
+    if (description !== undefined) updateData.description = String(description);
+    if (location !== undefined) updateData.location = String(location);
+    if (monthlyRent !== undefined) updateData.monthlyRent = Number(monthlyRent);
+    if (deposit !== undefined) updateData.deposit = Number(deposit);
+    if (amenities !== undefined) updateData.amenities = JSON.stringify(amenities);
+    if (images !== undefined) updateData.images = JSON.stringify(images);
+    if (videoUrls !== undefined) updateData.videoUrls = JSON.stringify(videoUrls);
+    if (bedrooms !== undefined) updateData.bedrooms = Number(bedrooms);
+    if (bathrooms !== undefined) updateData.bathrooms = Number(bathrooms);
+    if (areaSqM !== undefined) updateData.areaSqM = Number(areaSqM);
+    if (furnished !== undefined) updateData.furnished = Boolean(furnished);
+    if (parkingSpaces !== undefined) updateData.parkingSpaces = Number(parkingSpaces);
+    if (hasWater !== undefined) updateData.hasWater = Boolean(hasWater);
+    if (hasElectricity !== undefined) updateData.hasElectricity = Boolean(hasElectricity);
+    if (isFenced !== undefined) updateData.isFenced = Boolean(isFenced);
+    if (closeToRoad !== undefined) updateData.closeToRoad = Boolean(closeToRoad);
+    if (securityMeans !== undefined) updateData.securityMeans = String(securityMeans);
+    if (category !== undefined) updateData.category = String(category);
     if (status && ['draft', 'available', 'auto_unpublished'].includes(String(status))) {
       updateData.status = String(status);
     } else if (status) {
@@ -143,6 +157,27 @@ export class PropertyService {
     if (latitude !== undefined) updateData.latitude = Number(latitude);
     if (longitude !== undefined) updateData.longitude = Number(longitude);
 
+    const numericFields: Array<[string, unknown, number]> = [
+      ['bedrooms', bedrooms, 0],
+      ['bathrooms', bathrooms, 0],
+      ['areaSqM', areaSqM, 0],
+      ['parkingSpaces', parkingSpaces, 0],
+    ];
+    for (const [field, value, minimum] of numericFields) {
+      if (value !== undefined && (!Number.isFinite(Number(value)) || Number(value) < minimum)) {
+        throw { status: 400, message: `${field} must be a valid non-negative number.` };
+      }
+    }
+    if (latitude !== undefined && (!Number.isFinite(Number(latitude)) || Number(latitude) < -90 || Number(latitude) > 90)) {
+      throw { status: 400, message: 'latitude must be between -90 and 90.' };
+    }
+    if (longitude !== undefined && (!Number.isFinite(Number(longitude)) || Number(longitude) < -180 || Number(longitude) > 180)) {
+      throw { status: 400, message: 'longitude must be between -180 and 180.' };
+    }
+    if (Object.keys(updateData).length === 0) {
+      throw { status: 400, message: 'At least one property field is required.' };
+    }
+
     // Recompute H3 index if coordinates are updated
     const finalLat = updateData.latitude !== undefined ? updateData.latitude as number : property.latitude;
     const finalLng = updateData.longitude !== undefined ? updateData.longitude as number : property.longitude;
@@ -152,6 +187,7 @@ export class PropertyService {
     
     const result = await propertyRepository.update(id, updateData);
     await clearCacheByPattern('properties:*');
+    await clearCacheByPattern(`dashboard:landlord:${property.landlordId}`);
     emitPropertyFeedUpdated(id);
     return result;
   }
@@ -162,8 +198,16 @@ export class PropertyService {
     if (property.landlordId !== requestingUserId && requestingUserRole !== 'admin') {
       throw { status: 403, message: 'Forbidden.' };
     }
+    const activeRental = await prisma.rental.findFirst({
+      where: { propertyId: id },
+      select: { status: true },
+    });
+    if (activeRental?.status === 'active') {
+      throw { status: 409, message: 'Properties with active rentals cannot be deleted.' };
+    }
     await propertyRepository.delete(id);
     await clearCacheByPattern('properties:*');
+    await clearCacheByPattern(`dashboard:landlord:${property.landlordId}`);
     return { message: 'Property deleted.' };
   }
 
@@ -176,6 +220,7 @@ export class PropertyService {
     }
     const result = await propertyRepository.update(id, { status: 'available', lastConfirmedAvailableAt: new Date() });
     await clearCacheByPattern('properties:*');
+    await clearCacheByPattern(`dashboard:landlord:${property.landlordId}`);
     emitPropertyFeedUpdated(id);
     return result;
   }
@@ -186,6 +231,7 @@ export class PropertyService {
     if (property.landlordId !== userId && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
     const result = await propertyRepository.update(id, { status: 'draft' });
     await clearCacheByPattern('properties:*');
+    await clearCacheByPattern(`dashboard:landlord:${property.landlordId}`);
     emitPropertyFeedUpdated(id);
     return result;
   }
@@ -194,7 +240,9 @@ export class PropertyService {
     const property = await propertyRepository.findById(id);
     if (!property) throw { status: 404, message: 'Property not found.' };
     if (property.landlordId !== userId && role !== 'admin') throw { status: 403, message: 'Forbidden.' };
-    return propertyRepository.update(id, { lastConfirmedAvailableAt: new Date() });
+    const result = await propertyRepository.update(id, { lastConfirmedAvailableAt: new Date() });
+    await clearCacheByPattern(`dashboard:landlord:${property.landlordId}`);
+    return result;
   }
 
   async search(params: { q?: string; category?: string; minRent?: number; maxRent?: number; bedrooms?: number; page?: number; limit?: number; latitude?: number; longitude?: number }) {

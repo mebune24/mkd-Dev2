@@ -10,12 +10,14 @@ class AuthState {
   final bool isLoading;
   final String? error;
   final bool isGuest;
+  final bool hasAcceptedTerms;
 
   const AuthState({
     this.session,
     this.isLoading = false,
     this.error,
     this.isGuest = false,
+    this.hasAcceptedTerms = false,
   });
 
   /// True for real authenticated users (not guests).
@@ -24,18 +26,22 @@ class AuthState {
   /// True if the user has been granted browse-only guest access.
   bool get hasAccess => isAuthenticated || isGuest;
 
+  bool get hasConsent => hasAcceptedTerms || (session?.termsAccepted ?? false);
+
   AuthState copyWith({
     UserSession? session,
     bool? isLoading,
     String? error,
     bool clearError = false,
     bool? isGuest,
+    bool? hasAcceptedTerms,
   }) {
     return AuthState(
       session: session ?? this.session,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
       isGuest: isGuest ?? this.isGuest,
+      hasAcceptedTerms: hasAcceptedTerms ?? this.hasAcceptedTerms,
     );
   }
 }
@@ -52,7 +58,13 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final repo = ref.read(authRepositoryProvider);
       final session = await repo.getCurrentSession();
-      state = AuthState(session: session, isLoading: false);
+      final hasAcceptedTerms = await SessionStorageService.instance
+          .hasAcceptedTerms();
+      state = AuthState(
+        session: session,
+        isLoading: false,
+        hasAcceptedTerms: hasAcceptedTerms,
+      );
     } catch (e) {
       state = AuthState(isLoading: false, error: e.toString());
     }
@@ -153,12 +165,36 @@ class AuthNotifier extends Notifier<AuthState> {
     );
   }
 
-  /// Called when admin approves an agent's KYC — immediately unlocks the dashboard.
-  void updateSessionKycStatus({required bool isVerified}) {
+  /// Keeps the locally cached verification state aligned with the server.
+  Future<void> updateSessionKycStatus({
+    required bool isVerified,
+    String? kycStatus,
+  }) async {
     final current = state.session;
     if (current == null) return;
+    final updated = current.copyWith(
+      isKycVerified: isVerified,
+      kycStatus: kycStatus,
+    );
+    await SessionStorageService.instance.saveSession(updated);
     state = state.copyWith(
-      session: current.copyWith(isKycVerified: isVerified),
+      session: updated,
+    );
+  }
+
+  void markTermsAcceptedLocally() {
+    state = state.copyWith(hasAcceptedTerms: true);
+  }
+
+  void markTermsAccepted() {
+    final current = state.session;
+    if (current == null) {
+      markTermsAcceptedLocally();
+      return;
+    }
+    state = state.copyWith(
+      session: current.copyWith(termsAccepted: true),
+      hasAcceptedTerms: true,
     );
   }
 }

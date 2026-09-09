@@ -1,10 +1,10 @@
-# Space Rentals 🏠
+# Space Rentals
 
 Space Rentals is a comprehensive **property rental platform** connecting **Tenants**, **Landlords**, **Field Agents**, and **Administrators** in Cameroon (and beyond). It features a Flutter-based cross-platform mobile application and a Node.js/Express backend API.
 
 ---
 
-## 🎯 Architecture
+## Architecture
 
 The platform is split into two primary components:
 
@@ -16,15 +16,15 @@ The platform is split into two primary components:
 
 ---
 
-## 🚀 Features by Role (MVP)
+## Features by Role (MVP)
 
-### 👥 Tenants
+### Tenants
 - **Register & Verify:** Basic identity verification.
 - **Browse & Search:** Find available, verified properties.
 - **Apply & Track:** Submit rental applications and track their progress through the state machine.
 - **Lease & Rent:** Sign leases and enter active rentals.
 
-### 🏢 Landlords
+### Landlords
 - **Register & Verify:** Identity and ownership authority verification.
 - **Subscribe:** Pay the monthly platform subscription.
 - **List Properties:** Create property listings and get them verified by Field Agents.
@@ -32,14 +32,14 @@ The platform is split into two primary components:
 - **Lease & Rent:** Sign leases and collect rent directly from tenants.
 - **Platform Fees:** Pay the Space success fee once a rental becomes active.
 
-### 🕵️ Field Agents
+### Field Agents
 - **Register & Verify:** Full KYC verification and Admin approval.
 - **Property Acquisition:** Submit properties on behalf of landlords.
 - **Property Verification:** Perform on-the-ground physical verifications.
 - **Earn Commissions:** Track attributed properties and earn commissions (e.g., 2,000 FCFA) per **successfully rented** property acquired by the agent.
 - **Withdrawals:** Withdraw eligible commissions via Mobile Money.
 
-### 🛡️ Administrators
+### Administrators
 - **KYC & Verification:** Review and approve different tiers of user verification.
 - **Dispute Resolution:** Handle disputes between landlords and tenants.
 - **Financial Oversight:** Monitor payments, subscriptions, commissions, and agent wallets via the immutable ledger.
@@ -47,7 +47,7 @@ The platform is split into two primary components:
 
 ---
 
-## 💻 Tech Stack
+## Tech Stack
 
 ### Frontend (Flutter)
 *   **Framework:** Flutter (Dart)
@@ -65,7 +65,7 @@ The platform is split into two primary components:
 
 ---
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### 1. Running the Node.js Backend
 
@@ -110,7 +110,7 @@ The platform is split into two primary components:
 
 ---
 
-## 💰 Unit Economics & Business Model
+## Unit Economics & Business Model
 
 Space Rentals generates revenue through platform fees rather than taking a percentage of the actual rent. 
 
@@ -127,7 +127,7 @@ Commissions (e.g., 2,000 FCFA for property acquisition) become eligible for payo
 
 ---
 
-## 🤝 Core Domain State Machines
+## Core Domain State Machines
 
 The backend enforces strict state transitions. Examples include:
 

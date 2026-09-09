@@ -17,7 +17,7 @@ class AdminAgentsScreen extends ConsumerWidget {
     final transactions = ref.watch(agentTransactionsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'Manage Agents',

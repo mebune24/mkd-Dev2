@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, optionalAuthenticate, requireLandlord } from '../middleware/authMiddleware';
+import { authenticate, optionalAuthenticate, requireVerifiedLandlord } from '../middleware/authMiddleware';
 import {
   getProperties,
   getMyProperties,
@@ -38,12 +38,12 @@ router.post('/:id/like', authenticate, togglePropertyLike);
 router.post('/:id/reshare', authenticate, togglePropertyReshare);
 
 // Protected — Landlord
-router.post('/', authenticate, requireLandlord, validateRequest(createPropertySchema), createProperty);
-router.patch('/:id',                      authenticate, requireLandlord, updateProperty);
-router.delete('/:id',                     authenticate, requireLandlord, deleteProperty);
-router.patch('/:id/publish',              authenticate, requireLandlord, publishProperty);
-router.patch('/:id/unpublish',            authenticate, requireLandlord, unpublishProperty);
-router.patch('/:id/confirm-availability', authenticate, requireLandlord, confirmAvailability);
-router.post('/:id/boost',                 authenticate, requireLandlord, boostProperty);
+router.post('/', authenticate, requireVerifiedLandlord, validateRequest(createPropertySchema), createProperty);
+router.patch('/:id',                      authenticate, requireVerifiedLandlord, updateProperty);
+router.delete('/:id',                     authenticate, requireVerifiedLandlord, deleteProperty);
+router.patch('/:id/publish',              authenticate, requireVerifiedLandlord, publishProperty);
+router.patch('/:id/unpublish',            authenticate, requireVerifiedLandlord, unpublishProperty);
+router.patch('/:id/confirm-availability', authenticate, requireVerifiedLandlord, confirmAvailability);
+router.post('/:id/boost',                 authenticate, requireVerifiedLandlord, boostProperty);
 
 export default router;

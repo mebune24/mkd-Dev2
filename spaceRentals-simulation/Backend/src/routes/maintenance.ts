@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/authMiddleware';
+import { authenticate, requireLandlordVerificationIfApplicable } from '../middleware/authMiddleware';
 import {
   createMaintenanceRequest,
   getMaintenanceRequests,
@@ -8,7 +8,7 @@ import {
 } from '../controllers/maintenanceController';
 
 const router = Router();
-router.use(authenticate);
+router.use(authenticate, requireLandlordVerificationIfApplicable);
 
 router.post('/',     createMaintenanceRequest);
 router.get('/',      getMaintenanceRequests);

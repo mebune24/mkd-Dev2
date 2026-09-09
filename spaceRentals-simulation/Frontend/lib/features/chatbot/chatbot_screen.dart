@@ -22,105 +22,105 @@ class _SpaceRentalsAI {
     // --- Greetings ---
     if (_matches(q, ['hello', 'hi', 'hey', 'bonjour', 'salut', 'bonsoir'])) {
       return isFr
-          ? '👋 Bonjour ! Je suis **SpaceBot**, l\'assistant IA de SpaceRentals. Je peux vous aider avec :\n\n• Trouver des propriétés\n• Comprendre le processus de location\n• Informations sur les paiements\n• Procédure KYC pour propriétaires\n• Et bien plus encore!\n\nQue puis-je faire pour vous aujourd\'hui ?'
-          : '👋 Hello! I\'m **SpaceBot**, the SpaceRentals AI assistant. I can help you with:\n\n• Finding properties\n• Understanding the rental process\n• Payment information\n• KYC process for landlords\n• And much more!\n\nWhat can I help you with today?';
+          ? 'Bonjour ! Je suis **SpaceBot**, l\'assistant IA de SpaceRentals. Je peux vous aider avec :\n\nTrouver des proprits\nComprendre le processus de location\nInformations sur les paiements\nProcdure KYC pour propritaires\nEt bien plus encore!\n\nQue puis-je faire pour vous aujourd\'hui ?'
+          : 'Hello! I\'m **SpaceBot**, the SpaceRentals AI assistant. I can help you with:\n\nFinding properties\nUnderstanding the rental process\nPayment information\nKYC process for landlords\nAnd much more!\n\nWhat can I help you with today?';
     }
 
     // --- Properties ---
-    if (_matches(q, ['property', 'properties', 'house', 'apartment', 'villa', 'studio', 'propriété', 'maison', 'appartement', 'find', 'search', 'chercher', 'trouver'])) {
+    if (_matches(q, ['property', 'properties', 'house', 'apartment', 'villa', 'studio', 'proprit', 'maison', 'appartement', 'find', 'search', 'chercher', 'trouver'])) {
       return isFr
-          ? '🏠 **Trouver une Propriété**\n\nSpaceRentals propose des milliers de propriétés au Cameroun, notamment à :\n• **Yaoundé** – Bastos, Nlongkak, Melen, Omnisports\n• **Douala** – Bonanjo, Akwa, Bonapriso\n\n**Types disponibles :**\n✅ Appartements\n✅ Studios\n✅ Villas\n✅ Maisons individuelles\n✅ Logements étudiants\n✅ Bureaux commerciaux\n\nUtilisez la barre de recherche en haut ou le filtre de catégorie pour trouver exactement ce dont vous avez besoin !'
-          : '🏠 **Finding a Property**\n\nSpaceRentals lists thousands of properties across Cameroon, including in:\n• **Yaoundé** – Bastos, Nlongkak, Melen, Omnisports\n• **Douala** – Bonanjo, Akwa, Bonapriso\n\n**Available types:**\n✅ Apartments\n✅ Studios\n✅ Villas\n✅ Houses\n✅ Student Housing\n✅ Commercial Offices\n\nUse the search bar at the top or the category filter to find exactly what you need!';
+          ? '**Trouver une Proprit**\n\nSpaceRentals propose des milliers de proprits au Cameroun, notamment :\n**Yaound** Bastos, Nlongkak, Melen, Omnisports\n**Douala** Bonanjo, Akwa, Bonapriso\n\n**Types disponibles :**\nAppartements\nStudios\nVillas\nMaisons individuelles\nLogements tudiants\nBureaux commerciaux\n\nUtilisez la barre de recherche en haut ou le filtre de catgorie pour trouver exactement ce dont vous avez besoin !'
+          : '**Finding a Property**\n\nSpaceRentals lists thousands of properties across Cameroon, including in:\n**Yaound** Bastos, Nlongkak, Melen, Omnisports\n**Douala** Bonanjo, Akwa, Bonapriso\n\n**Available types:**\nApartments\nStudios\nVillas\nHouses\nStudent Housing\nCommercial Offices\n\nUse the search bar at the top or the category filter to find exactly what you need!';
     }
 
     // --- Rent / Payment ---
     if (_matches(q, ['pay', 'payment', 'rent', 'payer', 'paiement', 'loyer', 'mtn', 'orange', 'momo', 'bank', 'visa', 'mastercard'])) {
       return isFr
-          ? '💳 **Options de Paiement**\n\nSpaceRentals accepte plusieurs méthodes de paiement sécurisées :\n\n📱 **Mobile Money**\n• MTN Mobile Money\n• Orange Money\n\n🏦 **Carte Bancaire**\n• UBA Cameroun (Visa/Mastercard)\n• Afriland First Bank\n• Société Générale Cameroun\n• Ecobank\n• BICEC (Visa/GIMAC)\n\nPour payer votre loyer, allez dans **Mes Locations > Paiements** et choisissez votre méthode préférée. Les paiements sont sécurisés et confirmés en temps réel ✅'
-          : '💳 **Payment Options**\n\nSpaceRentals supports multiple secure payment methods:\n\n📱 **Mobile Money**\n• MTN Mobile Money\n• Orange Money\n\n🏦 **Bank Card**\n• UBA Cameroon (Visa/Mastercard)\n• Afriland First Bank\n• Société Générale Cameroun\n• Ecobank\n• BICEC (Visa/GIMAC)\n\nTo pay your rent, go to **My Rentals > Payments** and choose your preferred method. Payments are secured and confirmed in real time ✅';
+          ? '**Options de Paiement**\n\nSpaceRentals accepte plusieurs mthodes de paiement scurises :\n\n**Mobile Money**\nMTN Mobile Money\nOrange Money\n\n**Carte Bancaire**\nUBA Cameroun (Visa/Mastercard)\nAfriland First Bank\nSocitGnrale Cameroun\nEcobank\nBICEC (Visa/GIMAC)\n\nPour payer votre loyer, allez dans **Mes Locations > Paiements** et choisissez votre mthode prfre. Les paiements sont scuriss et confirms en temps rel '
+          : '**Payment Options**\n\nSpaceRentals supports multiple secure payment methods:\n\n**Mobile Money**\nMTN Mobile Money\nOrange Money\n\n**Bank Card**\nUBA Cameroon (Visa/Mastercard)\nAfriland First Bank\nSocitGnrale Cameroun\nEcobank\nBICEC (Visa/GIMAC)\n\nTo pay your rent, go to **My Rentals > Payments** and choose your preferred method. Payments are secured and confirmed in real time ';
     }
 
     // --- KYC / Verification ---
-    if (_matches(q, ['kyc', 'verify', 'verification', 'document', 'vérification', 'verified', 'landlord verify', 'id', 'titre', 'foncier', 'premium'])) {
+    if (_matches(q, ['kyc', 'verify', 'verification', 'document', 'vrification', 'verified', 'landlord verify', 'id', 'titre', 'foncier', 'premium'])) {
       return isFr
-          ? '📋 **Vérification KYC pour Propriétaires**\n\nPour publier des propriétés sur SpaceRentals, les propriétaires doivent se vérifier. Il existe **2 niveaux** :\n\n🔵 **Basique**\n• Carte Nationale d\'Identité (CNI)\n• Document de propriété foncière\n\n⭐ **Premium (Propriétaire Certifié)**\n• Titre Foncier officiel\n• Plan de Situation certifié\n• CNI valide\n• Quittance de taxe foncière *(optionnel)*\n\nAprès soumission, l\'équipe d\'administration de SpaceRentals examine vos documents sous **24 à 48 heures**. Une fois approuvé, vous pouvez lister vos propriétés immédiatement !'
-          : '📋 **KYC Verification for Landlords**\n\nTo list properties on SpaceRentals, landlords must be verified. There are **2 tiers**:\n\n🔵 **Basic**\n• National ID Card (CNI)\n• Land property document\n\n⭐ **Premium (Certified Landlord)**\n• Official Land Title (Titre Foncier)\n• Certified Site Plan\n• Valid CNI\n• Property tax receipts *(optional)*\n\nAfter submission, the SpaceRentals admin team reviews your documents within **24-48 hours**. Once approved, you can list properties immediately!';
+          ? '**Vrification KYC pour Propritaires**\n\nPour publier des proprits sur SpaceRentals, les propritaires doivent se vrifier. Il existe **2 niveaux** :\n\n**Basique**\nCarte Nationale d\'Identit(CNI)\nDocument de propritfoncire\n\n**Premium (Propritaire Certifi)**\nTitre Foncier officiel\nPlan de Situation certifi\nCNI valide\nQuittance de taxe foncire *(optionnel)*\n\nAprs soumission, l\'quipe d\'administration de SpaceRentals examine vos documents sous **24 48 heures**. Une fois approuv, vous pouvez lister vos proprits immdiatement !'
+          : '**KYC Verification for Landlords**\n\nTo list properties on SpaceRentals, landlords must be verified. There are **2 tiers**:\n\n**Basic**\nNational ID Card (CNI)\nLand property document\n\n**Premium (Certified Landlord)**\nOfficial Land Title (Titre Foncier)\nCertified Site Plan\nValid CNI\nProperty tax receipts *(optional)*\n\nAfter submission, the SpaceRentals admin team reviews your documents within **24-48 hours**. Once approved, you can list properties immediately!';
     }
 
     // --- Rental Application ---
     if (_matches(q, ['apply', 'application', 'how to rent', 'postuler', 'candidature', 'comment louer', 'how to apply'])) {
       return isFr
-          ? '📝 **Comment Postuler à une Location**\n\n**Étapes simples :**\n1. 🔍 Parcourez les propriétés disponibles sur l\'écran d\'accueil\n2. 🏠 Appuyez sur une propriété qui vous intéresse\n3. 📋 Consultez les détails, les photos et la localisation sur la carte\n4. ✅ Appuyez sur **"Postuler / Louer maintenant"**\n5. 📄 Remplissez le formulaire de candidature\n6. ⏳ Attendez la confirmation du propriétaire\n7. 📜 Signez l\'accord de location numérique\n\n⚠️ **Important :** Vous devez avoir un compte locataire pour postuler.'
-          : '📝 **How to Apply for a Rental**\n\n**Simple steps:**\n1. 🔍 Browse available properties on the home screen\n2. 🏠 Tap a property you\'re interested in\n3. 📋 Review details, photos and map location\n4. ✅ Tap **"Apply / Rent Now"**\n5. 📄 Fill out the rental application form\n6. ⏳ Await landlord confirmation\n7. 📜 Sign the digital rental agreement\n\n⚠️ **Important:** You need a tenant account to apply.';
+          ? '**Comment Postuler une Location**\n\n**tapes simples :**\n1. Parcourez les proprits disponibles sur l\'cran d\'accueil\n2. Appuyez sur une propritqui vous intresse\n3. Consultez les dtails, les photos et la localisation sur la carte\n4. Appuyez sur **"Postuler / Louer maintenant"**\n5. Remplissez le formulaire de candidature\n6. Attendez la confirmation du propritaire\n7. Signez l\'accord de location numrique\n\n**Important :** Vous devez avoir un compte locataire pour postuler.'
+          : '**How to Apply for a Rental**\n\n**Simple steps:**\n1. Browse available properties on the home screen\n2. Tap a property you\'re interested in\n3. Review details, photos and map location\n4. Tap **"Apply / Rent Now"**\n5. Fill out the rental application form\n6. Await landlord confirmation\n7. Sign the digital rental agreement\n\n**Important:** You need a tenant account to apply.';
     }
 
     // --- RNLP ---
     if (_matches(q, ['rnlp', 'deposit', 'financing', 'caution', 'financement', 'advance', 'avance'])) {
       return isFr
-          ? '🏦 **RNLP – Financement de Caution**\n\nLe **Régime National de Location de Propriété (RNLP)** est un programme unique de SpaceRentals qui aide les locataires à financer leur caution locative.\n\n**Comment ça marche :**\n• SpaceRentals paie la caution en votre nom\n• Vous remboursez en **mensualités flexibles**\n• Aucun refus d\'appartement à cause d\'un manque de caution\n\nAccédez au RNLP depuis **Mes Locations > Financement RNLP** dans votre tableau de bord.'
-          : '🏦 **RNLP – Deposit Financing**\n\nThe **Rental Neutral Loan Program (RNLP)** is a unique SpaceRentals program that helps tenants finance their rental deposit.\n\n**How it works:**\n• SpaceRentals pays the deposit on your behalf\n• You repay in **flexible monthly installments**\n• No more losing apartments due to lack of deposit funds\n\nAccess RNLP from **My Rentals > RNLP Financing** in your dashboard.';
+          ? '**RNLP Financement de Caution**\n\nLe **Rgime National de Location de Proprit(RNLP)** est un programme unique de SpaceRentals qui aide les locataires financer leur caution locative.\n\n**Comment a marche :**\nSpaceRentals paie la caution en votre nom\nVous remboursez en **mensualits flexibles**\nAucun refus d\'appartement cause d\'un manque de caution\n\nAccdez au RNLP depuis **Mes Locations > Financement RNLP** dans votre tableau de bord.'
+          : '**RNLP Deposit Financing**\n\nThe **Rental Neutral Loan Program (RNLP)** is a unique SpaceRentals program that helps tenants finance their rental deposit.\n\n**How it works:**\nSpaceRentals pays the deposit on your behalf\nYou repay in **flexible monthly installments**\nNo more losing apartments due to lack of deposit funds\n\nAccess RNLP from **My Rentals > RNLP Financing** in your dashboard.';
     }
 
     // --- Maintenance ---
-    if (_matches(q, ['maintenance', 'repair', 'fix', 'broken', 'réparation', 'service', 'plumbing', 'electric', 'electricité', 'panne'])) {
+    if (_matches(q, ['maintenance', 'repair', 'fix', 'broken', 'rparation', 'service', 'plumbing', 'electric', 'electricit', 'panne'])) {
       return isFr
-          ? '🔧 **Maintenance & Services**\n\nEn tant que locataire, vous pouvez soumettre des demandes de maintenance directement depuis l\'application !\n\n**Types de services :**\n• 🪛 Réparations générales\n• 🔌 Problèmes électriques\n• 🚿 Problèmes de plomberie\n• 🎨 Peinture et rénovation\n• ❄️ Climatisation\n• 🌿 Jardinage\n\n**Comment soumettre :**\nAllez dans **Mes Locations > Maintenance & Services**, décrivez le problème et soumettez. Le propriétaire sera notifié immédiatement.'
-          : '🔧 **Maintenance & Services**\n\nAs a tenant, you can submit maintenance requests directly from the app!\n\n**Types of services:**\n• 🪛 General repairs\n• 🔌 Electrical issues\n• 🚿 Plumbing problems\n• 🎨 Painting & renovation\n• ❄️ Air conditioning\n• 🌿 Gardening\n\n**How to submit:**\nGo to **My Rentals > Maintenance & Services**, describe the problem and submit. The landlord will be notified immediately.';
+          ? '**Maintenance & Services**\n\nEn tant que locataire, vous pouvez soumettre des demandes de maintenance directement depuis l\'application !\n\n**Types de services :**\nRparations gnrales\nProblmes lectriques\nProblmes de plomberie\nPeinture et rnovation\nClimatisation\nJardinage\n\n**Comment soumettre :**\nAllez dans **Mes Locations > Maintenance & Services**, dcrivez le problme et soumettez. Le propritaire sera notifiimmdiatement.'
+          : '**Maintenance & Services**\n\nAs a tenant, you can submit maintenance requests directly from the app!\n\n**Types of services:**\nGeneral repairs\nElectrical issues\nPlumbing problems\nPainting & renovation\nAir conditioning\nGardening\n\n**How to submit:**\nGo to **My Rentals > Maintenance & Services**, describe the problem and submit. The landlord will be notified immediately.';
     }
 
     // --- Account / Register ---
-    if (_matches(q, ['account', 'register', 'sign up', 'create', 'compte', 'inscription', 'créer'])) {
+    if (_matches(q, ['account', 'register', 'sign up', 'create', 'compte', 'inscription', 'crer'])) {
       return isFr
-          ? '👤 **Créer un Compte**\n\nSpaceRentals propose deux types de comptes :\n\n🏡 **Locataire**\n• Parcourir et postuler aux propriétés\n• Gérer vos locations\n• Effectuer des paiements\n• Accès RNLP\n\n🏗️ **Propriétaire**\n• Publier vos propriétés\n• Gérer vos locataires\n• Suivre les paiements\n• Vérification KYC obligatoire\n\n**Mot de passe requis :** 8 caractères minimum, une majuscule, un chiffre et un caractère spécial (!@#\$&*~).'
-          : '👤 **Creating an Account**\n\nSpaceRentals offers two account types:\n\n🏡 **Tenant**\n• Browse and apply for properties\n• Manage your rentals\n• Make payments\n• RNLP access\n\n🏗️ **Landlord**\n• List your properties\n• Manage your tenants\n• Track payments\n• Mandatory KYC verification\n\n**Password requirement:** Minimum 8 characters, one uppercase letter, one number, and one special character (!@#\$&*~).';
+          ? '**Crer un Compte**\n\nSpaceRentals propose deux types de comptes :\n\n**Locataire**\nParcourir et postuler aux proprits\nGrer vos locations\nEffectuer des paiements\nAccs RNLP\n\n**Propritaire**\nPublier vos proprits\nGrer vos locataires\nSuivre les paiements\nVrification KYC obligatoire\n\n**Mot de passe requis :** 8 caractres minimum, une majuscule, un chiffre et un caractre spcial (!@#\$&*~).'
+          : '**Creating an Account**\n\nSpaceRentals offers two account types:\n\n**Tenant**\nBrowse and apply for properties\nManage your rentals\nMake payments\nRNLP access\n\n**Landlord**\nList your properties\nManage your tenants\nTrack payments\nMandatory KYC verification\n\n**Password requirement:** Minimum 8 characters, one uppercase letter, one number, and one special character (!@#\$&*~).';
     }
 
     // --- Price / Cost ---
     if (_matches(q, ['price', 'cost', 'how much', 'fcfa', 'cfa', 'prix', 'combien', 'tarif', 'cheap', 'affordable', 'budget'])) {
       return isFr
-          ? '💰 **Gamme de Prix**\n\nLes propriétés sur SpaceRentals couvrent tous les budgets :\n\n| Type | Fourchette Mensuelle |\n|---|---|\n| Studio | 25 000 – 80 000 FCFA |\n| Appartement 2P | 80 000 – 200 000 FCFA |\n| Appartement 3P | 150 000 – 350 000 FCFA |\n| Villa | 300 000 – 1 000 000+ FCFA |\n| Logement Étudiant | 20 000 – 60 000 FCFA |\n\nUtilisez les filtres de prix sur la page de recherche pour affiner votre budget !'
-          : '💰 **Price Range**\n\nProperties on SpaceRentals cover all budgets:\n\n| Type | Monthly Range |\n|---|---|\n| Studio | 25,000 – 80,000 FCFA |\n| 2-Bedroom Apt | 80,000 – 200,000 FCFA |\n| 3-Bedroom Apt | 150,000 – 350,000 FCFA |\n| Villa | 300,000 – 1,000,000+ FCFA |\n| Student Housing | 20,000 – 60,000 FCFA |\n\nUse the price filters on the search page to narrow down your budget!';
+          ? '**Gamme de Prix**\n\nLes proprits sur SpaceRentals couvrent tous les budgets :\n\n| Type | Fourchette Mensuelle |\n|---|---|\n| Studio | 25 000 80 000 FCFA |\n| Appartement 2P | 80 000 200 000 FCFA |\n| Appartement 3P | 150 000 350 000 FCFA |\n| Villa | 300 000 1 000 000+ FCFA |\n| Logement tudiant | 20 000 60 000 FCFA |\n\nUtilisez les filtres de prix sur la page de recherche pour affiner votre budget !'
+          : '**Price Range**\n\nProperties on SpaceRentals cover all budgets:\n\n| Type | Monthly Range |\n|---|---|\n| Studio | 25,000 80,000 FCFA |\n| 2-Bedroom Apt | 80,000 200,000 FCFA |\n| 3-Bedroom Apt | 150,000 350,000 FCFA |\n| Villa | 300,000 1,000,000+ FCFA |\n| Student Housing | 20,000 60,000 FCFA |\n\nUse the price filters on the search page to narrow down your budget!';
     }
 
     // --- Landlord listing properties ---
-    if (_matches(q, ['add property', 'list property', 'post property', 'ajouter propriété', 'publier', 'listing', 'how to list'])) {
+    if (_matches(q, ['add property', 'list property', 'post property', 'ajouter proprit', 'publier', 'listing', 'how to list'])) {
       return isFr
-          ? '🏗️ **Comment Publier une Propriété**\n\n**Prérequis :**\n✅ Compte propriétaire créé\n✅ Vérification KYC approuvée par l\'admin\n\n**Étapes :**\n1. Connectez-vous à votre tableau de bord propriétaire\n2. Appuyez sur l\'icône **"+"** dans l\'onglet Propriétés\n3. Remplissez les détails : titre, description, prix, localisation\n4. Ajoutez des photos de haute qualité\n5. Définissez les commodités disponibles\n6. Publiez et attendez les candidatures !\n\n💡 **Conseil :** Les propriétés avec plus de 5 photos reçoivent 3× plus de candidatures !'
-          : '🏗️ **How to List a Property**\n\n**Requirements:**\n✅ Landlord account created\n✅ KYC verification approved by admin\n\n**Steps:**\n1. Log in to your landlord dashboard\n2. Tap the **"+"** icon on the Properties tab\n3. Fill in details: title, description, price, location\n4. Add high-quality photos\n5. Set available amenities\n6. Publish and wait for applications!\n\n💡 **Tip:** Properties with 5+ photos get 3× more applications!';
+          ? '**Comment Publier une Proprit**\n\n**Prrequis :**\nCompte propritaire cr\nVrification KYC approuve par l\'admin\n\n**tapes :**\n1. Connectez-vous votre tableau de bord propritaire\n2. Appuyez sur l\'icne **"+"** dans l\'onglet Proprits\n3. Remplissez les dtails : titre, description, prix, localisation\n4. Ajoutez des photos de haute qualit\n5. Dfinissez les commodits disponibles\n6. Publiez et attendez les candidatures !\n\n**Conseil :** Les proprits avec plus de 5 photos reoivent 3plus de candidatures !'
+          : '**How to List a Property**\n\n**Requirements:**\nLandlord account created\nKYC verification approved by admin\n\n**Steps:**\n1. Log in to your landlord dashboard\n2. Tap the **"+"** icon on the Properties tab\n3. Fill in details: title, description, price, location\n4. Add high-quality photos\n5. Set available amenities\n6. Publish and wait for applications!\n\n**Tip:** Properties with 5+ photos get 3more applications!';
     }
 
     // --- Admin ---
     if (_matches(q, ['admin', 'administrator', 'administrateur', 'approve', 'approuver'])) {
       return isFr
-          ? '🛡️ **Rôle Administrateur**\n\nLes administrateurs de SpaceRentals gèrent la plateforme et peuvent :\n\n• ✅ Approuver / rejeter les demandes KYC des propriétaires\n• 👥 Gérer tous les utilisateurs (locataires et propriétaires)\n• 📊 Surveiller les transactions de la plateforme\n• ➕ Ajouter d\'autres administrateurs\n• 🗑️ Supprimer les comptes de test\n\nSeuls les administrateurs autorisés peuvent se connecter via le portail admin. Si vous pensez qu\'une propriété est frauduleuse, signalez-la depuis la page détaillée de la propriété.'
-          : '🛡️ **Administrator Role**\n\nSpaceRentals admins manage the platform and can:\n\n• ✅ Approve / reject landlord KYC requests\n• 👥 Manage all users (tenants & landlords)\n• 📊 Monitor platform transactions\n• ➕ Add other administrators\n• 🗑️ Remove test accounts\n\nOnly authorized admins can log in via the admin portal. If you believe a property is fraudulent, report it from the property\'s detail page.';
+          ? '**Rle Administrateur**\n\nLes administrateurs de SpaceRentals grent la plateforme et peuvent :\n\nApprouver / rejeter les demandes KYC des propritaires\nGrer tous les utilisateurs (locataires et propritaires)\nSurveiller les transactions de la plateforme\nAjouter d\'autres administrateurs\nSupprimer les comptes de test\n\nSeuls les administrateurs autoriss peuvent se connecter via le portail admin. Si vous pensez qu\'une propritest frauduleuse, signalez-la depuis la page dtaille de la proprit.'
+          : '**Administrator Role**\n\nSpaceRentals admins manage the platform and can:\n\nApprove / reject landlord KYC requests\nManage all users (tenants & landlords)\nMonitor platform transactions\nAdd other administrators\nRemove test accounts\n\nOnly authorized admins can log in via the admin portal. If you believe a property is fraudulent, report it from the property\'s detail page.';
     }
 
     // --- Favorites ---
     if (_matches(q, ['favorite', 'save', 'wishlist', 'favoris', 'sauvegarder', 'liked', 'bookmark'])) {
       return isFr
-          ? '❤️ **Favoris**\n\nVous pouvez sauvegarder vos propriétés préférées en appuyant sur l\'icône **cœur** sur la page de détails de la propriété ou sur les cartes de propriété.\n\nAccédez à tous vos favoris dans l\'onglet **❤️ Favoris** de la barre de navigation inférieure.\n\nVos favoris sont sauvegardés localement sur votre appareil et ne seront pas perdus si vous fermez l\'application.'
-          : '❤️ **Favorites**\n\nYou can save your favorite properties by tapping the **heart icon** on the property detail page or on property cards.\n\nAccess all your saved properties in the **❤️ Favorites** tab in the bottom navigation bar.\n\nYour favorites are saved locally on your device and won\'t be lost when you close the app.';
+          ? '**Favoris**\n\nVous pouvez sauvegarder vos proprits prfres en appuyant sur l\'icne **cur** sur la page de dtails de la propritou sur les cartes de proprit.\n\nAccdez tous vos favoris dans l\'onglet **Favoris** de la barre de navigation infrieure.\n\nVos favoris sont sauvegards localement sur votre appareil et ne seront pas perdus si vous fermez l\'application.'
+          : '**Favorites**\n\nYou can save your favorite properties by tapping the **heart icon** on the property detail page or on property cards.\n\nAccess all your saved properties in the **Favorites** tab in the bottom navigation bar.\n\nYour favorites are saved locally on your device and won\'t be lost when you close the app.';
     }
 
     // --- Password ---
-    if (_matches(q, ['password', 'mot de passe', 'forgot', 'oublié', 'reset', 'réinitialiser'])) {
+    if (_matches(q, ['password', 'mot de passe', 'forgot', 'oubli', 'reset', 'rinitialiser'])) {
       return isFr
-          ? '🔐 **Mot de Passe**\n\n**Politique de sécurité :**\nVotre mot de passe doit contenir :\n• Au moins **8 caractères**\n• Une **lettre majuscule**\n• Un **chiffre**\n• Un **caractère spécial** (!@#\$&*~)\n\n**Mot de passe oublié ?**\nSur l\'écran de connexion, appuyez sur **"Mot de passe oublié?"** et suivez les instructions pour réinitialiser votre mot de passe via email.'
-          : '🔐 **Password**\n\n**Security policy:**\nYour password must contain:\n• At least **8 characters**\n• One **uppercase letter**\n• One **number**\n• One **special character** (!@#\$&*~)\n\n**Forgot your password?**\nOn the login screen, tap **"Forgot password?"** and follow the instructions to reset your password via email.';
+          ? '**Mot de Passe**\n\n**Politique de scurit:**\nVotre mot de passe doit contenir :\nAu moins **8 caractres**\nUne **lettre majuscule**\nUn **chiffre**\nUn **caractre spcial** (!@#\$&*~)\n\n**Mot de passe oubli?**\nSur l\'cran de connexion, appuyez sur **"Mot de passe oubli?"** et suivez les instructions pour rinitialiser votre mot de passe via email.'
+          : '**Password**\n\n**Security policy:**\nYour password must contain:\nAt least **8 characters**\nOne **uppercase letter**\nOne **number**\nOne **special character** (!@#\$&*~)\n\n**Forgot your password?**\nOn the login screen, tap **"Forgot password?"** and follow the instructions to reset your password via email.';
     }
 
     // --- Help / What can you do ---
     if (_matches(q, ['help', 'what can you do', 'aide', 'que peux-tu faire', 'capabilities', 'functions', 'features'])) {
       return isFr
-          ? '🤖 **Ce que je peux faire**\n\nJe suis SpaceBot, votre assistant IA pour SpaceRentals. Posez-moi des questions sur :\n\n🏠 **Propriétés** — trouver, filtrer, catégories\n💳 **Paiements** — MTN MoMo, Orange, cartes bancaires\n📋 **KYC** — vérification propriétaire, documents requis\n📝 **Location** — comment postuler, conditions\n🏦 **RNLP** — financement de caution\n🔧 **Maintenance** — soumettre des demandes\n👤 **Comptes** — inscription, mot de passe, rôles\n🛡️ **Admin** — approbations, gestion\n❤️ **Favoris** — sauvegarder des propriétés\n\nTapez simplement votre question en français ou en anglais !'
-          : '🤖 **What I can do**\n\nI\'m SpaceBot, your AI assistant for SpaceRentals. Ask me about:\n\n🏠 **Properties** — finding, filtering, categories\n💳 **Payments** — MTN MoMo, Orange, bank cards\n📋 **KYC** — landlord verification, required documents\n📝 **Renting** — how to apply, terms\n🏦 **RNLP** — deposit financing\n🔧 **Maintenance** — submitting requests\n👤 **Accounts** — registration, password, roles\n🛡️ **Admin** — approvals, management\n❤️ **Favorites** — saving properties\n\nJust type your question in English or French!';
+          ? '**Ce que je peux faire**\n\nJe suis SpaceBot, votre assistant IA pour SpaceRentals. Posez-moi des questions sur :\n\n**Proprits** trouver, filtrer, catgories\n**Paiements** MTN MoMo, Orange, cartes bancaires\n**KYC** vrification propritaire, documents requis\n**Location** comment postuler, conditions\n**RNLP** financement de caution\n**Maintenance** soumettre des demandes\n**Comptes** inscription, mot de passe, rles\n**Admin** approbations, gestion\n**Favoris** sauvegarder des proprits\n\nTapez simplement votre question en franais ou en anglais !'
+          : '**What I can do**\n\nI\'m SpaceBot, your AI assistant for SpaceRentals. Ask me about:\n\n**Properties** finding, filtering, categories\n**Payments** MTN MoMo, Orange, bank cards\n**KYC** landlord verification, required documents\n**Renting** how to apply, terms\n**RNLP** deposit financing\n**Maintenance** submitting requests\n**Accounts** registration, password, roles\n**Admin** approvals, management\n**Favorites** saving properties\n\nJust type your question in English or French!';
     }
 
     // --- Default fallback ---
     return isFr
-        ? '🤔 Je ne suis pas sûr de comprendre votre question. Essayez de demander :\n\n• "Comment trouver un appartement?"\n• "Comment payer mon loyer?"\n• "Quels documents KYC sont requis?"\n• "Comment ajouter une propriété?"\n• "Qu\'est-ce que le RNLP?"\n\nOu tapez **"aide"** pour voir toutes mes fonctionnalités !'
-        : '🤔 I\'m not sure I understood your question. Try asking:\n\n• "How do I find an apartment?"\n• "How do I pay my rent?"\n• "What KYC documents are required?"\n• "How do I list a property?"\n• "What is RNLP?"\n\nOr type **"help"** to see all my capabilities!';
+        ? 'Je ne suis pas sr de comprendre votre question. Essayez de demander :\n\n"Comment trouver un appartement?"\n"Comment payer mon loyer?"\n"Quels documents KYC sont requis?"\n"Comment ajouter une proprit?"\n"Qu\'est-ce que le RNLP?"\n\nOu tapez **"aide"** pour voir toutes mes fonctionnalits !'
+        : 'I\'m not sure I understood your question. Try asking:\n\n"How do I find an apartment?"\n"How do I pay my rent?"\n"What KYC documents are required?"\n"How do I list a property?"\n"What is RNLP?"\n\nOr type **"help"** to see all my capabilities!';
   }
 
   bool _matches(String input, List<String> keywords) {
@@ -157,8 +157,8 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
     // Add welcome message
     _messages.add(ChatMessage(
       text: isFr
-          ? '👋 Bonjour ! Je suis **SpaceBot**, votre assistant IA de SpaceRentals. Comment puis-je vous aider aujourd\'hui ?'
-          : '👋 Hello! I\'m **SpaceBot**, your SpaceRentals AI assistant. How can I help you today?',
+          ? 'Bonjour ! Je suis **SpaceBot**, votre assistant IA de SpaceRentals. Comment puis-je vous aider aujourd\'hui ?'
+          : 'Hello! I\'m **SpaceBot**, your SpaceRentals AI assistant. How can I help you today?',
       isUser: false,
       time: DateTime.now(),
     ));
@@ -244,7 +244,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isFr ? 'En ligne · Assistant IA' : 'Online · AI Assistant',
+                      isFr ? 'En ligne Assistant IA' : 'Online AI Assistant',
                       style: const TextStyle(fontSize: 11, color: Colors.grey),
                     ),
                   ],
