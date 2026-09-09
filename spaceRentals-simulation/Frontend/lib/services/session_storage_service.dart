@@ -25,6 +25,8 @@ class SessionStorageService {
   SessionStorageService._();
   static final SessionStorageService instance = SessionStorageService._();
 
+  static const currentTermsVersion = '2026-09-09';
+
   static const String termsAcceptedVersionKey =
       'spacerentals_terms_accepted_version';
 
@@ -131,7 +133,8 @@ class SessionStorageService {
             prefs.getBool(_prefKey(uid, 'pushNotificationsEnabled')) ?? true,
         termsAccepted: prefs.getBool(_prefKey(uid, 'termsAccepted')) ?? false,
         isKycVerified: prefs.getBool(_prefKey(uid, 'isKycVerified')) ?? false,
-        kycStatus: prefs.getString(_prefKey(uid, 'kycStatus')) ?? 'not_submitted',
+        kycStatus:
+            prefs.getString(_prefKey(uid, 'kycStatus')) ?? 'not_submitted',
       );
     } catch (e) {
       // Corrupt storage — wipe and require fresh login
@@ -191,7 +194,7 @@ class SessionStorageService {
   Future<bool> hasAcceptedTerms() async {
     final prefs = await SharedPreferences.getInstance();
     final version = prefs.getString(termsAcceptedVersionKey);
-    return version != null && version.isNotEmpty;
+    return version == currentTermsVersion;
   }
 
   // ── CLEAR ─────────────────────────────────────────────────────────────────

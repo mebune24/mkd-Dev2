@@ -26,7 +26,12 @@ export const acceptTerms = async (req: AuthRequest, res: Response) => {
 // POST /api/auth/login
 export const login = async (req: Request, res: Response) => {
   try {
-    const result = await authService.login(req.body.email, req.body.password);
+    const result = await authService.login(
+      req.body.email,
+      req.body.password,
+      req.body.termsAccepted === true,
+      req.body.termsVersion,
+    );
     return res.json(result);
   } catch (err) { return handle(res, err); }
 };

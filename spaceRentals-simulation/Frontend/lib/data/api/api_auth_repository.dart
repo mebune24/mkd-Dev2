@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import '../../core/api/api_endpoints.dart';
 import '../../features/auth/domain/user_session.dart';
 import '../../features/auth/domain/user_profile.dart';
-import '../../core/api/api_client.dart';
 import '../../repositories/auth_repository.dart';
 import '../../services/session_storage_service.dart';
 import '../../shared/models/enums.dart';
@@ -14,10 +13,9 @@ import '../../shared/models/enums.dart';
 /// All successful auth calls persist the session to device storage via
 /// SessionStorageService so the user stays logged in across app restarts.
 class ApiAuthRepository implements AuthRepository {
-  final ApiClient _apiClient;
   UserSession? _cachedSession;
 
-  ApiAuthRepository(this._apiClient);
+  ApiAuthRepository();
   @override
   Future<UserSession?> getCurrentSession() async {
     // 1. Return in-memory cache if valid
@@ -44,7 +42,12 @@ class ApiAuthRepository implements AuthRepository {
         .post(
           Uri.parse(ApiEndpoints.signIn),
           headers: {'Content-Type': 'application/json'},
-          body: json.encode({'email': email, 'password': password}),
+          body: json.encode({
+            'email': email.trim().toLowerCase(),
+            'password': password,
+            'termsAccepted': true,
+            'termsVersion': SessionStorageService.currentTermsVersion,
+          }),
         )
         .timeout(const Duration(seconds: 10));
 
@@ -75,11 +78,11 @@ class ApiAuthRepository implements AuthRepository {
           headers: {'Content-Type': 'application/json'},
           body: json.encode({
             'name': name,
-            'email': email,
+            'email': email.trim().toLowerCase(),
             'password': password,
             'role': role.toLowerCase(),
             'termsAccepted': true,
-            'termsVersion': '2026-09-09',
+            'termsVersion': SessionStorageService.currentTermsVersion,
           }),
         )
         .timeout(const Duration(seconds: 10));

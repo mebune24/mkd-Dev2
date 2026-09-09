@@ -6,7 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/di_providers.dart';
 import '../../services/session_storage_service.dart';
 
-const currentTermsVersion = '2026-09-09';
+const currentTermsVersion = SessionStorageService.currentTermsVersion;
 const _localTermsKey = 'spacerentals_terms_accepted_version';
 
 class TermsScreen extends ConsumerStatefulWidget {

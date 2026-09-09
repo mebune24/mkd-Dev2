@@ -35,9 +35,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   void initState() {
     super.initState();
     _animController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900));
-    _fadeAnim =
-        CurvedAnimation(parent: _animController, curve: Curves.easeOut);
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
     _animController.forward();
   }
 
@@ -116,25 +117,31 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                       onTap: () => ref.read(localeProvider.notifier).toggle(),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3)),
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(isFr ? '🇫🇷' : '🇨🇲',
-                                style: const TextStyle(fontSize: 18)),
+                            Text(
+                              isFr ? '🇫🇷' : '🇨🇲',
+                              style: const TextStyle(fontSize: 18),
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               isFr ? 'FR' : 'EN',
                               style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12),
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -146,8 +153,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                     top: 50,
                     left: 16,
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new,
-                          color: Colors.white),
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new,
+                        color: Colors.white,
+                      ),
                       onPressed: () => context.go('/login'),
                     ),
                   ),
@@ -164,16 +173,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             width: 40,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.apartment_rounded, size: 40, color: Colors.white),
+                                const Icon(
+                                  Icons.apartment_rounded,
+                                  size: 40,
+                                  color: Colors.white,
+                                ),
                           ),
                         ),
                         const SizedBox(height: 10),
                         Text(
                           isFr ? 'Créer un compte' : 'Create Account',
                           style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold),
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -181,8 +195,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                               ? 'Rejoignez des milliers de locataires'
                               : 'Join thousands of happy renters',
                           style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontSize: 12),
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -207,7 +222,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         icon: Icons.person_outline,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return isFr ? 'Le nom est requis' : 'Name is required';
+                            return isFr
+                                ? 'Le nom est requis'
+                                : 'Name is required';
                           }
                           return null;
                         },
@@ -222,10 +239,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         type: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return isFr ? 'L\'email est requis' : 'Email is required';
+                            return isFr
+                                ? 'L\'email est requis'
+                                : 'Email is required';
                           }
                           if (!value.contains('@')) {
-                            return isFr ? 'Email invalide' : 'Invalid email format';
+                            return isFr
+                                ? 'Email invalide'
+                                : 'Invalid email format';
                           }
                           return null;
                         },
@@ -243,19 +264,29 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             setState(() => _obscurePass = !_obscurePass),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return isFr ? 'Le mot de passe est requis' : 'Password is required';
+                            return isFr
+                                ? 'Le mot de passe est requis'
+                                : 'Password is required';
                           }
                           if (value.length < 8) {
-                            return isFr ? 'Au moins 8 caractères' : 'Must be at least 8 characters';
+                            return isFr
+                                ? 'Au moins 8 caractères'
+                                : 'Must be at least 8 characters';
                           }
                           if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                            return isFr ? 'Doit contenir une majuscule' : 'Must contain an uppercase letter';
+                            return isFr
+                                ? 'Doit contenir une majuscule'
+                                : 'Must contain an uppercase letter';
                           }
                           if (!RegExp(r'[0-9]').hasMatch(value)) {
-                            return isFr ? 'Doit contenir un chiffre' : 'Must contain a number';
+                            return isFr
+                                ? 'Doit contenir un chiffre'
+                                : 'Must contain a number';
                           }
                           if (!RegExp(r'[!@#\$&*~]').hasMatch(value)) {
-                            return isFr ? 'Doit contenir un caractère spécial (!@#\$&*~)' : 'Must contain a special character (!@#\$&*~)';
+                            return isFr
+                                ? 'Doit contenir un caractère spécial (!@#\$&*~)'
+                                : 'Must contain a special character (!@#\$&*~)';
                           }
                           return null;
                         },
@@ -275,7 +306,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             setState(() => _obscureConfirm = !_obscureConfirm),
                         validator: (value) {
                           if (value != _passwordController.text) {
-                            return isFr ? 'Les mots de passe ne correspondent pas' : 'Passwords do not match';
+                            return isFr
+                                ? 'Les mots de passe ne correspondent pas'
+                                : 'Passwords do not match';
                           }
                           return null;
                         },
@@ -285,7 +318,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                       // Optional Referral Code
                       _inputField(
                         controller: _referralController,
-                        label: isFr ? 'Code de parrainage (Optionnel)' : 'Referral Code (Optional)',
+                        label: isFr
+                            ? 'Code de parrainage (Optionnel)'
+                            : 'Referral Code (Optional)',
                         icon: Icons.card_giftcard,
                       ),
                       const SizedBox(height: 14),
@@ -297,9 +332,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3))
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
                           ],
                         ),
                         child: DropdownButtonFormField<String>(
@@ -307,28 +343,34 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           decoration: InputDecoration(
                             labelText: isFr ? 'Je suis...' : 'I am a...',
                             labelStyle: const TextStyle(fontSize: 13),
-                            prefixIcon: const Icon(Icons.badge_outlined,
-                                color: Colors.grey, size: 20),
+                            prefixIcon: const Icon(
+                              Icons.badge_outlined,
+                              color: Colors.grey,
+                              size: 20,
+                            ),
                             border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide.none),
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
                             filled: true,
                             fillColor: Colors.white,
                             contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 16),
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
                           ),
                           items: [
                             DropdownMenuItem(
                               value: 'tenant',
                               child: Row(
                                 children: [
-                                  Icon(Icons.search,
-                                      size: 18,
-                                      color: theme.colorScheme.primary),
+                                  Icon(
+                                    Icons.search,
+                                    size: 18,
+                                    color: theme.colorScheme.primary,
+                                  ),
                                   const SizedBox(width: 10),
-                                  Text(isFr
-                                      ? 'Locataire'
-                                      : 'Tenant'),
+                                  Text(isFr ? 'Locataire' : 'Tenant'),
                                 ],
                               ),
                             ),
@@ -336,13 +378,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                               value: 'landlord',
                               child: Row(
                                 children: [
-                                  Icon(Icons.business,
-                                      size: 18,
-                                      color: theme.colorScheme.primary),
+                                  Icon(
+                                    Icons.business,
+                                    size: 18,
+                                    color: theme.colorScheme.primary,
+                                  ),
                                   const SizedBox(width: 10),
-                                  Text(isFr
-                                      ? 'Propriétaire'
-                                      : 'Landlord'),
+                                  Text(isFr ? 'Propriétaire' : 'Landlord'),
                                 ],
                               ),
                             ),
@@ -350,13 +392,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                               value: 'agent',
                               child: Row(
                                 children: [
-                                  Icon(Icons.handshake,
-                                      size: 18,
-                                      color: theme.colorScheme.primary),
+                                  Icon(
+                                    Icons.handshake,
+                                    size: 18,
+                                    color: theme.colorScheme.primary,
+                                  ),
                                   const SizedBox(width: 10),
-                                  Text(isFr
-                                      ? 'Agent Immobilier'
-                                      : 'Agent'),
+                                  Text(isFr ? 'Agent Immobilier' : 'Agent'),
                                 ],
                               ),
                             ),
@@ -373,8 +415,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
                       // Terms checkbox
                       GestureDetector(
-                        onTap: () =>
-                            setState(() => _agreedToTerms = !_agreedToTerms),
+                        onTap: ref.read(authProvider).hasConsent
+                            ? null
+                            : () => context.go('/terms'),
                         child: Row(
                           children: [
                             AnimatedContainer(
@@ -382,20 +425,29 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                               width: 22,
                               height: 22,
                               decoration: BoxDecoration(
-                                color: _agreedToTerms
+                                color:
+                                    ref.watch(authProvider).hasConsent ||
+                                        _agreedToTerms
                                     ? theme.colorScheme.primary
                                     : Colors.white,
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                  color: _agreedToTerms
+                                  color:
+                                      ref.watch(authProvider).hasConsent ||
+                                          _agreedToTerms
                                       ? theme.colorScheme.primary
                                       : Colors.grey.shade300,
                                   width: 1.5,
                                 ),
                               ),
-                              child: _agreedToTerms
-                                  ? const Icon(Icons.check,
-                                      color: Colors.white, size: 14)
+                              child:
+                                  ref.watch(authProvider).hasConsent ||
+                                      _agreedToTerms
+                                  ? const Icon(
+                                      Icons.check,
+                                      color: Colors.white,
+                                      size: 14,
+                                    )
                                   : null,
                             ),
                             const SizedBox(width: 10),
@@ -406,27 +458,33 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                                       ? 'J\'accepte les '
                                       : 'I agree to the ',
                                   style: const TextStyle(
-                                      fontSize: 12, color: Colors.grey),
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
                                   children: [
                                     TextSpan(
                                       text: isFr
                                           ? 'conditions d\'utilisation'
                                           : 'Terms of Service',
                                       style: TextStyle(
-                                          color: theme.colorScheme.primary,
-                                          fontWeight: FontWeight.bold),
+                                        color: theme.colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                     TextSpan(
                                       text: isFr ? ' et la ' : ' and ',
-                                      style: const TextStyle(color: Colors.grey),
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                     TextSpan(
                                       text: isFr
                                           ? 'politique de confidentialité'
                                           : 'Privacy Policy',
                                       style: TextStyle(
-                                          color: theme.colorScheme.primary,
-                                          fontWeight: FontWeight.bold),
+                                        color: theme.colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -440,14 +498,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
                       // Register button
                       AnimatedLoadingButton(
-                        onPressed: _agreedToTerms
+                        onPressed:
+                            ref.watch(authProvider).hasConsent || _agreedToTerms
                             ? () async {
-                                if (_nameController.text.trim().isEmpty || 
-                                    _emailController.text.trim().isEmpty || 
-                                    _passwordController.text.isEmpty || 
+                                if (_nameController.text.trim().isEmpty ||
+                                    _emailController.text.trim().isEmpty ||
+                                    _passwordController.text.isEmpty ||
                                     _confirmController.text.isEmpty) {
                                   Fluttertoast.showToast(
-                                    msg: isFr ? 'Veuillez remplir tous les champs' : 'Please fill all input fields',
+                                    msg: isFr
+                                        ? 'Veuillez remplir tous les champs'
+                                        : 'Please fill all input fields',
                                     backgroundColor: Colors.orange,
                                   );
                                   return;
@@ -455,7 +516,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
                                 if (!_formKey.currentState!.validate()) {
                                   Fluttertoast.showToast(
-                                    msg: isFr ? 'Veuillez corriger les erreurs de formulaire' : 'Please fix the form errors',
+                                    msg: isFr
+                                        ? 'Veuillez corriger les erreurs de formulaire'
+                                        : 'Please fix the form errors',
                                     backgroundColor: Colors.red,
                                   );
                                   return;
@@ -463,40 +526,56 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
                                 // Determine role from dropdown
                                 Role roleToRegister = Role.tenant;
-                                if (_selectedRole == 'landlord') roleToRegister = Role.landlord;
-                                if (_selectedRole == 'agent') roleToRegister = Role.agent;
+                                if (_selectedRole == 'landlord')
+                                  roleToRegister = Role.landlord;
+                                if (_selectedRole == 'agent')
+                                  roleToRegister = Role.agent;
 
                                 try {
-                                  final nameParts = _nameController.text.trim().split(' ');
-                                  await ref.read(authProvider.notifier).signUp(
-                                    email: _emailController.text.trim(),
-                                    password: _passwordController.text,
-                                    firstName: nameParts.isNotEmpty ? nameParts.first : _nameController.text.trim(),
-                                    lastName: nameParts.length > 1 ? nameParts.skip(1).join(' ') : '',
-                                    role: roleToRegister.name,
-                                  );
+                                  final nameParts = _nameController.text
+                                      .trim()
+                                      .split(' ');
+                                  final created = await ref
+                                      .read(authProvider.notifier)
+                                      .signUp(
+                                        email: _emailController.text.trim(),
+                                        password: _passwordController.text,
+                                        firstName: nameParts.isNotEmpty
+                                            ? nameParts.first
+                                            : _nameController.text.trim(),
+                                        lastName: nameParts.length > 1
+                                            ? nameParts.skip(1).join(' ')
+                                            : '',
+                                        role: roleToRegister.name,
+                                      );
 
                                   if (!mounted) return;
 
+                                  final authState = ref.read(authProvider);
+                                  if (!created || authState.session == null) {
+                                    throw Exception(
+                                      authState.error ??
+                                          'Account creation failed. Please try again.',
+                                    );
+                                  }
+
                                   Fluttertoast.showToast(
-                                    msg: isFr ? 'Compte créé avec succès!' : 'Account created successfully!',
+                                    msg: isFr
+                                        ? 'Compte créé avec succès!'
+                                        : 'Account created successfully!',
                                     backgroundColor: Colors.green,
                                   );
 
-                                  // Read the FRESHLY set state — it's set synchronously after await
-                                  final authState = ref.read(authProvider);
-                                  if (authState.session == null) {
-                                    context.go('/login');
-                                    return;
-                                  }
-
-                                  if (authState.session!.role == Role.landlord) {
+                                  if (authState.session!.role ==
+                                      Role.landlord) {
                                     // Landlords always go to KYC first
                                     context.go('/landlord/kyc');
-                                  } else if (authState.session!.role == Role.agent) {
+                                  } else if (authState.session!.role ==
+                                      Role.agent) {
                                     // Agents go to the onboarding/KYC flow
                                     context.go('/agent/onboarding');
-                                  } else if (authState.session!.role == Role.admin) {
+                                  } else if (authState.session!.role ==
+                                      Role.admin) {
                                     context.go('/admin');
                                   } else {
                                     // Default: tenant
@@ -505,7 +584,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                                 } catch (e) {
                                   if (!mounted) return;
                                   Fluttertoast.showToast(
-                                    msg: e.toString().replaceFirst('Exception: ', ''),
+                                    msg: e.toString().replaceFirst(
+                                      'Exception: ',
+                                      '',
+                                    ),
                                     backgroundColor: Colors.red,
                                     toastLength: Toast.LENGTH_LONG,
                                   );
@@ -515,14 +597,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           elevation: 0,
-                          backgroundColor: _agreedToTerms ? theme.colorScheme.primary : Colors.grey,
+                          backgroundColor: _agreedToTerms
+                              ? theme.colorScheme.primary
+                              : Colors.grey,
                         ),
                         child: Text(
                           isFr ? 'Créer mon compte' : 'Create Account',
                           style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
 
@@ -533,14 +621,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         children: [
                           const Expanded(child: Divider()),
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 14),
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
                             child: Text(
-                              isFr
-                                  ? 'ou s\'inscrire avec'
-                                  : 'or sign up with',
+                              isFr ? 'ou s\'inscrire avec' : 'or sign up with',
                               style: const TextStyle(
-                                  color: Colors.grey, fontSize: 11),
+                                color: Colors.grey,
+                                fontSize: 11,
+                              ),
                             ),
                           ),
                           const Expanded(child: Divider()),
@@ -557,22 +644,32 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             onTap: () => _socialSnack('Google'),
                             bgColor: Colors.white,
                             borderColor: Colors.grey.shade200,
-                            child: const FaIcon(FontAwesomeIcons.google, color: Color(0xFFDB4437), size: 24),
+                            child: const FaIcon(
+                              FontAwesomeIcons.google,
+                              color: Color(0xFFDB4437),
+                              size: 24,
+                            ),
                           ),
                           const SizedBox(width: 20),
                           _socialLogo(
                             onTap: () => _socialSnack('Facebook'),
                             bgColor: const Color(0xFF1877F2),
-                            child: const FaIcon(FontAwesomeIcons.facebookF,
-                                color: Colors.white, size: 24),
+                            child: const FaIcon(
+                              FontAwesomeIcons.facebookF,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
                           const SizedBox(width: 20),
                           _socialLogo(
                             onTap: () => _socialSnack('Instagram'),
                             isGradient: true,
                             bgColor: Colors.transparent,
-                            child: const FaIcon(FontAwesomeIcons.instagram,
-                                color: Colors.white, size: 28),
+                            child: const FaIcon(
+                              FontAwesomeIcons.instagram,
+                              color: Colors.white,
+                              size: 28,
+                            ),
                           ),
                         ],
                       ),
@@ -588,7 +685,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                                 ? 'Vous avez déjà un compte? '
                                 : 'Already have an account? ',
                             style: const TextStyle(
-                                color: Colors.grey, fontSize: 13),
+                              color: Colors.grey,
+                              fontSize: 13,
+                            ),
                           ),
                           GestureDetector(
                             onTap: () => context.go('/login'),
@@ -682,9 +781,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 3))
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: TextFormField(
@@ -709,12 +809,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                 )
               : null,
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );

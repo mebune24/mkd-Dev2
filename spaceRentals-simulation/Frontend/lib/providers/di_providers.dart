@@ -43,8 +43,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 // ── Auth ───────────────────────────────────────────────────────────────────
 /// Provides the AuthRepository implementation backed by the live Node.js API.
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  final apiClient = ref.watch(apiClientProvider);
-  return ApiAuthRepository(apiClient);
+  return ApiAuthRepository();
 });
 
 // ── Authorization Header ───────────────────────────────────────────────────

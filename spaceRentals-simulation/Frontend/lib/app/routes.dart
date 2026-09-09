@@ -192,7 +192,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       // Signed-in user: redirect away from auth/splash screens to their dashboard.
       final session = authState.session!;
-      if (!session.termsAccepted && !isGoingToTerms && !isGoingToSplash) {
+      if (!hasAcceptedTerms &&
+          !session.termsAccepted &&
+          !isGoingToTerms &&
+          !isGoingToSplash) {
         return '/terms';
       }
       if (isAuthRoute || isGoingToSplash) {

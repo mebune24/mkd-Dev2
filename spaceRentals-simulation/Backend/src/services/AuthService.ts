@@ -10,6 +10,7 @@ export const CURRENT_TERMS_VERSION = '2026-09-09';
 
 export class AuthService {
   async register(name: string, email: string, password: string, role: string, termsAccepted: boolean, termsVersion?: string) {
+    email = email.trim().toLowerCase();
     if (!name || !email || !password || !role) {
       throw { status: 400, message: 'name, email, password and role are required.' };
     }
@@ -37,7 +38,8 @@ export class AuthService {
     return { token, user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status, isKycVerified: false, kycStatus: role === 'landlord' ? 'not_submitted' : undefined, termsAccepted: true, termsVersion: CURRENT_TERMS_VERSION } };
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string, termsAccepted = false, termsVersion?: string) {
+    email = email.trim().toLowerCase();
     if (!email || !password) {
       throw { status: 400, message: 'email and password are required.' };
     }
@@ -46,11 +48,18 @@ export class AuthService {
     if (user.status === 'suspended') {
       throw { status: 403, message: 'Your account has been suspended. Please contact support.' };
     }
-    if (user.termsVersion !== CURRENT_TERMS_VERSION) {
-      throw { status: 403, message: 'You must accept the current SpaceRentals Terms and Conditions before signing in.' };
-    }
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) throw { status: 401, message: 'Invalid credentials.' };
+
+    if (user.termsVersion !== CURRENT_TERMS_VERSION) {
+      if (!termsAccepted || termsVersion !== CURRENT_TERMS_VERSION) {
+        throw { status: 403, message: 'You must accept the current SpaceRentals Terms and Conditions before signing in.' };
+      }
+      await userRepository.update(user.id, {
+        termsAcceptedAt: new Date(),
+        termsVersion: CURRENT_TERMS_VERSION,
+      });
+    }
 
     const landlordVerification = user.role === 'landlord'
       ? await prisma.landlordVerification.findUnique({ where: { landlordId: user.id }, select: { status: true } })

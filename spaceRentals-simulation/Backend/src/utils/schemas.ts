@@ -13,6 +13,8 @@ export const loginSchema = z.object({
   body: z.object({
     email: z.string().email(),
     password: z.string().min(1),
+    termsAccepted: z.boolean().optional(),
+    termsVersion: z.string().optional(),
   }),
 });
 
