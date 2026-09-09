@@ -79,11 +79,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         if (user.role == Role.tenant) {
           context.go('/tenant');
         } else if (user.role == Role.landlord) {
-          context.go(user.isKycVerified
-              ? '/landlord'
-              : (user.kycStatus == 'pending'
-                  ? '/landlord/pending'
-                  : '/landlord/kyc'));
+          context.go(
+            user.isKycVerified
+                ? '/landlord'
+                : (user.kycStatus == 'pending'
+                      ? '/landlord/pending'
+                      : '/landlord/kyc'),
+          );
         } else if (user.role == Role.admin) {
           context.go('/admin');
         } else if (user.role == Role.agent) {
@@ -91,13 +93,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         }
       } else if (authState.error != null) {
         Fluttertoast.showToast(
-          msg: authState.error!,
+          msg: _formatAuthError(authState.error!),
           backgroundColor: Colors.red,
         );
       }
     } catch (e) {
-      Fluttertoast.showToast(msg: e.toString(), backgroundColor: Colors.red);
+      Fluttertoast.showToast(
+        msg: _formatAuthError(e.toString()),
+        backgroundColor: Colors.red,
+      );
     }
+  }
+
+  String _formatAuthError(String error) {
+    return error
+        .replaceFirst('Exception: ', '')
+        .replaceFirst('ClientException: ', '')
+        .trim();
   }
 
   void _continueAsGuest() {
@@ -417,31 +429,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             onTap: () => _socialSnack('Google'),
                             bgColor: Colors.white,
                             borderColor: Colors.grey.shade200,
-                            child: const FaIcon(
-                              FontAwesomeIcons.google,
-                              color: Color(0xFFDB4437),
-                              size: 24,
+                            child: ShaderMask(
+                              blendMode: BlendMode.srcIn,
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [
+                                  Color(0xFF4285F4),
+                                  Color(0xFF34A853),
+                                  Color(0xFFFBBC05),
+                                  Color(0xFFEA4335),
+                                ],
+                              ).createShader(bounds),
+                              child: const FaIcon(
+                                FontAwesomeIcons.google,
+                                size: 24,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 20),
                           _socialLogo(
                             onTap: () => _socialSnack('Facebook'),
-                            bgColor: const Color(0xFF1877F2),
+                            bgColor: Colors.white,
+                            borderColor: Colors.grey.shade200,
                             child: const FaIcon(
                               FontAwesomeIcons.facebookF,
-                              color: Colors.white,
+                              color: Color(0xFF1877F2),
                               size: 24,
                             ),
                           ),
                           const SizedBox(width: 20),
                           _socialLogo(
                             onTap: () => _socialSnack('Instagram'),
-                            bgColor: Colors.transparent,
-                            isGradient: true,
-                            child: const FaIcon(
-                              FontAwesomeIcons.instagram,
-                              color: Colors.white,
-                              size: 28,
+                            bgColor: Colors.white,
+                            borderColor: Colors.grey.shade200,
+                            child: ShaderMask(
+                              blendMode: BlendMode.srcIn,
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [
+                                  Color(0xFFF58529),
+                                  Color(0xFFDD2A7B),
+                                  Color(0xFF8134AF),
+                                  Color(0xFF515BD4),
+                                ],
+                                begin: Alignment.topRight,
+                                end: Alignment.bottomLeft,
+                              ).createShader(bounds),
+                              child: const FaIcon(
+                                FontAwesomeIcons.instagram,
+                                size: 28,
+                              ),
                             ),
                           ),
                         ],

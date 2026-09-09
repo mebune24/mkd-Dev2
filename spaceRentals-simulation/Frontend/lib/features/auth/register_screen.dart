@@ -644,31 +644,54 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                             onTap: () => _socialSnack('Google'),
                             bgColor: Colors.white,
                             borderColor: Colors.grey.shade200,
-                            child: const FaIcon(
-                              FontAwesomeIcons.google,
-                              color: Color(0xFFDB4437),
-                              size: 24,
+                            child: ShaderMask(
+                              blendMode: BlendMode.srcIn,
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [
+                                  Color(0xFF4285F4),
+                                  Color(0xFF34A853),
+                                  Color(0xFFFBBC05),
+                                  Color(0xFFEA4335),
+                                ],
+                              ).createShader(bounds),
+                              child: const FaIcon(
+                                FontAwesomeIcons.google,
+                                size: 24,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 20),
                           _socialLogo(
                             onTap: () => _socialSnack('Facebook'),
-                            bgColor: const Color(0xFF1877F2),
+                            bgColor: Colors.white,
+                            borderColor: Colors.grey.shade200,
                             child: const FaIcon(
                               FontAwesomeIcons.facebookF,
-                              color: Colors.white,
+                              color: Color(0xFF1877F2),
                               size: 24,
                             ),
                           ),
                           const SizedBox(width: 20),
                           _socialLogo(
                             onTap: () => _socialSnack('Instagram'),
-                            isGradient: true,
-                            bgColor: Colors.transparent,
-                            child: const FaIcon(
-                              FontAwesomeIcons.instagram,
-                              color: Colors.white,
-                              size: 28,
+                            bgColor: Colors.white,
+                            borderColor: Colors.grey.shade200,
+                            child: ShaderMask(
+                              blendMode: BlendMode.srcIn,
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [
+                                  Color(0xFFF58529),
+                                  Color(0xFFDD2A7B),
+                                  Color(0xFF8134AF),
+                                  Color(0xFF515BD4),
+                                ],
+                                begin: Alignment.topRight,
+                                end: Alignment.bottomLeft,
+                              ).createShader(bounds),
+                              child: const FaIcon(
+                                FontAwesomeIcons.instagram,
+                                size: 28,
+                              ),
                             ),
                           ),
                         ],
