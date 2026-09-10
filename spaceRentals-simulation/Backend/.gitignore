@@ -3,3 +3,4 @@ dist/
 .env
 dev.db
 dev.db-journal
+storage/

@@ -1,5 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises';
+import pathModule from 'path';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -7,6 +9,21 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 let supabase: SupabaseClient | null = null;
 if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
+}
+
+const localStorageRoot = pathModule.resolve(process.cwd(), 'storage');
+
+function useLocalStorage() {
+  return !supabase && process.env.NODE_ENV !== 'production';
+}
+
+function localPath(bucket: string, filePath: string) {
+  const resolved = pathModule.resolve(localStorageRoot, bucket, filePath);
+  const bucketRoot = pathModule.resolve(localStorageRoot, bucket);
+  if (!resolved.startsWith(`${bucketRoot}${pathModule.sep}`)) {
+    throw { status: 400, message: 'Invalid storage path.' };
+  }
+  return resolved;
 }
 
 export const supabaseService = {
@@ -18,6 +35,12 @@ export const supabaseService = {
   },
 
   async uploadFile(bucket: string, path: string, fileBuffer: Buffer, mimeType: string) {
+    if (useLocalStorage()) {
+      const target = localPath(bucket, path);
+      await mkdir(pathModule.dirname(target), { recursive: true });
+      await writeFile(target, fileBuffer);
+      return { path, bucket };
+    }
     const { data, error } = await this.client.storage
       .from(bucket)
       .upload(path, fileBuffer, { contentType: mimeType, upsert: true });
@@ -29,6 +52,9 @@ export const supabaseService = {
   },
 
   async getSignedUrl(bucket: string, path: string, expiresIn = 3600) {
+    if (useLocalStorage()) {
+      return `/api/storage/download?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(path)}`;
+    }
     const { data, error } = await this.client.storage
       .from(bucket)
       .createSignedUrl(path, expiresIn);
@@ -40,6 +66,13 @@ export const supabaseService = {
   },
 
   async downloadFile(bucket: string, path: string): Promise<Buffer> {
+    if (useLocalStorage()) {
+      try {
+        return await readFile(localPath(bucket, path));
+      } catch {
+        throw { status: 404, message: 'Stored file not found.' };
+      }
+    }
     const { data, error } = await this.client.storage
       .from(bucket)
       .download(path);
@@ -52,6 +85,14 @@ export const supabaseService = {
   },
 
   async fileExists(bucket: string, path: string): Promise<boolean> {
+    if (useLocalStorage()) {
+      try {
+        await readFile(localPath(bucket, path));
+        return true;
+      } catch {
+        return false;
+      }
+    }
     const separator = path.lastIndexOf('/');
     if (separator <= 0 || separator === path.length - 1) return false;
     const folder = path.slice(0, separator);
@@ -63,15 +104,31 @@ export const supabaseService = {
     return data?.some((file) => file.name === filename) ?? false;
   },
 
-  async listFiles(bucket: string, folder: string) {
+  async listFiles(bucket: string, folder: string): Promise<Array<{ name: string; created_at?: string; updated_at?: string }>> {
+    if (useLocalStorage()) {
+      try {
+        const names = await readdir(localPath(bucket, folder));
+        return names.map((name) => ({ name }));
+      } catch {
+        return [];
+      }
+    }
     const { data, error } = await this.client.storage.from(bucket).list(folder, { limit: 1000 });
     if (error) {
       throw { status: 500, message: `Failed to list storage files: ${error.message}` };
     }
-    return data ?? [];
+    return (data ?? []) as Array<{ name: string; created_at?: string; updated_at?: string }>;
   },
 
   async deleteFile(bucket: string, path: string) {
+    if (useLocalStorage()) {
+      try {
+        await unlink(localPath(bucket, path));
+      } catch (error: any) {
+        if (error?.code !== 'ENOENT') throw { status: 500, message: 'Failed to delete stored file.' };
+      }
+      return;
+    }
     const { error } = await this.client.storage
       .from(bucket)
       .remove([path]);
