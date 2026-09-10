@@ -26,8 +26,10 @@ class LandlordDashboard extends ConsumerStatefulWidget {
 class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const _DashboardOverview(),
+  List<Widget> get _screens => [
+    _DashboardOverview(
+      onNavigateToTab: (index) => setState(() => _currentIndex = index),
+    ),
     const MyProperties(),
     const TenantManagementScreen(),
     const LandlordPaymentsScreen(),
@@ -147,17 +149,11 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
+          border: Border(top: BorderSide(color: Colors.grey.shade200)),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -193,24 +189,6 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                   activeIcon: Icons.payments_rounded,
                   label: 'Payments',
                   index: 3,
-                  currentIndex: _currentIndex,
-                  onTap: (i) => setState(() => _currentIndex = i),
-                  theme: theme,
-                ),
-                _NavItem(
-                  icon: Icons.real_estate_agent_outlined,
-                  activeIcon: Icons.real_estate_agent,
-                  label: 'Agents',
-                  index: 4,
-                  currentIndex: _currentIndex,
-                  onTap: (i) => setState(() => _currentIndex = i),
-                  theme: theme,
-                ),
-                _NavItem(
-                  icon: Icons.message_outlined,
-                  activeIcon: Icons.message_rounded,
-                  label: 'Messages',
-                  index: 5,
                   currentIndex: _currentIndex,
                   onTap: (i) => setState(() => _currentIndex = i),
                   theme: theme,
@@ -409,7 +387,9 @@ class _LandlordDrawer extends StatelessWidget {
 }
 
 class _DashboardOverview extends ConsumerWidget {
-  const _DashboardOverview();
+  final void Function(int index)? onNavigateToTab;
+
+  const _DashboardOverview({this.onNavigateToTab});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -672,6 +652,54 @@ class _DashboardOverview extends ConsumerWidget {
                           'Ask SpaceBot',
                           const Color(0xFF5D3F6A),
                           () => context.push('/chatbot'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickAction(
+                          context,
+                          Icons.real_estate_agent_outlined,
+                          'Agents',
+                          Colors.indigo,
+                          () => onNavigateToTab?.call(4),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickAction(
+                          context,
+                          Icons.message_outlined,
+                          'Messages',
+                          Colors.blue,
+                          () => onNavigateToTab?.call(5),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickAction(
+                          context,
+                          Icons.notifications_outlined,
+                          'Alerts',
+                          Colors.orange,
+                          () => context.push('/notifications'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickAction(
+                          context,
+                          Icons.savings_outlined,
+                          'Income',
+                          Colors.green,
+                          () => context.push('/landlord/monetization'),
                         ),
                       ),
                     ],
