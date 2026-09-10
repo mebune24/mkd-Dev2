@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -182,7 +183,7 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
   void initState() {
     super.initState();
     _engagement = widget.item.engagement;
-    _videoTimeout = Timer(const Duration(seconds: 4), () {
+    _videoTimeout = Timer(const Duration(seconds: 15), () {
       if (!mounted || _controller?.value.isInitialized == true) return;
       setState(() => _failed = true);
     });
@@ -193,7 +194,6 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
               .then((_) {
                 if (!mounted) return;
                 _videoTimeout?.cancel();
-                _controller!.play();
                 setState(() {});
               })
               .catchError((_) {
@@ -216,6 +216,27 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
         resharedByMe: _engagement.resharedByMe,
       );
     });
+  }
+
+  Future<void> _togglePlayback() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return;
+    if (controller.value.isPlaying) {
+      await controller.pause();
+    } else {
+      await controller.play();
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _showLandlordProfile() async {
+    context.push(
+      '/tenant/landlord/${widget.item.landlordId}',
+      extra: {
+        'name': widget.item.landlordName,
+        'avatarUrl': widget.item.landlordAvatarUrl,
+      },
+    );
   }
 
   Future<void> _toggleReshare() async {
@@ -303,15 +324,18 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
       fit: StackFit.expand,
       children: [
         if (ready)
-          FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: controller!.value.size.width,
-              height: controller.value.size.height,
-              child: VideoPlayer(controller),
+          GestureDetector(
+            onTap: _togglePlayback,
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: controller!.value.size.width,
+                height: controller.value.size.height,
+                child: VideoPlayer(controller),
+              ),
             ),
           )
-        else if (item.images.isNotEmpty)
+        else if (_failed && item.images.isNotEmpty)
           Image.network(
             item.images.first,
             fit: BoxFit.cover,
@@ -333,6 +357,25 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
             ),
           ),
         ),
+        if (ready)
+          Center(
+            child: IconButton(
+              tooltip: controller!.value.isPlaying
+                  ? 'Pause video'
+                  : 'Play video',
+              onPressed: _togglePlayback,
+              iconSize: 58,
+              color: Colors.white,
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.black.withValues(alpha: 0.42),
+              ),
+              icon: Icon(
+                controller.value.isPlaying
+                    ? Icons.pause_circle_filled
+                    : Icons.play_circle_filled,
+              ),
+            ),
+          ),
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 18, 14, 28),
@@ -430,6 +473,7 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
                     _CreatorBubble(
                       name: item.landlordName,
                       avatarUrl: item.landlordAvatarUrl,
+                      onTap: _showLandlordProfile,
                     ),
                     _FeedAction(
                       icon: Icons.favorite,
@@ -468,7 +512,16 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
           ),
         ),
         if (!ready && !_failed)
-          const Center(child: CircularProgressIndicator(color: Colors.white)),
+          const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: Colors.white),
+                SizedBox(height: 12),
+                Text('Loading video...', style: TextStyle(color: Colors.white)),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -477,30 +530,55 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
 class _CreatorBubble extends StatelessWidget {
   final String name;
   final String? avatarUrl;
+  final VoidCallback onTap;
 
-  const _CreatorBubble({required this.name, required this.avatarUrl});
+  const _CreatorBubble({
+    required this.name,
+    required this.avatarUrl,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final image = _imageProvider(avatarUrl);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: CircleAvatar(
-        radius: 24,
-        backgroundColor: Colors.white,
-        backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-            ? NetworkImage(avatarUrl!)
-            : null,
-        child: avatarUrl == null || avatarUrl!.isEmpty
-            ? Text(
-                name.isEmpty ? '?' : name.substring(0, 1).toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              )
-            : null,
+      child: GestureDetector(
+        onTap: onTap,
+        child: CircleAvatar(
+          radius: 24,
+          backgroundColor: Colors.white,
+          backgroundImage: image,
+          child: image == null
+              ? Text(
+                  name.isEmpty ? '?' : name.substring(0, 1).toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              : null,
+        ),
       ),
     );
+  }
+
+  ImageProvider<Object>? _imageProvider(String? value) {
+    if (value == null || value.isEmpty) return null;
+    if (value.startsWith('data:image/')) {
+      final separator = value.indexOf(',');
+      if (separator > 0) {
+        try {
+          return MemoryImage(base64Decode(value.substring(separator + 1)));
+        } catch (_) {
+          return null;
+        }
+      }
+    }
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return NetworkImage(value);
+    }
+    return null;
   }
 }
 

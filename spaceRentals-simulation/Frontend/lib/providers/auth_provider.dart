@@ -75,7 +75,13 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final repo = ref.read(authRepositoryProvider);
       final session = await repo.signIn(email: email, password: password);
-      state = AuthState(session: session, isLoading: false);
+      final hasAcceptedTerms = await SessionStorageService.instance
+          .hasAcceptedTerms();
+      state = AuthState(
+        session: session,
+        isLoading: false,
+        hasAcceptedTerms: hasAcceptedTerms,
+      );
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -100,7 +106,13 @@ class AuthNotifier extends Notifier<AuthState> {
         lastName: lastName,
         role: role,
       );
-      state = AuthState(session: session, isLoading: false);
+      final hasAcceptedTerms = await SessionStorageService.instance
+          .hasAcceptedTerms();
+      state = AuthState(
+        session: session,
+        isLoading: false,
+        hasAcceptedTerms: hasAcceptedTerms,
+      );
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -119,11 +131,13 @@ class AuthNotifier extends Notifier<AuthState> {
       state = const AuthState();
       return;
     }
+    final hasAcceptedTerms = await SessionStorageService.instance
+        .hasAcceptedTerms();
     state = state.copyWith(isLoading: true);
     try {
       final repo = ref.read(authRepositoryProvider);
       await repo.signOut();
-      state = const AuthState();
+      state = AuthState(hasAcceptedTerms: hasAcceptedTerms);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -177,9 +191,7 @@ class AuthNotifier extends Notifier<AuthState> {
       kycStatus: kycStatus,
     );
     await SessionStorageService.instance.saveSession(updated);
-    state = state.copyWith(
-      session: updated,
-    );
+    state = state.copyWith(session: updated);
   }
 
   void markTermsAcceptedLocally() {

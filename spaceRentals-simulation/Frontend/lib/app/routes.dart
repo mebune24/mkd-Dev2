@@ -16,6 +16,7 @@ import '../features/tenant/rnlp_screen.dart';
 import '../features/tenant/maintenance_screen.dart';
 import '../features/tenant/property_search.dart';
 import '../features/tenant/category_properties_screen.dart';
+import '../features/tenant/landlord_profile_screen.dart';
 import '../features/tenant/monetization/tenant_monetization_screen.dart';
 import '../features/tenant/monetization/tenant_gigs_screen.dart';
 import '../features/messages/chat_screens.dart';
@@ -169,10 +170,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // Not signed in and not a guest → force the consent gate before auth screens.
       if (!hasAccess) {
         if (!hasAcceptedTerms) {
-          if (!isAuthRoute && !isGoingToSplash && !isGoingToOnboarding)
+          if (!isAuthRoute && !isGoingToSplash && !isGoingToOnboarding) {
             return '/terms';
-          if (isGoingToLogin || isGoingToRegister || isGoingToForgot)
+          }
+          if (isGoingToLogin || isGoingToRegister || isGoingToForgot) {
             return '/terms';
+          }
         }
         return null;
       }
@@ -304,6 +307,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 context,
                 state,
                 PropertyDetails(property: property),
+              );
+            },
+          ),
+          GoRoute(
+            path: 'landlord/:id',
+            pageBuilder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>?;
+              return _slideRight(
+                context,
+                state,
+                LandlordProfileScreen(
+                  landlordId: state.pathParameters['id'] ?? '',
+                  initialName: extra?['name']?.toString() ?? 'Landlord',
+                  initialAvatarUrl: extra?['avatarUrl']?.toString(),
+                ),
               );
             },
           ),

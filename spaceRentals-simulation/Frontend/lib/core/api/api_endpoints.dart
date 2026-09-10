@@ -7,6 +7,18 @@ class ApiEndpoints {
       dotenv.env['API_BASE_URL'] ?? 'http://127.0.0.1:3000';
   static String get _base => '$baseUrl/api';
 
+  static String propertyMedia(String propertyId, String path) {
+    return Uri.parse('$_base/storage/public')
+        .replace(
+          queryParameters: {
+            'bucket': 'property-images',
+            'propertyId': propertyId,
+            'path': path,
+          },
+        )
+        .toString();
+  }
+
   // Auth
   static String get signIn => '$_base/auth/login';
   static String get signUp => '$_base/auth/register';
@@ -22,6 +34,10 @@ class ApiEndpoints {
   // User Profile
   static String get userProfile => '$_base/users/profile';
   static String userById(String id) => '$_base/users/$id';
+  static String publicUserProfile(String id) =>
+      '$_base/users/$id/public-profile';
+  static String followStatus(String id) => '$_base/users/$id/follow-status';
+  static String followUser(String id) => '$_base/users/$id/follow';
   static String suspendUser(String id) => '$_base/users/$id/suspend';
   static String activateUser(String id) => '$_base/users/$id/activate';
 
