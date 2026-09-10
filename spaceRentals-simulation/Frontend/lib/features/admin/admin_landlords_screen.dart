@@ -190,6 +190,24 @@ class _LandlordCard extends StatelessWidget {
                   user.email,
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
                 ),
+                if (user.phone != null && user.phone!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.phone, size: 12, color: Colors.grey.shade500),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          user.phone!,
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 6),
                 Row(
                   children: [

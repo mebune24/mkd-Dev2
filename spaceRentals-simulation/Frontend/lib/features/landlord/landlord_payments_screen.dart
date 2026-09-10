@@ -31,8 +31,6 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final allAsync = ref.watch(landlordTransactionsProvider);
     final pendingAsync = ref.watch(landlordPendingTransactionsProvider);
     final successfulAsync = ref.watch(landlordSuccessfulTransactionsProvider);
@@ -49,16 +47,7 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary,
-                      const Color(0xFF2D6A4F),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
+                decoration: const BoxDecoration(color: Color(0xFF2B1F4A)),
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),

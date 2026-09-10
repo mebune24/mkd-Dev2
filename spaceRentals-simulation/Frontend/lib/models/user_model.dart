@@ -5,9 +5,11 @@ class UserModel {
   final String id;
   final String email;
   final String name;
+  final String? phone;
   final Role role;
   final String status;
-  final String kycStatus; // 'unverified', 'pending', 'verified', 'premium', 'agent_pending', 'agent_approved'
+  final String
+  kycStatus; // 'unverified', 'pending', 'verified', 'premium', 'agent_pending', 'agent_approved'
 
   // Agent Specific Fields
   final String? agentId;
@@ -20,6 +22,7 @@ class UserModel {
     required this.id,
     required this.email,
     required this.name,
+    this.phone,
     required this.role,
     required this.status,
     this.kycStatus = 'unverified',
@@ -35,6 +38,7 @@ class UserModel {
       id: json['id'],
       email: json['email'],
       name: json['name'],
+      phone: json['phone']?.toString(),
       role: Role.values.firstWhere((e) => e.name == json['role']),
       status: json['status'],
       kycStatus: json['kycStatus'] ?? 'unverified',
@@ -51,6 +55,7 @@ class UserModel {
       'id': id,
       'email': email,
       'name': name,
+      'phone': phone,
       'role': role.name,
       'status': status,
       'kycStatus': kycStatus,
@@ -62,4 +67,3 @@ class UserModel {
     };
   }
 }
-

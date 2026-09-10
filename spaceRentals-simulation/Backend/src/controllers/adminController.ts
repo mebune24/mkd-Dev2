@@ -164,6 +164,7 @@ export const getAdminUsers = async (req: AuthRequest, res: Response) => {
     if (search) where.OR = [
       { name: { contains: String(search), mode: 'insensitive' } },
       { email: { contains: String(search), mode: 'insensitive' } },
+      { phone: { contains: String(search), mode: 'insensitive' } },
     ];
     const users = await userRepository.findMany({ where, orderBy: { createdAt: 'desc' } });
     return res.json(users);

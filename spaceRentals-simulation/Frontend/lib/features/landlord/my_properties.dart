@@ -14,7 +14,12 @@ class MyProperties extends ConsumerWidget {
     final propertiesAsync = ref.watch(landlordPropertiesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Properties')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        title: const Text('My Properties'),
+      ),
       body: propertiesAsync.when(
         data: (properties) {
           if (properties.isEmpty) {
