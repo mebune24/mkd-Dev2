@@ -17,9 +17,8 @@ class PropertyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final property = item.property;
-    final listing = item.listing;
     final verification = item.verification;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
       clipBehavior: Clip.antiAlias,
@@ -56,7 +55,7 @@ class PropertyCard extends StatelessWidget {
                               strokeWidth: 2,
                               value: loadingProgress.expectedTotalBytes != null
                                   ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
+                                        loadingProgress.expectedTotalBytes!
                                   : null,
                             ),
                           ),
@@ -69,9 +68,19 @@ class PropertyCard extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.image_not_supported, size: 48, color: Colors.grey[400]),
+                            Icon(
+                              Icons.image_not_supported,
+                              size: 48,
+                              color: Colors.grey[400],
+                            ),
                             const SizedBox(height: 8),
-                            Text('Image unavailable', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                            Text(
+                              'Image unavailable',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -99,16 +108,30 @@ class PropertyCard extends StatelessWidget {
                     top: 12,
                     right: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.verified_user, size: 14, color: Colors.white),
+                          Icon(
+                            Icons.verified_user,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                           SizedBox(width: 4),
-                          Text('VERIFIED', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                          Text(
+                            'VERIFIED',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -119,7 +142,10 @@ class PropertyCard extends StatelessWidget {
                   child: CircleAvatar(
                     backgroundColor: Colors.white,
                     child: IconButton(
-                      icon: const Icon(Icons.favorite_border, color: Colors.grey),
+                      icon: const Icon(
+                        Icons.favorite_border,
+                        color: Colors.grey,
+                      ),
                       onPressed: () {},
                     ),
                   ),
@@ -133,19 +159,29 @@ class PropertyCard extends StatelessWidget {
                 children: [
                   Text(
                     property.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     item.availabilityLabel,
-                    style: TextStyle(color: Colors.green.shade700, fontSize: 11, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Colors.green.shade700,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                      const Icon(
+                        Icons.location_on,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -163,10 +199,11 @@ class PropertyCard extends StatelessWidget {
                     children: [
                       Text(
                         '${CurrencyFormatter.formatCFA(property.monthlyRentUnits.toDouble())} / month',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       Row(
                         children: [
@@ -174,7 +211,11 @@ class PropertyCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text('${property.bedrooms}'),
                           const SizedBox(width: 12),
-                          const Icon(Icons.bathtub, size: 16, color: Colors.grey),
+                          const Icon(
+                            Icons.bathtub,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 4),
                           Text('${property.bathrooms}'),
                         ],
@@ -191,4 +232,3 @@ class PropertyCard extends StatelessWidget {
     );
   }
 }
-

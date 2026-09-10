@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../services/session_storage_service.dart';
@@ -30,6 +31,7 @@ class StorageService {
       'file',
       bytes,
       filename: file.name,
+      contentType: _contentTypeFor(file.name),
     );
     request.files.add(multipartFile);
 
@@ -42,6 +44,16 @@ class StorageService {
     } else {
       throw Exception('Failed to upload file: ${response.body}');
     }
+  }
+
+  MediaType? _contentTypeFor(String filename) {
+    final name = filename.toLowerCase();
+    if (name.endsWith('.jpg') || name.endsWith('.jpeg')) {
+      return MediaType('image', 'jpeg');
+    }
+    if (name.endsWith('.png')) return MediaType('image', 'png');
+    if (name.endsWith('.webp')) return MediaType('image', 'webp');
+    return null;
   }
 
   /// Optional: bulk upload for convenience
@@ -74,10 +86,7 @@ class StorageService {
     if (paths.isEmpty) return;
     final response = await http.delete(
       Uri.parse('${ApiEndpoints.baseUrl}/api/storage/kyc-orphans'),
-      headers: {
-        'Content-Type': 'application/json',
-        ...await _headers,
-      },
+      headers: {'Content-Type': 'application/json', ...await _headers},
       body: json.encode({'paths': paths}),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
