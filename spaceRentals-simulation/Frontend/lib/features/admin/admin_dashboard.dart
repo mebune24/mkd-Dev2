@@ -850,8 +850,9 @@ class _AdminOverviewScreen extends ConsumerWidget {
                     );
                 ref.invalidate(allUsersProvider);
                 if (ctx.mounted) Navigator.pop(ctx);
-                if (context.mounted)
+                if (context.mounted) {
                   context.showSuccessToast('Administrator created');
+                }
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -933,11 +934,13 @@ class _AdminOverviewScreen extends ConsumerWidget {
                         );
                     ref.invalidate(allUsersProvider);
                     if (ctx.mounted) Navigator.pop(ctx);
-                    if (context.mounted)
+                    if (context.mounted) {
                       context.showSuccessToast('$count account(s) suspended');
+                    }
                   } catch (error) {
-                    if (context.mounted)
+                    if (context.mounted) {
                       context.showErrorToast(error.toString());
+                    }
                   }
                 }();
               },
@@ -1127,11 +1130,13 @@ class _KYCCard extends ConsumerWidget {
                             .read(agentRepositoryProvider)
                             .rejectKyc(submission.id);
                         ref.invalidate(kycSubmissionsProvider);
-                        if (context.mounted)
+                        if (context.mounted) {
                           context.showErrorToast('KYC Rejected');
+                        }
                       } catch (error) {
-                        if (context.mounted)
+                        if (context.mounted) {
                           context.showErrorToast(error.toString());
+                        }
                       }
                     },
                     icon: const Icon(Icons.close, size: 16),
@@ -1151,11 +1156,13 @@ class _KYCCard extends ConsumerWidget {
                             .read(agentRepositoryProvider)
                             .approveKyc(submission.id);
                         ref.invalidate(kycSubmissionsProvider);
-                        if (context.mounted)
+                        if (context.mounted) {
                           context.showSuccessToast('KYC Approved');
+                        }
                       } catch (error) {
-                        if (context.mounted)
+                        if (context.mounted) {
                           context.showErrorToast(error.toString());
+                        }
                       }
                     },
                     icon: const Icon(Icons.check, size: 16),
@@ -1422,11 +1429,13 @@ class _DisputeCard extends StatelessWidget {
                               .read(disputeRepositoryProvider)
                               .reviewDispute(dispute.id);
                           ref.invalidate(disputesProvider);
-                          if (context.mounted)
+                          if (context.mounted) {
                             context.showSuccessToast('Dispute moved to review');
+                          }
                         } catch (error) {
-                          if (context.mounted)
+                          if (context.mounted) {
                             context.showErrorToast(error.toString());
+                          }
                         }
                       },
                       icon: const Icon(Icons.search, size: 14),
@@ -1506,15 +1515,17 @@ class _DisputeCard extends StatelessWidget {
             onPressed: () async {
               try {
                 final resolution = ctrl.text.trim();
-                if (resolution.isEmpty)
+                if (resolution.isEmpty) {
                   throw Exception('Resolution note is required');
+                }
                 await ref
                     .read(disputeRepositoryProvider)
                     .resolveDispute(d.id, resolution);
                 ref.invalidate(disputesProvider);
                 if (ctx.mounted) Navigator.pop(ctx);
-                if (context.mounted)
+                if (context.mounted) {
                   context.showSuccessToast('Dispute resolved');
+                }
               } catch (error) {
                 if (context.mounted) context.showErrorToast(error.toString());
               }

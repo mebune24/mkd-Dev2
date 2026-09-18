@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../providers/property_provider.dart';
 import '../../providers/di_providers.dart';
-import '../../providers/auth_provider.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/ui_helpers.dart';
 import '../../widgets/form_safe_modal.dart';
@@ -113,19 +112,11 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
           _descCtrl.text.isNotEmpty ||
           _rentCtrl.text.isNotEmpty,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F7),
+        backgroundColor: Colors.white,
         appBar: AppBar(
           title: const Text('List a Property'),
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
           elevation: 0,
         ),
         body: Form(
@@ -505,7 +496,11 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
           label: 'Add Photos',
           color: theme.colorScheme.primary,
           onPick: () async {
-            final picked = await _picker.pickMultiImage(imageQuality: 80);
+            final picked = await _picker.pickMultiImage(
+              imageQuality: 80,
+              maxWidth: 1920,
+              maxHeight: 1080,
+            );
             setState(() => _photos.addAll(picked));
           },
           onRemove: (i) => setState(() => _photos.removeAt(i)),
@@ -520,7 +515,11 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
           label: 'Upload Floor Plans',
           color: Colors.indigo,
           onPick: () async {
-            final picked = await _picker.pickMultiImage();
+            final picked = await _picker.pickMultiImage(
+              imageQuality: 80,
+              maxWidth: 1920,
+              maxHeight: 1080,
+            );
             setState(() => _floorPlanImages.addAll(picked));
           },
           onRemove: (i) => setState(() => _floorPlanImages.removeAt(i)),
@@ -910,7 +909,6 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
 
     if (!mounted) return;
 
-    final user = ref.read(authProvider);
     final repo = ref.read(propertyRepositoryProvider);
 
     try {
@@ -953,6 +951,7 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
         monthlyRentUnits: (double.tryParse(_rentCtrl.text) ?? 0).toInt(),
         depositUnits: (double.tryParse(_depositCtrl.text) ?? 0).toInt(),
         imageUrls: imageUrls,
+        videoUrls: videoUrls,
         category: _category,
         amenities: {
           'hasWater': _hasWater,
@@ -966,7 +965,6 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
           'totalFloors': _totalFloors,
           'nearbyAmenities': _nearbyAmenities.toList(),
           'floorPlanImages': floorPlans,
-          'videoUrls': videoUrls,
           'rentalAgreementTerms': _terms,
         },
       );

@@ -72,8 +72,26 @@ final landlordPropertiesProvider = FutureProvider<List<PropertyWithListing>>((
   ref,
 ) async {
   final repo = ref.watch(propertyRepositoryProvider);
-  return repo.getLandlordProperties();
+  final hiddenIds = ref.watch(hiddenLandlordPropertyIdsProvider);
+  final properties = await repo.getLandlordProperties();
+  return properties
+      .where((property) => !hiddenIds.contains(property.property.id))
+      .toList();
 });
+
+class HiddenLandlordPropertyIdsNotifier extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => <String>{};
+
+  void hide(String propertyId) {
+    state = {...state, propertyId};
+  }
+}
+
+final hiddenLandlordPropertyIdsProvider =
+    NotifierProvider<HiddenLandlordPropertyIdsNotifier, Set<String>>(
+      HiddenLandlordPropertyIdsNotifier.new,
+    );
 
 // --- Recently Viewed --- //
 

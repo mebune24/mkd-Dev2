@@ -302,10 +302,11 @@ class _EditPropertyState extends ConsumerState<EditProperty> {
                 title: Text(amenity),
                 value: _amenities.contains(amenity),
                 onChanged: (selected) => setState(() {
-                  if (selected == true)
+                  if (selected == true) {
                     _amenities.add(amenity);
-                  else
+                  } else {
                     _amenities.remove(amenity);
+                  }
                 }),
               ),
             ),

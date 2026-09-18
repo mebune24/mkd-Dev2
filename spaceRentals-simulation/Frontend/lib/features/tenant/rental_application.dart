@@ -241,11 +241,13 @@ class _RentalApplicationState extends ConsumerState<RentalApplication> {
                                         setState(() {
                                           _uploadedDocs[entry.key] = true;
                                           if (entry.key ==
-                                              'National ID / Passport')
+                                              'National ID / Passport') {
                                             _nationalIdUrl = path;
+                                          }
                                           if (entry.key ==
-                                              'Proof of Income (Pay Slip)')
+                                              'Proof of Income (Pay Slip)') {
                                             _proofOfIncomeUrl = path;
+                                          }
                                         });
                                       } catch (e) {
                                         if (mounted) {

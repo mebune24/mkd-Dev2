@@ -205,10 +205,23 @@ export class PropertyService {
     if (activeRental?.status === 'active') {
       throw { status: 409, message: 'Properties with active rentals cannot be deleted.' };
     }
-    await propertyRepository.delete(id);
+    const [applicationCount, leaseCount] = await Promise.all([
+      prisma.application.count({ where: { propertyId: id } }),
+      prisma.lease.count({ where: { propertyId: id } }),
+    ]);
+    if (applicationCount > 0 || leaseCount > 0) {
+      await propertyRepository.update(id, { status: 'auto_unpublished' });
+    } else {
+      await propertyRepository.delete(id);
+    }
     await clearCacheByPattern('properties:*');
     await clearCacheByPattern(`dashboard:landlord:${property.landlordId}`);
-    return { message: 'Property deleted.' };
+    return {
+      message: applicationCount > 0 || leaseCount > 0
+        ? 'Property archived because it has application or lease history.'
+        : 'Property deleted.',
+      archived: applicationCount > 0 || leaseCount > 0,
+    };
   }
 
   async publish(id: string, userId: string, role: string) {

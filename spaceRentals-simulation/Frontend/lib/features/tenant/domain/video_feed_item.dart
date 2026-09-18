@@ -1,5 +1,6 @@
 import '../../../features/properties/domain/property.dart';
 import '../../../shared/models/enums.dart';
+import '../../../core/api/api_endpoints.dart';
 
 class VideoFeedItem {
   final String id;
@@ -16,6 +17,7 @@ class VideoFeedItem {
   final int bathrooms;
   final bool furnished;
   final String landlordName;
+  final String landlordId;
   final String? landlordAvatarUrl;
   final int verificationLevel;
   final FeedEngagement engagement;
@@ -36,6 +38,7 @@ class VideoFeedItem {
     required this.bathrooms,
     required this.furnished,
     required this.landlordName,
+    required this.landlordId,
     required this.landlordAvatarUrl,
     required this.verificationLevel,
     required this.publishedAt,
@@ -58,6 +61,7 @@ class VideoFeedItem {
       bathrooms: bathrooms,
       furnished: furnished,
       landlordName: landlordName,
+      landlordId: landlordId,
       landlordAvatarUrl: landlordAvatarUrl,
       verificationLevel: verificationLevel,
       publishedAt: publishedAt,
@@ -89,12 +93,35 @@ class VideoFeedItem {
       category: json['category']?.toString() ?? 'Apartment',
       monthlyRent: (json['monthlyRent'] as num?)?.toInt() ?? 0,
       deposit: (json['deposit'] as num?)?.toInt() ?? 0,
-      images: list(json['images']),
-      videoUrls: list(json['videoUrls']),
+      images: list(json['images'])
+          .map(
+            (path) => path.startsWith('http')
+                ? path
+                : ApiEndpoints.propertyMedia(
+                    json['propertyId']?.toString() ??
+                        json['id']?.toString() ??
+                        '',
+                    path,
+                  ),
+          )
+          .toList(),
+      videoUrls: list(json['videoUrls'])
+          .map(
+            (path) => path.startsWith('http')
+                ? path
+                : ApiEndpoints.propertyMedia(
+                    json['propertyId']?.toString() ??
+                        json['id']?.toString() ??
+                        '',
+                    path,
+                  ),
+          )
+          .toList(),
       bedrooms: (json['bedrooms'] as num?)?.toInt() ?? 0,
       bathrooms: (json['bathrooms'] as num?)?.toInt() ?? 0,
       furnished: json['furnished'] == true,
       landlordName: landlord['name']?.toString() ?? 'Landlord',
+      landlordId: landlord['id']?.toString() ?? '',
       landlordAvatarUrl: landlord['avatarUrl']?.toString(),
       verificationLevel: (verification['level'] as num?)?.toInt() ?? 0,
       publishedAt:

@@ -20,6 +20,7 @@ abstract class PropertyRepository {
     required int monthlyRentUnits,
     required int depositUnits,
     required List<String> imageUrls,
+    List<String> videoUrls = const [],
     required String category,
     required Map<String, dynamic> amenities,
   });

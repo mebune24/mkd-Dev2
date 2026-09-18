@@ -82,6 +82,12 @@ class MyProperties extends ConsumerWidget {
                                     await ref
                                         .read(propertyRepositoryProvider)
                                         .deleteProperty(property.property.id);
+                                    ref
+                                        .read(
+                                          hiddenLandlordPropertyIdsProvider
+                                              .notifier,
+                                        )
+                                        .hide(property.property.id);
                                     ref.invalidate(landlordPropertiesProvider);
                                     if (context.mounted) {
                                       context.showToast(

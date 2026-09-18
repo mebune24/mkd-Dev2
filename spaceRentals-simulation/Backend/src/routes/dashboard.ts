@@ -5,7 +5,6 @@ import {
 } from '../middleware/authMiddleware';
 import { getLandlordDashboardStats } from '../controllers/dashboardController';
 
-import { cacheResponse } from '../middleware/cacheMiddleware';
 
 const router = Router();
 
@@ -14,7 +13,6 @@ router.get(
   '/landlord',
   authenticate,
   requireVerifiedLandlord,
-  cacheResponse(60),
   getLandlordDashboardStats,
 );
 

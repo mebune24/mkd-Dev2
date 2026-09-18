@@ -41,6 +41,27 @@ export const getLeaseByApplicationId = async (req: AuthRequest, res: Response) =
   catch (err) { return handle(res, err); }
 };
 
+export const acceptLease = async (req: AuthRequest, res: Response) => {
+  try {
+    return res.json(await leaseService.accept(
+      String(req.params.id),
+      req.user!.userId,
+      req.user!.role,
+    ));
+  } catch (err) { return handle(res, err); }
+};
+
+export const rejectLease = async (req: AuthRequest, res: Response) => {
+  try {
+    return res.json(await leaseService.reject(
+      String(req.params.id),
+      req.user!.userId,
+      req.user!.role,
+      req.body?.reason,
+    ));
+  } catch (err) { return handle(res, err); }
+};
+
 // PATCH /api/leases/:id/sign
 export const signLease = async (req: AuthRequest, res: Response) => {
   try { 

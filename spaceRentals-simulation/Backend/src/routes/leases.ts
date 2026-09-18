@@ -11,6 +11,8 @@ import {
   getTenantLeases,
   getLandlordLeases,
   getAllLeases,
+  acceptLease,
+  rejectLease,
   signLease,
 } from '../controllers/leaseController';
 
@@ -22,6 +24,8 @@ router.get('/landlord', requireVerifiedLandlord, getLandlordLeases);
 router.get('/', requireAdmin, getAllLeases);
 router.get('/by-application/:applicationId', getLeaseByApplicationId);
 router.get('/:id', getLeaseById);
+router.patch('/:id/accept', acceptLease);
+router.patch('/:id/reject', rejectLease);
 router.patch('/:id/sign', signLease);
 
 export default router;

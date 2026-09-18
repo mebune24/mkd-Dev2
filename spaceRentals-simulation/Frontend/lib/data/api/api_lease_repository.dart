@@ -20,13 +20,35 @@ class ApiLeaseRepository implements LeaseRepository {
   Lease _fromJson(Map<String, dynamic> j) {
     LeaseStatus status;
     switch (j['status']) {
-      case 'generated':       status = LeaseStatus.generated; break;
-      case 'pending_tenant':  status = LeaseStatus.pendingTenantSignature; break;
-      case 'pending_landlord':status = LeaseStatus.pendingLandlordSignature; break;
-      case 'partially_signed':status = LeaseStatus.partiallySigned; break;
-      case 'signed':          status = LeaseStatus.signed; break;
-      case 'active':          status = LeaseStatus.signed; break;
-      default:                status = LeaseStatus.generated;
+      case 'generated':
+        status = LeaseStatus.generated;
+        break;
+      case 'tenant_accepted':
+        status = LeaseStatus.tenantAccepted;
+        break;
+      case 'landlord_accepted':
+        status = LeaseStatus.landlordAccepted;
+        break;
+      case 'pending_tenant':
+        status = LeaseStatus.pendingTenantSignature;
+        break;
+      case 'pending_landlord':
+        status = LeaseStatus.pendingLandlordSignature;
+        break;
+      case 'partially_signed':
+        status = LeaseStatus.partiallySigned;
+        break;
+      case 'signed':
+        status = LeaseStatus.signed;
+        break;
+      case 'rejected':
+        status = LeaseStatus.rejected;
+        break;
+      case 'active':
+        status = LeaseStatus.signed;
+        break;
+      default:
+        status = LeaseStatus.generated;
     }
 
     LeaseSignature? buildSig(String? signerId, Role role, DateTime? signedAt) {
@@ -35,7 +57,9 @@ class ApiLeaseRepository implements LeaseRepository {
         id: '$signerId-${role.name}',
         signerId: signerId,
         signerRole: role,
-        status: signedAt != null ? SignatureStatus.signed : SignatureStatus.pending,
+        status: signedAt != null
+            ? SignatureStatus.signed
+            : SignatureStatus.pending,
         signedAt: signedAt,
       );
     }
@@ -43,23 +67,27 @@ class ApiLeaseRepository implements LeaseRepository {
     final property = j['property'] as Map<String, dynamic>?;
 
     return Lease(
-      id:            j['id'] ?? '',
+      id: j['id'] ?? '',
       applicationId: j['applicationId'] ?? '',
-      propertyId:    j['propertyId'] ?? '',
+      propertyId: j['propertyId'] ?? '',
       propertyTitle: property?['title'] ?? '',
-      tenantId:      j['tenantId'] ?? '',
-      landlordId:    j['landlordId'] ?? '',
-      status:        status,
+      tenantId: j['tenantId'] ?? '',
+      landlordId: j['landlordId'] ?? '',
+      status: status,
       leaseDocumentUrl: j['documentUrl'],
-      tenantSignature:   buildSig(
+      tenantSignature: buildSig(
         j['tenantId'],
         Role.tenant,
-        j['tenantSignedAt'] != null ? DateTime.tryParse(j['tenantSignedAt']) : null,
+        j['tenantSignedAt'] != null
+            ? DateTime.tryParse(j['tenantSignedAt'])
+            : null,
       ),
       landlordSignature: buildSig(
         j['landlordId'],
         Role.landlord,
-        j['landlordSignedAt'] != null ? DateTime.tryParse(j['landlordSignedAt']) : null,
+        j['landlordSignedAt'] != null
+            ? DateTime.tryParse(j['landlordSignedAt'])
+            : null,
       ),
       createdAt: DateTime.tryParse(j['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(j['updatedAt'] ?? '') ?? DateTime.now(),
@@ -84,7 +112,9 @@ class ApiLeaseRepository implements LeaseRepository {
       '${ApiEndpoints.leases}/by-application/$applicationId',
     );
     if (!response.isSuccess || response.data == null) {
-      throw Exception(response.error?.message ?? 'Lease not found for this application');
+      throw Exception(
+        response.error?.message ?? 'Lease not found for this application',
+      );
     }
     return _fromJson(response.data!);
   }
@@ -114,6 +144,29 @@ class ApiLeaseRepository implements LeaseRepository {
   }
 
   @override
+  Future<Lease> acceptLease(String leaseId) async {
+    final response = await _apiClient.patch<Map<String, dynamic>>(
+      ApiEndpoints.acceptLease(leaseId),
+    );
+    if (!response.isSuccess || response.data == null) {
+      throw Exception(response.error?.message ?? 'Failed to accept lease');
+    }
+    return _fromJson(response.data!);
+  }
+
+  @override
+  Future<Lease> rejectLease(String leaseId, {String? reason}) async {
+    final response = await _apiClient.patch<Map<String, dynamic>>(
+      ApiEndpoints.rejectLease(leaseId),
+      data: {'reason': reason},
+    );
+    if (!response.isSuccess || response.data == null) {
+      throw Exception(response.error?.message ?? 'Failed to reject lease');
+    }
+    return _fromJson(response.data!);
+  }
+
+  @override
   Future<List<Lease>> getTenantLeases() async {
     final response = await _apiClient.get<List<dynamic>>(
       '${ApiEndpoints.leases}/tenant',
@@ -121,7 +174,9 @@ class ApiLeaseRepository implements LeaseRepository {
     if (!response.isSuccess || response.data == null) {
       throw Exception(response.error?.message ?? 'Failed to load leases');
     }
-    return response.data!.map((j) => _fromJson(j as Map<String, dynamic>)).toList();
+    return response.data!
+        .map((j) => _fromJson(j as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -132,7 +187,9 @@ class ApiLeaseRepository implements LeaseRepository {
     if (!response.isSuccess || response.data == null) {
       throw Exception(response.error?.message ?? 'Failed to load leases');
     }
-    var leases = response.data!.map((j) => _fromJson(j as Map<String, dynamic>)).toList();
+    var leases = response.data!
+        .map((j) => _fromJson(j as Map<String, dynamic>))
+        .toList();
     if (propertyId != null) {
       leases = leases.where((l) => l.propertyId == propertyId).toList();
     }

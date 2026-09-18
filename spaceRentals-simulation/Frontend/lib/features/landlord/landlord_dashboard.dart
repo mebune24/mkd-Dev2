@@ -119,19 +119,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: _currentIndex == 1
-                          ? [
-                              theme.colorScheme.primary,
-                              theme.colorScheme.primary,
-                            ]
-                          : [
-                              theme.colorScheme.primary,
-                              const Color(0xFF5D3F6A),
-                            ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: theme.colorScheme.primary,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Icon(
@@ -281,29 +269,23 @@ class _LandlordDrawer extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(24, 56, 24, 28),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
+            color: Colors.white,
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.business, size: 42, color: Colors.white),
+                Icon(Icons.business, size: 42, color: Colors.black),
                 SizedBox(height: 12),
                 Text(
                   'Tableau de Bord Bailleur',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
                 Text(
                   'Gérez vos propriétés et vos revenus',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(color: Colors.black54, fontSize: 12),
                 ),
               ],
             ),
@@ -399,7 +381,7 @@ class _DashboardOverview extends ConsumerWidget {
     final dashboard = dashboardAsync.value;
     if (dashboard == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF5F5F7),
+        backgroundColor: Colors.white,
         body: dashboardAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => Center(
@@ -429,7 +411,7 @@ class _DashboardOverview extends ConsumerWidget {
     final pendingApplications = dashboard.pendingApplications;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -439,16 +421,7 @@ class _DashboardOverview extends ConsumerWidget {
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary,
-                      const Color(0xFF5D3F6A),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
+                color: Colors.white,
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -459,7 +432,7 @@ class _DashboardOverview extends ConsumerWidget {
                         Text(
                           'Good day, ${user.session?.fullName.split(' ').first ?? 'Landlord'}',
                           style: const TextStyle(
-                            color: Colors.white70,
+                            color: Colors.black54,
                             fontSize: 14,
                           ),
                         ),
@@ -467,7 +440,7 @@ class _DashboardOverview extends ConsumerWidget {
                         const Text(
                           'Landlord Dashboard',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Colors.black,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -558,6 +531,30 @@ class _DashboardOverview extends ConsumerWidget {
                           '$pendingApplications',
                           Icons.pending_actions_rounded,
                           Colors.orange,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Followers',
+                          '${dashboard.followerCount}',
+                          Icons.person_add_alt_1_rounded,
+                          Colors.pinkAccent,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Active Listings',
+                          '${dashboard.activeListings}',
+                          Icons.visibility_rounded,
+                          Colors.deepPurple,
                         ),
                       ),
                     ],
@@ -805,11 +802,7 @@ class _DashboardOverview extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [color.withValues(alpha: 0.8), color],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -821,13 +814,13 @@ class _DashboardOverview extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 22),
+            Icon(icon, color: color, size: 22),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 label,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Colors.black,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),

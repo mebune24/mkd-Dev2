@@ -37,7 +37,7 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
     final totalRevenueAsync = ref.watch(landlordTotalRevenueProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: Colors.white,
       body: NestedScrollView(
         headerSliverBuilder: (_, __) => [
           SliverAppBar(
@@ -47,7 +47,7 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: const BoxDecoration(color: Color(0xFF2B1F4A)),
+                color: Colors.white,
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
@@ -58,7 +58,7 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
                         const Text(
                           'Payments',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Colors.black,
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
                           ),
@@ -115,7 +115,7 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
             bottom: TabBar(
               controller: _tabController,
               labelColor: Colors.white,
-              unselectedLabelColor: Colors.white60,
+              unselectedLabelColor: Colors.black54,
               indicatorColor: Colors.white,
               indicatorWeight: 3,
               tabs: const [
@@ -156,7 +156,7 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
+        color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -167,7 +167,7 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
           Text(
             value,
             style: const TextStyle(
-              color: Colors.white,
+              color: Colors.black,
               fontWeight: FontWeight.bold,
               fontSize: 13,
             ),
@@ -176,7 +176,7 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
           ),
           Text(
             label,
-            style: const TextStyle(color: Colors.white70, fontSize: 10),
+            style: const TextStyle(color: Colors.black54, fontSize: 10),
           ),
         ],
       ),
@@ -273,11 +273,7 @@ class _LedgerTab extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [theme.colorScheme.primary, const Color(0xFF2D6A4F)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -292,13 +288,13 @@ class _LedgerTab extends StatelessWidget {
               children: [
                 const Text(
                   'Total Approved Revenue',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                  style: TextStyle(color: Colors.black54, fontSize: 13),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   CurrencyFormatter.formatCFA(totalRevenue),
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),

@@ -7,7 +7,71 @@ import { prisma } from '../lib/prisma';
 import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB limit
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit
+
+const parseStoredPaths = (value: string | null) => {
+  try {
+    const parsed = JSON.parse(value ?? '[]');
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+// Published property media is intentionally public so video players can stream it without bearer headers.
+router.get('/public', asyncHandler(async (req: Request, res: Response) => {
+  const bucket = String(req.query.bucket ?? '');
+  const path = String(req.query.path ?? '');
+  const propertyId = String(req.query.propertyId ?? '');
+  if (bucket !== 'property-images' || !path || !propertyId) {
+    throw { status: 400, message: 'Published property media requires a valid bucket, path, and propertyId.' };
+  }
+
+  const property = await prisma.property.findFirst({
+    where: { id: propertyId, status: 'available' },
+    select: { images: true, videoUrls: true },
+  });
+  const publishedPaths = [
+    ...parseStoredPaths(property?.images ?? null),
+    ...parseStoredPaths(property?.videoUrls ?? null),
+  ];
+  if (!property || !publishedPaths.includes(path)) {
+    throw { status: 404, message: 'Published property media not found.' };
+  }
+
+  const file = await supabaseService.downloadFile(bucket, path);
+  const extension = path.split('.').pop()?.toLowerCase();
+  const contentTypes: Record<string, string> = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    mp4: 'video/mp4',
+    mov: 'video/quicktime',
+    webm: 'video/webm',
+  };
+  res.setHeader('Content-Type', contentTypes[extension ?? ''] ?? 'application/octet-stream');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('Accept-Ranges', 'bytes');
+  const range = req.headers.range;
+  if (range?.startsWith('bytes=')) {
+    const [startValue, endValue] = range.slice('bytes='.length).split('-', 2);
+    const start = Number.parseInt(startValue, 10);
+    const requestedEnd = endValue ? Number.parseInt(endValue, 10) : file.length - 1;
+    const end = Math.min(Number.isNaN(requestedEnd) ? file.length - 1 : requestedEnd, file.length - 1);
+    if (!Number.isNaN(start) && start >= 0 && start <= end) {
+      const chunk = file.subarray(start, end + 1);
+      res.status(206);
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${file.length}`);
+      res.setHeader('Content-Length', chunk.length);
+      return res.send(chunk);
+    }
+  }
+  res.setHeader('Content-Length', file.length);
+  return res.send(file);
+}));
 
 // Require authentication for all storage routes
 router.use(authenticate);

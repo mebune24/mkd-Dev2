@@ -34,10 +34,11 @@ class ApiAdminRepository {
         'temporaryPassword': temporaryPassword,
       },
     );
-    if (!response.isSuccess)
+    if (!response.isSuccess) {
       throw Exception(
         response.error?.message ?? 'Failed to create administrator',
       );
+    }
   }
 
   Future<int> bulkSuspendUsers(List<String> userIds) async {

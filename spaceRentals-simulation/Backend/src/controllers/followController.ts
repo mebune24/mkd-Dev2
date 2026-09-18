@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { io } from '../socket';
+import { clearCacheByPattern } from '../config/redis';
 
 // ── Follow a user ─────────────────────────────────────────────────────────────
 export const followUser = async (req: any, res: any) => {
@@ -20,6 +21,7 @@ export const followUser = async (req: any, res: any) => {
 
     // Get updated follower count for real-time push
     const count = await prisma.follow.count({ where: { followingId } });
+    await clearCacheByPattern(`dashboard:landlord:${followingId}`);
 
     // Notify the followed user in real-time
     io.to(`user:${followingId}`).emit('follow_update', {
@@ -44,6 +46,7 @@ export const unfollowUser = async (req: any, res: any) => {
     await prisma.follow.deleteMany({ where: { followerId, followingId } });
 
     const count = await prisma.follow.count({ where: { followingId } });
+    await clearCacheByPattern(`dashboard:landlord:${followingId}`);
 
     io.to(`user:${followingId}`).emit('follow_update', {
       followerId,

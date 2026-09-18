@@ -14,7 +14,7 @@ if (supabaseUrl && supabaseKey) {
 const localStorageRoot = pathModule.resolve(process.cwd(), 'storage');
 
 function useLocalStorage() {
-  return !supabase && process.env.NODE_ENV !== 'production';
+  return !supabase;
 }
 
 function localPath(bucket: string, filePath: string) {

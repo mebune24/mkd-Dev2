@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Prisma } from '@prisma/client';
+import multer from 'multer';
 
 export const globalErrorHandler = (
   err: any,
@@ -18,6 +19,13 @@ export const globalErrorHandler = (
     if (err.code === 'P2025') {
       return res.status(404).json({ message: 'Requested record not found.' });
     }
+  }
+
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ message: 'Uploaded file is too large. Maximum size is 50 MB.' });
+    }
+    return res.status(400).json({ message: `Upload failed: ${err.message}` });
   }
 
   // Handle our custom thrown errors { status, message }

@@ -156,20 +156,25 @@ class SessionStorageService {
     bool? pushNotificationsEnabled,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    if (firstName != null)
+    if (firstName != null) {
       prefs.setString(_prefKey(userId, 'firstName'), firstName);
-    if (lastName != null)
+    }
+    if (lastName != null) {
       prefs.setString(_prefKey(userId, 'lastName'), lastName);
+    }
     if (phone != null) prefs.setString(_prefKey(userId, 'phone'), phone);
-    if (avatarUrl != null)
+    if (avatarUrl != null) {
       prefs.setString(_prefKey(userId, 'avatarUrl'), avatarUrl);
-    if (twoFactorEnabled != null)
+    }
+    if (twoFactorEnabled != null) {
       prefs.setBool(_prefKey(userId, 'twoFactorEnabled'), twoFactorEnabled);
-    if (pushNotificationsEnabled != null)
+    }
+    if (pushNotificationsEnabled != null) {
       prefs.setBool(
         _prefKey(userId, 'pushNotificationsEnabled'),
         pushNotificationsEnabled,
       );
+    }
   }
 
   /// Replace the stored access token (after a token refresh).

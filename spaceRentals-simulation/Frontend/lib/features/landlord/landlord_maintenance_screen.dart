@@ -14,7 +14,7 @@ class LandlordMaintenanceScreen extends ConsumerWidget {
     final maintenanceAsync = ref.watch(maintenanceProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Maintenance Requests'),
         elevation: 0,

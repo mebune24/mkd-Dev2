@@ -12,6 +12,7 @@ class LandlordDashboardSnapshot {
   final int pendingAmount;
   final int openMaintenance;
   final int unreadMessages;
+  final int followerCount;
   final List<LandlordActivity> recentActivity;
   final List<RentCollectionPoint> monthlyCollections;
 
@@ -29,6 +30,7 @@ class LandlordDashboardSnapshot {
     required this.pendingAmount,
     required this.openMaintenance,
     required this.unreadMessages,
+    required this.followerCount,
     required this.recentActivity,
     required this.monthlyCollections,
   });
@@ -55,6 +57,7 @@ class LandlordDashboardSnapshot {
       pendingAmount: _integer(finance['pendingAmount']),
       openMaintenance: _integer(json['openMaintenance']),
       unreadMessages: _integer(json['unreadMessages']),
+      followerCount: _integer(json['followerCount']),
       recentActivity: (json['recentActivity'] is List)
           ? (json['recentActivity'] as List)
                 .whereType<Map>()

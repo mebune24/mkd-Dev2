@@ -172,8 +172,9 @@ class ApiAgentRepository {
       ApiEndpoints.agentAgreements,
       data: {'agentId': agentId, 'serviceTerms': serviceTerms},
     );
-    if (!response.isSuccess)
+    if (!response.isSuccess) {
       throw Exception(response.error?.message ?? 'Service request failed');
+    }
   }
 
   Future<void> decideAgreement(
@@ -184,7 +185,8 @@ class ApiAgentRepository {
       ApiEndpoints.agentAgreementDecision(agreementId),
       data: {'accept': accept},
     );
-    if (!response.isSuccess)
+    if (!response.isSuccess) {
       throw Exception(response.error?.message ?? 'Agreement decision failed');
+    }
   }
 }

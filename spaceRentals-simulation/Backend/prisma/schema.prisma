@@ -213,7 +213,7 @@ model Lease {
   tenant                User?       @relation("TenantLeases", fields: [tenantId], references: [id])
   landlordId            String?
   landlord              User?       @relation("LandlordLeases", fields: [landlordId], references: [id])
-  status                String      @default("generated") // "generated", "pending_tenant", "pending_landlord", "partially_signed", "signed", "active"
+  status                String      @default("generated") // "generated", "tenant_accepted", "landlord_accepted", "pending_tenant", "pending_landlord", "partially_signed", "signed", "rejected", "active"
   documentUrl           String?
   tenantSignatureHash   String?
   landlordSignatureHash String?

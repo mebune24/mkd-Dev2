@@ -27,16 +27,8 @@ class _AgentMarketplaceScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Agent Marketplace'),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
       ),
       body: Column(
         children: [
@@ -126,8 +118,9 @@ class _AgentCard extends ConsumerWidget {
                 'Standard property verification and tenant referral services.',
           );
       ref.invalidate(agentAgreementsProvider);
-      if (context.mounted)
+      if (context.mounted) {
         context.showSuccessToast('Service request sent to ${agent.name}.');
+      }
     } catch (error) {
       if (context.mounted) context.showErrorToast(error.toString());
     }
@@ -181,9 +174,7 @@ class _AgentCard extends ConsumerWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: agent.tier.gradient,
-                              ),
+                              color: agent.tier.gradient.first,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(

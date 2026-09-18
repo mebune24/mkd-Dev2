@@ -6,28 +6,22 @@ class LandlordMonetizationScreen extends StatefulWidget {
   const LandlordMonetizationScreen({super.key});
 
   @override
-  State<LandlordMonetizationScreen> createState() => _LandlordMonetizationScreenState();
+  State<LandlordMonetizationScreen> createState() =>
+      _LandlordMonetizationScreenState();
 }
 
-class _LandlordMonetizationScreenState extends State<LandlordMonetizationScreen> {
+class _LandlordMonetizationScreenState
+    extends State<LandlordMonetizationScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Revenus & Parrainage'),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [theme.colorScheme.primary, const Color(0xFF5D3F6A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -36,21 +30,54 @@ class _LandlordMonetizationScreenState extends State<LandlordMonetizationScreen>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── Passive Income Summary ────────────────────────
-            const Text('Revenus Auxiliaires Mensuels', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Revenus Auxiliaires Mensuels',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildMetricCard(label: 'Commissions Services', value: 45000, color: Colors.green, icon: Icons.payments)),
+                Expanded(
+                  child: _buildMetricCard(
+                    label: 'Commissions Services',
+                    value: 45000,
+                    color: Colors.green,
+                    icon: Icons.payments,
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _buildMetricCard(label: 'Bonus Parrainage', value: 60000, color: Colors.purple, icon: Icons.group_add)),
+                Expanded(
+                  child: _buildMetricCard(
+                    label: 'Bonus Parrainage',
+                    value: 60000,
+                    color: Colors.purple,
+                    icon: Icons.group_add,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildMetricCard(label: 'Tâches Publiées', value: 3, isCurrency: false, color: Colors.orange, icon: Icons.task_alt)),
+                Expanded(
+                  child: _buildMetricCard(
+                    label: 'Tâches Publiées',
+                    value: 3,
+                    isCurrency: false,
+                    color: Colors.orange,
+                    icon: Icons.task_alt,
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _buildMetricCard(label: 'Tâches Complétées', value: 2, isCurrency: false, color: Colors.teal, icon: Icons.check_circle)),
+                Expanded(
+                  child: _buildMetricCard(
+                    label: 'Tâches Complétées',
+                    value: 2,
+                    isCurrency: false,
+                    color: Colors.teal,
+                    icon: Icons.check_circle,
+                  ),
+                ),
               ],
             ),
 
@@ -60,13 +87,15 @@ class _LandlordMonetizationScreenState extends State<LandlordMonetizationScreen>
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1B5E20), Color(0xFF388E3C)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.green.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 8))],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withValues(alpha: 0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,7 +107,7 @@ class _LandlordMonetizationScreenState extends State<LandlordMonetizationScreen>
                       Expanded(
                         child: Text(
                           'Programme Bailleur Premium',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                          style: TextStyle(color: Colors.black54, fontSize: 13),
                         ),
                       ),
                     ],
@@ -86,7 +115,12 @@ class _LandlordMonetizationScreenState extends State<LandlordMonetizationScreen>
                   const SizedBox(height: 12),
                   Text(
                     'Gagnez ${CurrencyFormatter.formatCFA(60000)} par bailleur parrainé !',
-                    style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, height: 1.2),
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   const _PremiumStatusRow(),
@@ -100,7 +134,9 @@ class _LandlordMonetizationScreenState extends State<LandlordMonetizationScreen>
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFF1B5E20),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       minimumSize: const Size(double.infinity, 48),
                     ),
                   ),
@@ -121,9 +157,15 @@ class _LandlordMonetizationScreenState extends State<LandlordMonetizationScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Publier une Micro-Tâche', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    'Publier une Micro-Tâche',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   const SizedBox(height: 6),
-                  const Text('Faites entretenir votre propriété par la communauté', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  const Text(
+                    'Faites entretenir votre propriété par la communauté',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () => context.push('/landlord/post-gig'),
@@ -133,7 +175,9 @@ class _LandlordMonetizationScreenState extends State<LandlordMonetizationScreen>
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ],
@@ -145,27 +189,44 @@ class _LandlordMonetizationScreenState extends State<LandlordMonetizationScreen>
     );
   }
 
-  Widget _buildMetricCard({required String label, required num value, required Color color, required IconData icon, bool isCurrency = true}) {
+  Widget _buildMetricCard({
+    required String label,
+    required num value,
+    required Color color,
+    required IconData icon,
+    bool isCurrency = true,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 12),
           Text(
-            isCurrency ? CurrencyFormatter.formatCFA(value.toDouble()) : '$value',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color),
+            isCurrency
+                ? CurrencyFormatter.formatCFA(value.toDouble())
+                : '$value',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: color,
+            ),
           ),
           const SizedBox(height: 4),
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
@@ -185,7 +246,7 @@ class _PremiumStatusRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: Colors.black26),
       ),
       child: const Row(
         children: [
@@ -195,8 +256,17 @@ class _PremiumStatusRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Statut Premium Actif', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                Text('3 mois offerts restants', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(
+                  'Statut Premium Actif',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '3 mois offerts restants',
+                  style: TextStyle(color: Colors.black54, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -219,7 +289,14 @@ class _ReferralLedger extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Historique Parrainages', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+        const Text(
+          'Historique Parrainages',
+          style: TextStyle(
+            color: Colors.black54,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 10),
         ..._ledger.map((e) {
           final isValidated = e['status'] == 'Validé';
@@ -228,21 +305,46 @@ class _ReferralLedger extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(e['name'] as String, style: const TextStyle(color: Colors.white, fontSize: 13)),
-                Row(children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isValidated ? Colors.greenAccent.withValues(alpha: 0.2) : Colors.orange.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
+                Text(
+                  e['name'] as String,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isValidated
+                            ? Colors.greenAccent.withValues(alpha: 0.2)
+                            : Colors.orange.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        e['status'] as String,
+                        style: TextStyle(
+                          color: isValidated
+                              ? Colors.greenAccent
+                              : Colors.orange,
+                          fontSize: 11,
+                        ),
+                      ),
                     ),
-                    child: Text(e['status'] as String, style: TextStyle(color: isValidated ? Colors.greenAccent : Colors.orange, fontSize: 11)),
-                  ),
-                  if (isValidated) ...[
-                    const SizedBox(width: 8),
-                    Text(CurrencyFormatter.formatCFA(e['amount'] as double), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                  ]
-                ]),
+                    if (isValidated) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        CurrencyFormatter.formatCFA(e['amount'] as double),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
           );

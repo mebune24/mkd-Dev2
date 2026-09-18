@@ -26,7 +26,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   String _selectedRole = 'tenant';
   bool _obscurePass = true;
   bool _obscureConfirm = true;
-  bool _agreedToTerms = false;
+  final bool _agreedToTerms = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -526,10 +526,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
                                 // Determine role from dropdown
                                 Role roleToRegister = Role.tenant;
-                                if (_selectedRole == 'landlord')
+                                if (_selectedRole == 'landlord') {
                                   roleToRegister = Role.landlord;
-                                if (_selectedRole == 'agent')
+                                }
+                                if (_selectedRole == 'agent') {
                                   roleToRegister = Role.agent;
+                                }
 
                                 try {
                                   final nameParts = _nameController.text

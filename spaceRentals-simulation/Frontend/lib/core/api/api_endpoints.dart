@@ -69,6 +69,8 @@ class ApiEndpoints {
   // Leases
   static String get leases => '$_base/leases';
   static String lease(String id) => '$_base/leases/$id';
+  static String acceptLease(String id) => '$_base/leases/$id/accept';
+  static String rejectLease(String id) => '$_base/leases/$id/reject';
   static String signLease(String id) => '$_base/leases/$id/sign';
 
   // Rentals

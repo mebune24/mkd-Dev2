@@ -175,10 +175,11 @@ class _LandlordKycCardState extends State<_LandlordKycCard> {
         await widget.repository.rejectLandlordKyc(widget.submission.id);
       }
       widget.onChanged();
-      if (mounted)
+      if (mounted) {
         context.showSuccessToast(
           approve ? 'Landlord KYC approved.' : 'Landlord KYC rejected.',
         );
+      }
     } catch (error) {
       if (mounted) context.showErrorToast(error.toString());
     } finally {

@@ -26,7 +26,7 @@ export const getLandlordDashboardStats = async (req: AuthRequest, res: Response)
     const historyStart = new Date(monthStart);
     historyStart.setUTCMonth(historyStart.getUTCMonth() - 5);
 
-    const [properties, applications, rentals, successfulPayments, pendingPayments, historicalPayments, openMaintenance, unreadMessages, recentApplications, recentRentals, recentMessages] = await Promise.all([
+    const [properties, applications, rentals, successfulPayments, pendingPayments, historicalPayments, openMaintenance, unreadMessages, followerCount, recentApplications, recentRentals, recentMessages] = await Promise.all([
       prisma.property.groupBy({
         by: ['status'],
         where: { landlordId },
@@ -69,6 +69,9 @@ export const getLandlordDashboardStats = async (req: AuthRequest, res: Response)
       }),
       prisma.message.count({
         where: { receiverId: landlordId, readAt: null },
+      }),
+      prisma.follow.count({
+        where: { followingId: landlordId },
       }),
       prisma.application.findMany({
         where: { property: { landlordId } },
@@ -140,6 +143,7 @@ export const getLandlordDashboardStats = async (req: AuthRequest, res: Response)
       activeRentals: activeRentals.length,
       openMaintenance,
       unreadMessages,
+      followerCount,
       recentActivity: [
         ...recentApplications.map((application) => ({
           type: 'application',

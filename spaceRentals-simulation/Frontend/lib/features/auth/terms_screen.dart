@@ -37,10 +37,11 @@ class _TermsScreenState extends ConsumerState<TermsScreen> {
       );
       if (mounted) context.go(session == null ? '/login' : '/splash');
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

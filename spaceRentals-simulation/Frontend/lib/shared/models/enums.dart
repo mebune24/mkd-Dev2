@@ -1,9 +1,4 @@
-enum Role {
-  tenant,
-  landlord,
-  agent,
-  admin,
-}
+enum Role { tenant, landlord, agent, admin }
 
 enum PropertyVerificationLevel {
   unverified,
@@ -34,12 +29,15 @@ enum ApplicationStatus {
 enum LeaseStatus {
   draft,
   generated,
+  tenantAccepted,
+  landlordAccepted,
   pendingTenantSignature,
   pendingLandlordSignature,
   partiallySigned,
   signed,
   expired,
   cancelled,
+  rejected,
 }
 
 enum RentalStatus {
@@ -72,11 +70,7 @@ enum PlatformFeeStatus {
   waived,
 }
 
-enum WalletStatus {
-  active,
-  frozen,
-  restricted,
-}
+enum WalletStatus { active, frozen, restricted }
 
 enum CommissionStatus {
   pending,
@@ -89,18 +83,9 @@ enum CommissionStatus {
   reversed,
 }
 
-enum CommissionType {
-  propertyAcquisition,
-  tenantReferral,
-}
+enum CommissionType { propertyAcquisition, tenantReferral }
 
-enum WithdrawalStatus {
-  requested,
-  processing,
-  paid,
-  failed,
-  cancelled,
-}
+enum WithdrawalStatus { requested, processing, paid, failed, cancelled }
 
 enum AgentApplicationStatus {
   draft,
@@ -111,28 +96,10 @@ enum AgentApplicationStatus {
   suspended,
 }
 
-enum SignatureStatus {
-  pending,
-  signed,
-  declined,
-}
+enum SignatureStatus { pending, signed, declined }
 
-enum PaymentProvider {
-  campay,
-  flutterwave,
-  other,
-}
+enum PaymentProvider { campay, flutterwave, other }
 
-enum PaymentMethod {
-  mobileMoney,
-  bank,
-  card,
-}
+enum PaymentMethod { mobileMoney, bank, card }
 
-enum SubscriptionStatus {
-  active,
-  paymentDue,
-  gracePeriod,
-  expired,
-  cancelled,
-}
+enum SubscriptionStatus { active, paymentDue, gracePeriod, expired, cancelled }

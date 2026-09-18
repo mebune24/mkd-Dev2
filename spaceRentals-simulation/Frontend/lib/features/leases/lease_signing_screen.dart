@@ -52,6 +52,7 @@ class LeaseSigningScreen extends ConsumerStatefulWidget {
 class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
   bool _hasReadDocument = false;
   bool _isSigning = false;
+  bool _isChangingDecision = false;
   final SignatureController _signatureController = SignatureController(
     penStrokeWidth: 3,
     penColor: Colors.black,
@@ -73,7 +74,7 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Lease Agreement'),
         flexibleSpace: Container(
@@ -92,8 +93,9 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _buildError(e.toString()),
         data: (lease) {
-          if (lease == null)
+          if (lease == null) {
             return _buildError('No lease found for this application yet.');
+          }
           return _buildContent(context, lease, session, theme);
         },
       ),
@@ -131,6 +133,12 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
     final alreadySigned = myRole == Role.tenant
         ? lease.tenantSignature?.status == SignatureStatus.signed
         : lease.landlordSignature?.status == SignatureStatus.signed;
+    final canAccept =
+        !alreadySigned &&
+        (myRole == Role.tenant && lease.status == LeaseStatus.generated ||
+            myRole == Role.landlord &&
+                lease.status == LeaseStatus.tenantAccepted);
+    final isRejected = lease.status == LeaseStatus.rejected;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -153,6 +161,16 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
           // ── Signature Status ─────────────────────────────────────────
           _buildSignatureStatus(lease, theme),
           const SizedBox(height: 16),
+
+          if (isRejected)
+            _decisionBanner(
+              'This lease was rejected.',
+              Colors.red,
+              Icons.cancel,
+            )
+          else if (canAccept)
+            _buildDecisionActions(lease, myRole, theme),
+          if (canAccept) const SizedBox(height: 16),
 
           // ── OHADA Compliance Notice ─────────────────────────────────
           _buildOhadaNotice(theme),
@@ -201,6 +219,91 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
         ],
       ),
     );
+  }
+
+  Widget _decisionBanner(String text, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(color: color, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDecisionActions(Lease lease, Role role, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Review the lease terms before continuing.'),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _isChangingDecision
+                    ? null
+                    : () => _decideLease(lease, false),
+                icon: const Icon(Icons.close, color: Colors.red),
+                label: const Text(
+                  'Reject',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: _isChangingDecision
+                    ? null
+                    : () => _decideLease(lease, true),
+                icon: _isChangingDecision
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.check),
+                label: const Text('Accept'),
+                style: FilledButton.styleFrom(backgroundColor: Colors.green),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _decideLease(Lease lease, bool accept) async {
+    setState(() => _isChangingDecision = true);
+    final notifier = ref.read(leaseSignatureProvider.notifier);
+    final ok = accept
+        ? await notifier.acceptLease(lease.id)
+        : await notifier.rejectLease(lease.id);
+    if (!mounted) return;
+    setState(() => _isChangingDecision = false);
+    if (ok) {
+      ref.invalidate(leaseByApplicationIdProvider(widget.applicationId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(accept ? 'Lease accepted.' : 'Lease rejected.')),
+      );
+    }
   }
 
   // ── Sub-widgets ──────────────────────────────────────────────────────────
@@ -334,20 +437,26 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.indigo.withValues(alpha: 0.06),
+        color: const Color(0xFF5D3F6A).withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.indigo.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: const Color(0xFF5D3F6A).withValues(alpha: 0.25),
+        ),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.verified_user, color: Colors.indigo, size: 18),
+          Icon(Icons.verified_user, color: Color(0xFF5D3F6A), size: 18),
           SizedBox(width: 10),
           Expanded(
             child: Text(
               'This lease is electronically signed and time-stamped in compliance with OHADA Uniform Act on General Commercial Law and Cameroon Law No. 2010/021 on Electronic Commerce. '
               'All signature events are cryptographically hashed (SHA-256) and immutably recorded.',
-              style: TextStyle(fontSize: 11, color: Colors.indigo, height: 1.6),
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF5D3F6A),
+                height: 1.6,
+              ),
             ),
           ),
         ],
@@ -670,6 +779,10 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
     switch (s) {
       case LeaseStatus.generated:
         return 'Ready to Sign';
+      case LeaseStatus.tenantAccepted:
+        return 'Awaiting Landlord Acceptance';
+      case LeaseStatus.landlordAccepted:
+        return 'Accepted — Ready for Signatures';
       case LeaseStatus.pendingTenantSignature:
         return 'Awaiting Tenant Signature';
       case LeaseStatus.pendingLandlordSignature:
@@ -696,7 +809,15 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
       case LeaseStatus.pendingTenantSignature:
       case LeaseStatus.pendingLandlordSignature:
       case LeaseStatus.generated:
-        return (Colors.blue.shade600, Icons.description, 'Awaiting Signatures');
+      case LeaseStatus.tenantAccepted:
+      case LeaseStatus.landlordAccepted:
+        return (
+          const Color(0xFF5D3F6A),
+          Icons.description,
+          'Awaiting Signatures',
+        );
+      case LeaseStatus.rejected:
+        return (Colors.red, Icons.cancel, 'Lease Rejected');
       case LeaseStatus.expired:
         return (Colors.grey, Icons.timer_off, 'Lease Expired');
       case LeaseStatus.cancelled:

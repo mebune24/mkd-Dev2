@@ -51,7 +51,8 @@ class Lease {
 
   bool needsSignatureFrom(Role role) {
     if (role == Role.tenant) {
-      return status == LeaseStatus.pendingTenantSignature ||
+      return status == LeaseStatus.landlordAccepted ||
+          status == LeaseStatus.pendingTenantSignature ||
           status == LeaseStatus.partiallySigned &&
               (tenantSignature == null ||
                   tenantSignature!.status == SignatureStatus.pending);

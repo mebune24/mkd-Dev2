@@ -11,8 +11,9 @@ final adminMaintenanceProvider = FutureProvider<List<MaintenanceModel>>((
   final response = await ref
       .read(apiClientProvider)
       .get<dynamic>(ApiEndpoints.maintenance);
-  if (!response.isSuccess)
+  if (!response.isSuccess) {
     throw Exception(response.error?.message ?? 'Failed to load maintenance');
+  }
   final data = response.data;
   final list = data is Map && data['data'] is List
       ? data['data'] as List
@@ -43,10 +44,11 @@ class AdminMaintenanceOperationsScreen extends ConsumerWidget {
           data: {'status': status},
         );
     if (!response.isSuccess) {
-      if (context.mounted)
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(response.error?.message ?? 'Update failed')),
         );
+      }
       return;
     }
     ref.invalidate(adminMaintenanceProvider);

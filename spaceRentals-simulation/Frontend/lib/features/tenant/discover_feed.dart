@@ -23,6 +23,7 @@ class _DiscoverFeedScreenState extends ConsumerState<DiscoverFeedScreen> {
   late final PageController _pageController;
   io.Socket? _socket;
   List<VideoFeedItem> _items = [];
+  int _activeIndex = 0;
   int _nextPage = 2;
   bool _hasMore = true;
   bool _loadingMore = false;
@@ -150,12 +151,15 @@ class _DiscoverFeedScreenState extends ConsumerState<DiscoverFeedScreen> {
               scrollDirection: Axis.vertical,
               itemCount: items.length,
               onPageChanged: (index) {
+                setState(() => _activeIndex = index);
                 if (index >= items.length - 2 && page.hasMore) {
                   _loadMore(items);
                 }
               },
-              itemBuilder: (context, index) =>
-                  _VideoFeedCard(item: items[index]),
+              itemBuilder: (context, index) => _VideoFeedCard(
+                item: items[index],
+                isActive: index == _activeIndex,
+              ),
             ),
           );
         },
@@ -166,8 +170,9 @@ class _DiscoverFeedScreenState extends ConsumerState<DiscoverFeedScreen> {
 
 class _VideoFeedCard extends ConsumerStatefulWidget {
   final VideoFeedItem item;
+  final bool isActive;
 
-  const _VideoFeedCard({required this.item});
+  const _VideoFeedCard({required this.item, required this.isActive});
 
   @override
   ConsumerState<_VideoFeedCard> createState() => _VideoFeedCardState();
@@ -183,22 +188,49 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
   void initState() {
     super.initState();
     _engagement = widget.item.engagement;
+    _startVideo();
+  }
+
+  Future<void> _startVideo() async {
+    if (!widget.isActive ||
+        widget.item.videoUrls.isEmpty ||
+        _controller != null) {
+      return;
+    }
+    _failed = false;
+    final controller = VideoPlayerController.networkUrl(
+      Uri.parse(widget.item.videoUrls.first),
+    )..setLooping(true);
+    _controller = controller;
     _videoTimeout = Timer(const Duration(seconds: 15), () {
-      if (!mounted || _controller?.value.isInitialized == true) return;
+      if (!mounted ||
+          _controller != controller ||
+          controller.value.isInitialized) {
+        return;
+      }
       setState(() => _failed = true);
     });
-    _controller =
-        VideoPlayerController.networkUrl(Uri.parse(widget.item.videoUrls.first))
-          ..setLooping(true)
-          ..initialize()
-              .then((_) {
-                if (!mounted) return;
-                _videoTimeout?.cancel();
-                setState(() {});
-              })
-              .catchError((_) {
-                if (mounted) setState(() => _failed = true);
-              });
+    try {
+      await controller.initialize();
+      if (!mounted || _controller != controller || !widget.isActive) {
+        controller.dispose();
+        return;
+      }
+      _videoTimeout?.cancel();
+      setState(() {});
+    } catch (_) {
+      if (mounted && _controller == controller) {
+        setState(() => _failed = true);
+      }
+    }
+  }
+
+  void _stopVideo() {
+    _videoTimeout?.cancel();
+    _videoTimeout = null;
+    final controller = _controller;
+    _controller = null;
+    controller?.dispose();
   }
 
   Future<void> _toggleLike() async {
@@ -301,8 +333,7 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
 
   @override
   void dispose() {
-    _videoTimeout?.cancel();
-    _controller?.dispose();
+    _stopVideo();
     super.dispose();
   }
 
@@ -311,6 +342,14 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.item.engagement != widget.item.engagement) {
       setState(() => _engagement = widget.item.engagement);
+    }
+    if (oldWidget.isActive != widget.isActive) {
+      if (widget.isActive) {
+        _startVideo();
+      } else {
+        _stopVideo();
+        if (mounted) setState(() {});
+      }
     }
   }
 
@@ -335,7 +374,7 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
               ),
             ),
           )
-        else if (_failed && item.images.isNotEmpty)
+        else if (item.images.isNotEmpty)
           Image.network(
             item.images.first,
             fit: BoxFit.cover,
