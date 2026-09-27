@@ -28,14 +28,12 @@ import '../features/landlord/kyc_screen.dart';
 import '../features/landlord/kyc_pending_screen.dart';
 import '../features/landlord/monetization/landlord_monetization_screen.dart';
 import '../features/landlord/monetization/post_gig_form.dart';
-import '../features/landlord/agent_marketplace_screen.dart';
 import '../features/admin/admin_dashboard.dart';
 import '../features/admin/admin_landlords_screen.dart';
 import '../features/admin/admin_tenants_screen.dart';
 import '../features/admin/users_screen.dart';
 import '../features/admin/kyc_management_screen.dart';
 import '../features/admin/admin_landlord_kyc_screen.dart';
-import '../features/admin/admin_agents_screen.dart';
 import '../features/admin/disputes_screen.dart';
 import '../features/admin/listings_screen.dart';
 import '../features/admin/transactions_screen.dart';
@@ -46,10 +44,6 @@ import '../features/admin/maintenance_operations_screen.dart';
 import '../features/admin/admin_platform_fees_screen.dart';
 import '../features/admin/admin_subscriptions_screen.dart';
 import '../features/notifications/notifications_screen.dart';
-import '../features/agent/agent_onboarding_screen.dart';
-import '../features/agent/agent_dashboard.dart';
-import '../features/agent/agent_kyc_screen.dart';
-import '../features/agent/agent_kyc_pending_screen.dart';
 import '../features/chatbot/chatbot_screen.dart';
 import '../features/properties/domain/property.dart';
 import '../features/leases/lease_signing_screen.dart';
@@ -185,11 +179,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         if (isGoingToSplash) return '/tenant';
         if (isAuthRoute && !isGoingToTerms) return null;
 
-        // Guests can browse /tenant, /chatbot, and /agent/onboarding
         final loc = state.matchedLocation;
         if (loc.startsWith('/tenant')) return null;
         if (loc == '/chatbot') return null;
-        if (loc == '/agent/onboarding') return null;
         return '/tenant';
       }
 
@@ -211,21 +203,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             return '/landlord/pending';
           case Role.admin:
             return '/admin';
-          case Role.agent:
-            // Route agents based on their KYC status
-            if (session.isKycVerified) return '/agent/dashboard';
-            return '/agent/pending'; // they've applied and are waiting
         }
-      }
-
-      // Agent routing: pending agents can browse /tenant, /chatbot while waiting
-      if (session.role == Role.agent && !session.isKycVerified) {
-        final loc = state.matchedLocation;
-        if (loc.startsWith('/agent/pending')) return null;
-        if (loc.startsWith('/agent/kyc')) return null;
-        if (loc.startsWith('/tenant')) return null;
-        if (loc == '/chatbot') return null;
-        return '/agent/pending'; // block everything else
       }
 
       // A landlord must complete KYC before any landlord dashboard or
@@ -243,9 +221,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (loc.startsWith('/tenant') && session.role != Role.tenant) {
         if (session.role == Role.landlord) return '/landlord';
         if (session.role == Role.admin) return '/admin';
-        if (session.role == Role.agent && session.isKycVerified) {
-          return '/agent/dashboard';
-        }
       }
       if (loc.startsWith('/landlord') && session.role != Role.landlord) {
         if (session.role == Role.tenant) return '/tenant';
@@ -471,11 +446,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 _slideUp(context, state, const PostPropertyGigForm()),
           ),
           GoRoute(
-            path: 'agents/marketplace',
-            pageBuilder: (context, state) =>
-                _slideRight(context, state, const AgentMarketplaceScreen()),
-          ),
-          GoRoute(
             path: 'maintenance',
             pageBuilder: (context, state) =>
                 _slideRight(context, state, const LandlordMaintenanceScreen()),
@@ -509,11 +479,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'tenants',
             pageBuilder: (context, state) =>
                 _slideRight(context, state, const AdminTenantsScreen()),
-          ),
-          GoRoute(
-            path: 'agents',
-            pageBuilder: (context, state) =>
-                _slideRight(context, state, const AdminAgentsScreen()),
           ),
           GoRoute(
             path: 'users',
@@ -579,28 +544,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ],
-      ),
-
-      // ── Agent ────────────────────────────────────────────────────────────────
-      GoRoute(
-        path: '/agent/onboarding',
-        pageBuilder: (context, state) =>
-            _slideUp(context, state, const AgentOnboardingScreen()),
-      ),
-      GoRoute(
-        path: '/agent/kyc',
-        pageBuilder: (context, state) =>
-            _fade(context, state, const AgentKYCScreen()),
-      ),
-      GoRoute(
-        path: '/agent/pending',
-        pageBuilder: (context, state) =>
-            _fade(context, state, const AgentKycPendingScreen()),
-      ),
-      GoRoute(
-        path: '/agent/dashboard',
-        pageBuilder: (context, state) =>
-            _fade(context, state, const AgentDashboard()),
       ),
 
       // ── Shared ───────────────────────────────────────────────────────────────

@@ -1,5 +1,9 @@
-import { Router } from 'express';
-import { authenticate, requireLandlordVerificationIfApplicable, requireRole } from '../middleware/authMiddleware';
+import { Router } from "express";
+import {
+  authenticate,
+  requireLandlordVerificationIfApplicable,
+  requireRole,
+} from "../middleware/authMiddleware";
 import {
   initiatePayment,
   initiatePayout,
@@ -7,22 +11,27 @@ import {
   getMyTransactions,
   getLandlordTransactions,
   fapshiWebhook,
-} from '../controllers/paymentController';
-import { validateRequest } from '../middleware/validateMiddleware';
-import { initiatePaymentSchema } from '../utils/schemas';
+} from "../controllers/paymentController";
+import { validateRequest } from "../middleware/validateMiddleware";
+import { initiatePaymentSchema } from "../utils/schemas";
 
 const router = Router();
 
 // Fapshi webhook — no auth (called server-to-server by Fapshi)
-router.post('/webhook', fapshiWebhook);
+router.post("/webhook", fapshiWebhook);
 
 // All other payment routes require authentication
 router.use(authenticate, requireLandlordVerificationIfApplicable);
 
-router.post('/initiate', requireRole(['tenant', 'landlord', 'agent', 'admin']), validateRequest(initiatePaymentSchema), initiatePayment);
-router.post('/payout', requireRole(['landlord', 'agent', 'admin']), initiatePayout);
-router.get('/status/:gatewayTxId', getPaymentStatus);
-router.get('/transactions', getMyTransactions);
-router.get('/landlord-transactions', getLandlordTransactions);
+router.post(
+  "/initiate",
+  requireRole(["tenant", "landlord", "admin"]),
+  validateRequest(initiatePaymentSchema),
+  initiatePayment,
+);
+router.post("/payout", requireRole(["landlord", "admin"]), initiatePayout);
+router.get("/status/:gatewayTxId", getPaymentStatus);
+router.get("/transactions", getMyTransactions);
+router.get("/landlord-transactions", getLandlordTransactions);
 
 export default router;

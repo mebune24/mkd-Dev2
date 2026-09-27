@@ -1,49 +1,99 @@
-import { Router } from 'express';
-import {
-  authenticate,
-  requireAdmin,
-  requireAgent,
-  requireVerifiedAgent,
-} from '../middleware/authMiddleware';
-import {
-  listAgents,
-  getAgentProfile,
-  getMyKyc,
-  submitKyc,
-  getAllKyc,
-  getPendingKyc,
-  approveKyc,
-  rejectKyc,
-  getWallet,
-  requestWithdrawal,
-  getWithdrawals,
-  getMyCommissions,
-  getAllCommissions,
-} from '../controllers/agentController';
+import { Router } from "express";
+import { authenticate } from "../middleware/authMiddleware";
 
 const router = Router();
 
-// Public marketplace listing
-router.get('/', listAgents);
+router.use(authenticate);
 
-// Agent profile (self)
-router.get('/profile', authenticate, requireAgent, getAgentProfile);
+router.get("/", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
 
-// KYC
-router.get('/kyc/me',           authenticate, requireAgent, getMyKyc);
-router.post('/kyc',             authenticate, requireAgent, submitKyc);
-router.get('/kyc/pending',      authenticate, requireAdmin, getPendingKyc);
-router.get('/kyc',              authenticate, requireAdmin, getAllKyc);
-router.patch('/kyc/:id/approve', authenticate, requireAdmin, approveKyc);
-router.patch('/kyc/:id/reject',  authenticate, requireAdmin, rejectKyc);
+router.get("/profile", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
 
-// Wallet
-router.get('/wallet',              authenticate, requireVerifiedAgent, getWallet);
-router.post('/wallet/withdraw',    authenticate, requireVerifiedAgent, requestWithdrawal);
-router.get('/wallet/withdrawals',  authenticate, requireVerifiedAgent, getWithdrawals);
+router.get("/kyc/me", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
 
-// Commissions
-router.get('/commissions',      authenticate, requireVerifiedAgent, getMyCommissions);
-router.get('/commissions/all',  authenticate, requireAdmin, getAllCommissions);
+router.post("/kyc", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
+
+router.get("/kyc/pending", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
+
+router.get("/kyc", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
+
+router.patch("/kyc/:id/approve", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
+
+router.patch("/kyc/:id/reject", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
+
+router.get("/wallet", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
+
+router.post("/wallet/withdraw", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
+
+router.get("/wallet/withdrawals", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
+
+router.get("/commissions", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
+
+router.get("/commissions/all", (_req, res) => {
+  res.status(410).json({
+    message:
+      "Agent workflows have been removed. This app is for tenants and landlords only.",
+  });
+});
 
 export default router;

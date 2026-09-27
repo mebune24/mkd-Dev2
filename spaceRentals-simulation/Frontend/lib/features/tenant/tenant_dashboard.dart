@@ -103,18 +103,6 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
                   },
                 ),
                 _QuickActionTile(
-                  icon: Icons.real_estate_agent_outlined,
-                  color: Colors.orange,
-                  label: isFr ? 'Devenir agent' : 'Become an agent',
-                  subtitle: isFr
-                      ? 'Gagnez des commissions'
-                      : 'Earn commissions and grow your network',
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    context.push('/agent/onboarding');
-                  },
-                ),
-                _QuickActionTile(
                   icon: Icons.search_rounded,
                   color: Colors.blue,
                   label: isFr ? 'Explorer les annonces' : 'Browse listings',
@@ -438,18 +426,6 @@ class _TenantDrawer extends ConsumerWidget {
                       () => context.push('/tenant/gigs'),
                       featureName: 'micro-gigs',
                     );
-                  },
-                ),
-                _DrawerTile(
-                  icon: Icons.real_estate_agent,
-                  color: const Color(0xFF6A1B9A),
-                  label: isFrench ? 'Devenir Agent' : 'Become an Agent',
-                  subtitle: isFrench
-                      ? 'Gagnez des commissions de location'
-                      : 'Earn rental commissions',
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/agent/onboarding');
                   },
                 ),
                 const Padding(

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 
-export type UserRole = 'admin' | 'landlord' | 'tenant' | 'agent';
+export type UserRole = 'admin' | 'landlord' | 'tenant';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -76,7 +76,6 @@ export const requireRole = (...roles: (UserRole | UserRole[])[]) =>
 // Convenience shorthands
 export const requireAdmin   = requireRole('admin');
 export const requireLandlord = requireRole('admin', 'landlord');
-export const requireAgent   = requireRole('admin', 'agent');
 export const requireTenant  = requireRole('admin', 'tenant');
 
 /**
@@ -103,30 +102,6 @@ export const requireVerifiedLandlord = async (
     return res.status(403).json({
       message: 'Approved landlord verification is required before using landlord operations.',
       code: 'LANDLORD_KYC_REQUIRED',
-    });
-  }
-  return next();
-};
-
-export const requireVerifiedAgent = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
-  if (!req.user) return res.status(401).json({ message: 'Authentication required' });
-  if (req.user.role === 'admin') return next();
-  if (req.user.role !== 'agent') {
-    return res.status(403).json({ message: 'Agent access required.' });
-  }
-
-  const verification = await prisma.agentVerification.findUnique({
-    where: { agentId: req.user.userId },
-    select: { status: true },
-  });
-  if (verification?.status !== 'approved') {
-    return res.status(403).json({
-      message: 'Approved agent verification is required before using agent operations.',
-      code: 'AGENT_KYC_REQUIRED',
     });
   }
   return next();

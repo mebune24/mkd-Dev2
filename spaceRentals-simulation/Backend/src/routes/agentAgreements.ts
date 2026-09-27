@@ -1,11 +1,35 @@
-import { Router } from 'express';
-import { authenticate, requireVerifiedAgent, requireVerifiedLandlord } from '../middleware/authMiddleware';
-import { decideAgreement, listAgreements, requestAgreement } from '../controllers/agentAgreementController';
+import { Router } from "express";
+import {
+  authenticate,
+  requireLandlordVerificationIfApplicable,
+} from "../middleware/authMiddleware";
 
 const router = Router();
 router.use(authenticate);
-router.get('/', listAgreements);
-router.post('/', requireVerifiedLandlord, requestAgreement);
-router.patch('/:id/decision', requireVerifiedAgent, decideAgreement);
+
+router.get("/", (_req, res) => {
+  res
+    .status(410)
+    .json({
+      message:
+        "Agent workflows have been removed. This app is for tenants and landlords only.",
+    });
+});
+router.post("/", requireLandlordVerificationIfApplicable, (_req, res) => {
+  res
+    .status(410)
+    .json({
+      message:
+        "Agent workflows have been removed. This app is for tenants and landlords only.",
+    });
+});
+router.patch("/:id/decision", (_req, res) => {
+  res
+    .status(410)
+    .json({
+      message:
+        "Agent workflows have been removed. This app is for tenants and landlords only.",
+    });
+});
 
 export default router;

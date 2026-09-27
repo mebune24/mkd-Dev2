@@ -79,8 +79,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         } else {
           context.go('/landlord');
         }
-      } else if (authState.session!.role == Role.agent) {
-        context.go('/agent/dashboard');
       } else {
         context.go('/tenant');
       }

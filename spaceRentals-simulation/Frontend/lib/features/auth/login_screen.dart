@@ -88,8 +88,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           );
         } else if (user.role == Role.admin) {
           context.go('/admin');
-        } else if (user.role == Role.agent) {
-          context.go('/agent/pending');
         }
       } else if (authState.error != null) {
         Fluttertoast.showToast(

@@ -26,37 +26,33 @@ model User {
   termsAcceptedAt          DateTime?
   termsVersion             String?
 
-  properties           Property[]              @relation("LandlordProperties")
-  applications         Application[]           @relation("TenantApplications")
-  agentVerification    AgentVerification?
+  properties           Property[]             @relation("LandlordProperties")
+  applications         Application[]          @relation("TenantApplications")
   landlordVerification LandlordVerification?
-  agentTransactions    AgentTransaction[]      @relation("AgentLedger")
-  platformFees         PlatformFee[]           @relation("LandlordFees")
-  transactions         Transaction[]           @relation("UserTransactions")
-  tenantLeases         Lease[]                 @relation("TenantLeases")
-  landlordLeases       Lease[]                 @relation("LandlordLeases")
-  tenantRentals        Rental[]                @relation("TenantRentals")
-  rnlpContracts        RnlpContract[]          @relation("TenantRnlpContracts")
-  landlordRentals      Rental[]                @relation("LandlordRentals")
+  platformFees         PlatformFee[]          @relation("LandlordFees")
+  transactions         Transaction[]          @relation("UserTransactions")
+  tenantLeases         Lease[]                @relation("TenantLeases")
+  landlordLeases       Lease[]                @relation("LandlordLeases")
+  tenantRentals        Rental[]               @relation("TenantRentals")
+  rnlpContracts        RnlpContract[]         @relation("TenantRnlpContracts")
+  landlordRentals      Rental[]               @relation("LandlordRentals")
   subscriptions        Subscription[]
-  openedDisputes       Dispute[]               @relation("OpenedDisputes")
+  openedDisputes       Dispute[]              @relation("OpenedDisputes")
   passwordResetToken   PasswordResetToken?
   notifications        Notification[]
-  maintenanceRequests  MaintenanceRequest[]    @relation("TenantMaintenanceRequests")
-  reviewsGiven         Review[]                @relation("TenantReviews")
-  reviewsReceived      Review[]                @relation("LandlordReviews")
-  followers            Follow[]                @relation("UserFollowing")
-  following            Follow[]                @relation("UserFollowers")
-  comments             Comment[]               @relation("UserComments")
+  maintenanceRequests  MaintenanceRequest[]   @relation("TenantMaintenanceRequests")
+  reviewsGiven         Review[]               @relation("TenantReviews")
+  reviewsReceived      Review[]               @relation("LandlordReviews")
+  followers            Follow[]               @relation("UserFollowing")
+  following            Follow[]               @relation("UserFollowers")
+  comments             Comment[]              @relation("UserComments")
   propertyLikes        PropertyLike[]
   propertyReshares     PropertyReshare[]
   tenantWallet         TenantWallet?
   tenantWalletEntries  TenantWalletEntry[]
-  sentMessages         Message[]               @relation("SentMessages")
-  receivedMessages     Message[]               @relation("ReceivedMessages")
+  sentMessages         Message[]              @relation("SentMessages")
+  receivedMessages     Message[]              @relation("ReceivedMessages")
   auditLogs            AuditLog[]
-  landlordAgreements   AgentServiceAgreement[] @relation("LandlordAgreements")
-  agentAgreements      AgentServiceAgreement[] @relation("AgentAgreements")
 }
 
 model AuditLog {
@@ -75,37 +71,6 @@ model AuditLog {
   @@index([createdAt])
   @@index([userId, createdAt])
   @@index([resourceType, resourceId])
-}
-
-model AgentVerification {
-  id             String   @id @default(uuid())
-  agentId        String   @unique
-  agent          User     @relation(fields: [agentId], references: [id])
-  status         String   @default("pending") // "pending", "approved", "rejected"
-  documents      String // JSON string of documents
-  nationalIdUrl  String?
-  selfieUrl      String?
-  businessDocUrl String?
-  taxCardUrl     String?
-  adminNotes     String?
-  submittedAt    DateTime @default(now())
-  updatedAt      DateTime @default(now()) @updatedAt
-}
-
-model AgentServiceAgreement {
-  id           String    @id @default(uuid())
-  landlordId   String
-  landlord     User      @relation("LandlordAgreements", fields: [landlordId], references: [id], onDelete: Cascade)
-  agentId      String
-  agent        User      @relation("AgentAgreements", fields: [agentId], references: [id], onDelete: Cascade)
-  status       String    @default("pending") // pending, accepted, active, suspended, terminated
-  serviceTerms String
-  requestedAt  DateTime  @default(now())
-  acceptedAt   DateTime?
-  updatedAt    DateTime  @updatedAt
-
-  @@unique([landlordId, agentId])
-  @@index([agentId, status])
 }
 
 model LandlordVerification {
@@ -146,8 +111,6 @@ model Property {
   closeToRoad              Boolean   @default(false)
   securityMeans            String    @default("None")
   category                 String    @default("Apartment")
-  acquisitionSource        String    @default("LANDLORD") // DIRECT, AGENT, LANDLORD, ADMIN, IMPORT
-  acquisitionAgentId       String?
   lastConfirmedAvailableAt DateTime  @default(now())
   videoUrls                String    @default("[]") // JSON array of video tour URLs
   premiumBoostUntil        DateTime? // When set, this property is boosted to top of feed
@@ -181,7 +144,7 @@ model PropertyVerification {
   property   Property  @relation(fields: [propertyId], references: [id])
   status     String    @default("pending") // "pending", "verified", "rejected"
   level      Int       @default(0) // 0: unverified, 1: docs, 2: owner, 3: property, 4: inspected
-  verifiedBy String? // Agent ID who verified it
+  verifiedBy String? // User ID who verified it
   notes      String?
   verifiedAt DateTime?
 }
@@ -326,23 +289,6 @@ model PlatformFee {
   referenceId String? // e.g. Lease ID for success fee
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
-}
-
-model AgentTransaction {
-  id             String    @id @default(uuid())
-  agentId        String
-  agent          User      @relation("AgentLedger", fields: [agentId], references: [id])
-  type           String // "commission", "withdrawal"
-  amount         Int // positive for commission, negative for withdrawal
-  status         String    @default("pending") // "pending", "eligible", "available", "processing", "paid", "failed"
-  sourceEvent    String // e.g. "property_acquisition", "tenant_referral"
-  referenceType  String    @default("LEASE")
-  referenceId    String? // e.g. Lease ID
-  idempotencyKey String    @unique
-  eligibleAt     DateTime?
-  availableAt    DateTime?
-  paidAt         DateTime?
-  createdAt      DateTime  @default(now())
 }
 
 model TenantWallet {

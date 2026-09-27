@@ -270,15 +270,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: _QuickIconAction(
-                                  icon: Icons.real_estate_agent_outlined,
-                                  label: 'Agent',
-                                  onTap: () =>
-                                      context.push('/agent/onboarding'),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _QuickIconAction(
                                   icon: Icons.home_work_outlined,
                                   label: 'Homes',
                                   onTap: () => context.push('/tenant/search'),
@@ -2662,10 +2653,10 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => context.push('/agent/onboarding'),
-                        icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                        onPressed: () => context.push('/tenant/search'),
+                        icon: const Icon(Icons.search_rounded, size: 18),
                         label: Text(
-                          isFr ? 'Je suis un agent' : 'I Am an Agent',
+                          isFr ? 'Explorer les biens' : 'Browse homes',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,

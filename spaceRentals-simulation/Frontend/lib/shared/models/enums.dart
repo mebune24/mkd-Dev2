@@ -1,4 +1,4 @@
-enum Role { tenant, landlord, agent, admin }
+enum Role { tenant, landlord, admin }
 
 enum PropertyVerificationLevel {
   unverified,

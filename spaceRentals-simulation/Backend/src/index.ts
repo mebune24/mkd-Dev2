@@ -33,9 +33,6 @@ const adminLimiter = createUserRateLimiter(15 * 60 * 1000, 60, 'rate-limit:admin
 // Payment routes: strict limit to prevent fraud / duplicate charges
 const paymentLimiter = createUserRateLimiter(15 * 60 * 1000, 30, 'rate-limit:payment');
 
-// Agent routes: moderate limit
-const agentLimiter = createUserRateLimiter(15 * 60 * 1000, 100, 'rate-limit:agent');
-
 app.use(express.json({ limit: '10mb' }));
 
 // ── Routes ────────────────────────────────────────────────────
@@ -46,7 +43,6 @@ import applicationRoutes   from './routes/applications';
 import paymentRoutes       from './routes/payments';
 import leaseRoutes         from './routes/leases';
 import rentalRoutes        from './routes/rentals';
-import agentRoutes         from './routes/agents';
 import subscriptionRoutes  from './routes/subscriptions';
 import commissionRoutes    from './routes/commissions';
 import platformFeeRoutes   from './routes/platformFees';
@@ -64,7 +60,6 @@ import { globalErrorHandler } from './middleware/errorMiddleware';
 import { startBackgroundWorkers } from './workers';
 import tenantWalletRoutes from './routes/tenantWallet';
 import landlordVerificationRoutes from './routes/landlordVerification';
-import agentAgreementRoutes from './routes/agentAgreements';
 
 const BASE = '/api';
 
@@ -77,7 +72,6 @@ app.use(`${BASE}/applications`,  applicationRoutes);
 app.use(`${BASE}/payments`,      paymentLimiter, paymentRoutes);
 app.use(`${BASE}/leases`,        leaseRoutes);
 app.use(`${BASE}/rentals`,       rentalRoutes);
-app.use(`${BASE}/agents`,        agentLimiter, agentRoutes);
 app.use(`${BASE}/subscriptions`, subscriptionRoutes);
 app.use(`${BASE}/commissions`,   commissionRoutes);
 app.use(`${BASE}/platform-fees`, platformFeeRoutes);
@@ -93,7 +87,6 @@ app.use(`${BASE}/messages`,      messageRoutes);
 app.use(`${BASE}/rnlp`,          rnlpRoutes);
 app.use(`${BASE}/tenant-wallet`, tenantWalletRoutes);
 app.use(`${BASE}/landlord-verification`, landlordVerificationRoutes);
-app.use(`${BASE}/agent-agreements`, agentAgreementRoutes);
 
 // ── Health ────────────────────────────────────────────────────
 app.get(`${BASE}/health`, (_req, res) => {
@@ -105,7 +98,7 @@ app.get(`${BASE}/health`, (_req, res) => {
     paymentGateway: 'Fapshi (MTN & Orange Money)',
     routes: [
       'auth', 'users', 'properties', 'applications', 'payments',
-      'leases', 'rentals', 'agents', 'subscriptions', 'commissions',
+      'leases', 'rentals', 'subscriptions', 'commissions',
       'platform-fees', 'admin', 'notifications', 'maintenance', 'reviews', 'rnlp', 'messages',
     ],
   });

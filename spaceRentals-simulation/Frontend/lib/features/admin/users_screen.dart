@@ -17,8 +17,6 @@ class UsersScreen extends ConsumerWidget {
         return Colors.blue;
       case Role.tenant:
         return Colors.teal;
-      case Role.agent:
-        return Colors.orange;
     }
   }
 
@@ -66,8 +64,6 @@ class UsersScreen extends ConsumerWidget {
                       ? Icons.admin_panel_settings
                       : user.role == Role.landlord
                       ? Icons.business
-                      : user.role == Role.agent
-                      ? Icons.real_estate_agent
                       : Icons.person,
                   color: _roleColor(user.role),
                 ),

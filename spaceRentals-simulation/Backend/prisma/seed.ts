@@ -99,21 +99,6 @@ async function main() {
     },
   });
 
-  const agent = await prisma.user.upsert({
-    where: { email: 'agent1@spacerentals.cm' },
-    update: {},
-    create: {
-      email: 'agent1@spacerentals.cm',
-      passwordHash,
-      name: 'Victor Tagne',
-      firstName: 'Victor',
-      lastName: 'Tagne',
-      phone: '+237655300001',
-      role: 'agent',
-      status: 'active',
-    },
-  });
-
   console.log('Users seeded');
 
   // ── Properties ────────────────────────────────────────────────────
