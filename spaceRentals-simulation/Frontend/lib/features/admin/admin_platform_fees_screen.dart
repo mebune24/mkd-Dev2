@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/domain_providers.dart';
+import '../../core/constants/app_colors.dart';
 
 class AdminPlatformFeesScreen extends ConsumerWidget {
   const AdminPlatformFeesScreen({super.key});
@@ -11,9 +12,9 @@ class AdminPlatformFeesScreen extends ConsumerWidget {
       case 'paid':
         return Colors.green;
       case 'processing':
-        return Colors.orange;
+        return AppColors.accent;
       case 'due':
-        return Colors.blue;
+        return AppColors.primary;
       default:
         return Colors.grey;
     }

@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/di_providers.dart';
 import '../../core/utils/ui_helpers.dart';
+import '../../core/constants/app_colors.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -567,16 +568,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.amber.shade50,
+                                      color: AppColors.accent,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: Colors.amber.shade300,
+                                        color: AppColors.accent,
                                       ),
                                     ),
                                     child: const Text(
                                       '4.8',
                                       style: TextStyle(
-                                        color: Colors.amber,
+                                        color: AppColors.accent,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 12,
                                       ),
@@ -652,7 +653,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   backgroundColor: Color(0xFFF0EDF5),
                                   child: Icon(
                                     Icons.language,
-                                    color: Colors.purple,
+                                    color: AppColors.primary,
                                   ),
                                 ),
                                 title: Text(isFrench ? 'Langue' : 'Language'),
@@ -842,7 +843,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }) => ListTile(
     leading: CircleAvatar(
       backgroundColor: const Color(0xFFF0EDF5),
-      child: Icon(icon, color: Colors.purple, size: 20),
+      child: Icon(icon, color: AppColors.primary, size: 20),
     ),
     title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
     subtitle: subtitle != null
@@ -864,7 +865,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }) => ListTile(
     leading: CircleAvatar(
       backgroundColor: const Color(0xFFF0EDF5),
-      child: Icon(icon, color: Colors.purple),
+      child: Icon(icon, color: AppColors.primary),
     ),
     title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
     trailing: Switch(

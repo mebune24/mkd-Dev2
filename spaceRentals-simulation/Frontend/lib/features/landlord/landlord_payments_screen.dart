@@ -4,6 +4,7 @@ import '../../providers/payments_provider.dart';
 import '../../data/api/api_payment_repository.dart';
 import '../../core/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
+import '../../core/constants/app_colors.dart';
 
 class LandlordPaymentsScreen extends ConsumerStatefulWidget {
   const LandlordPaymentsScreen({super.key});
@@ -88,7 +89,7 @@ class _LandlordPaymentsScreenState extends ConsumerState<LandlordPaymentsScreen>
                                   error: (_, __) => 'Err',
                                 ),
                                 Icons.pending_actions,
-                                Colors.orangeAccent,
+                                AppColors.accent,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -309,7 +310,7 @@ class _LedgerTab extends StatelessWidget {
                     const SizedBox(width: 8),
                     _ledgerBadge(
                       "${transactions.where((p) => p.status == 'PENDING').length} Pending",
-                      Colors.orangeAccent,
+                      AppColors.accent,
                     ),
                     const SizedBox(width: 8),
                     _ledgerBadge(
@@ -389,7 +390,7 @@ class _LedgerRow extends StatelessWidget {
     Color statusColor = tx.status == 'SUCCESSFUL'
         ? Colors.green
         : tx.status == 'PENDING'
-        ? Colors.orange
+        ? AppColors.accent
         : Colors.red;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -476,7 +477,7 @@ class _TransactionCard extends StatelessWidget {
     final statusColor = tx.status == 'SUCCESSFUL'
         ? Colors.green
         : tx.status == 'PENDING'
-        ? Colors.orange
+        ? AppColors.accent
         : Colors.red;
     const typeIcon = Icons.payments;
 
@@ -540,13 +541,13 @@ class _TransactionCard extends StatelessWidget {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.1),
+                              color: AppColors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               tx.paymentMethod,
                               style: const TextStyle(
-                                color: Colors.blue,
+                                color: AppColors.primary,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),

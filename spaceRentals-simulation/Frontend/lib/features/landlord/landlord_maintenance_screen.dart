@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../providers/di_providers.dart';
 import '../../widgets/empty_state.dart';
-import '../tenant/maintenance_screen.dart'
-    show MaintenanceModel, maintenanceProvider;
+import '../tenant/maintenance_screen.dart' show MaintenanceModel, maintenanceProvider;
+import '../../core/constants/app_colors.dart';
 
 class LandlordMaintenanceScreen extends ConsumerWidget {
   const LandlordMaintenanceScreen({super.key});
@@ -106,9 +106,9 @@ class _LandlordMaintenanceCard extends StatelessWidget {
       case 'Emergency':
         return Colors.red;
       case 'High':
-        return Colors.orange;
+        return AppColors.accent;
       case 'Low':
-        return Colors.blue;
+        return AppColors.primary;
       default:
         return Colors.grey;
     }
@@ -120,9 +120,9 @@ class _LandlordMaintenanceCard extends StatelessWidget {
       case 'closed':
         return Colors.green;
       case 'in_progress':
-        return Colors.blue;
+        return AppColors.primary;
       case 'acknowledged':
-        return Colors.orange;
+        return AppColors.accent;
       default:
         return Colors.grey;
     }
@@ -348,7 +348,7 @@ class _LandlordMaintenanceCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -356,7 +356,7 @@ class _LandlordMaintenanceCard extends StatelessWidget {
                     const Icon(
                       Icons.info_outline,
                       size: 14,
-                      color: Colors.blue,
+                      color: AppColors.primary,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -364,7 +364,7 @@ class _LandlordMaintenanceCard extends StatelessWidget {
                         'Your note: ${request.landlordNote}',
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Colors.blue,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),

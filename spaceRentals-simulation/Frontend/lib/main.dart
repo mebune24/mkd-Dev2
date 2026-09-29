@@ -34,7 +34,11 @@ class SpaceRentalsApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final router = ref.watch(goRouterProvider);
     final currentPath = router.routerDelegate.currentConfiguration.uri.path;
-    final showWatermark = currentPath != '/tenant' && currentPath != '/splash';
+    final mainScreens = const [
+      '/login', '/register', '/onboarding',
+      '/tenant', '/landlord', '/admin',
+    ];
+    final showWatermark = mainScreens.contains(currentPath);
     return MaterialApp.router(
       title: 'SpaceRentals',
       theme: AppTheme.lightTheme,

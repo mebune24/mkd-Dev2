@@ -14,7 +14,7 @@ import '../data/api/api_property_repository.dart';
 import '../data/api/api_application_repository.dart';
 import '../data/api/api_lease_repository.dart';
 import '../data/api/api_payment_repository.dart';
-import '../data/api/api_agent_repository.dart';
+
 import '../data/api/api_dispute_repository.dart';
 import '../data/api/api_notification_repository.dart';
 import '../data/api/api_audit_repository.dart';
@@ -82,11 +82,6 @@ final paymentRepositoryProvider = Provider<ApiPaymentRepository>((ref) {
   return ApiPaymentRepository(apiClient);
 });
 
-// ── Agents ─────────────────────────────────────────────────────────────────
-final agentRepositoryProvider = Provider<ApiAgentRepository>((ref) {
-  final apiClient = ref.watch(apiClientProvider);
-  return ApiAgentRepository(apiClient);
-});
 
 // ── Disputes ───────────────────────────────────────────────────────────────
 final disputeRepositoryProvider = Provider<ApiDisputeRepository>((ref) {

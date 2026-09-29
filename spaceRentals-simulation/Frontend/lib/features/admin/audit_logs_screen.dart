@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/domain_providers.dart';
+import '../../core/constants/app_colors.dart';
 
 class AuditLogsScreen extends ConsumerWidget {
   const AuditLogsScreen({super.key});
@@ -62,7 +63,7 @@ class AuditLogsScreen extends ConsumerWidget {
                   Color color = Colors.blueGrey;
                   IconData icon = Icons.history;
                   if (isLease) {
-                    color = Colors.indigo;
+                    color = AppColors.primary;
                     icon = Icons.description;
                   }
                   if (isPayment) {
@@ -70,11 +71,11 @@ class AuditLogsScreen extends ConsumerWidget {
                     icon = Icons.payments;
                   }
                   if (isApproval) {
-                    color = Colors.teal;
+                    color = AppColors.primary;
                     icon = Icons.how_to_reg;
                   }
                   if (action.contains('login')) {
-                    color = Colors.blue;
+                    color = AppColors.primary;
                     icon = Icons.login;
                   }
 
@@ -182,7 +183,7 @@ class AuditLogsScreen extends ConsumerWidget {
                                           style: const TextStyle(
                                             fontSize: 10,
                                             fontFamily: 'monospace',
-                                            color: Colors.indigo,
+                                            color: AppColors.primary,
                                           ),
                                         ),
                                         Text(

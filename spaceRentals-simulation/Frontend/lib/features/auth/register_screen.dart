@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../shared/models/enums.dart';
 import '../../widgets/animated_loading_button.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../../core/constants/app_colors.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -495,7 +496,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                                     msg: isFr
                                         ? 'Veuillez remplir tous les champs'
                                         : 'Please fill all input fields',
-                                    backgroundColor: Colors.orange,
+                                    backgroundColor: AppColors.accent,
                                   );
                                   return;
                                 }

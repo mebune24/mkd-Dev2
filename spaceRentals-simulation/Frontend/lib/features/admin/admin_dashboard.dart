@@ -14,6 +14,7 @@ import 'reports_screen.dart';
 import 'domain/admin_transaction.dart';
 import '../../core/utils/ui_helpers.dart';
 import '../../core/api/storage_service.dart';
+import '../../core/constants/app_colors.dart';
 
 class AdminDashboard extends ConsumerStatefulWidget {
   const AdminDashboard({super.key});
@@ -232,14 +233,14 @@ class _AdminOverviewScreen extends ConsumerWidget {
                                   children: [
                                     Icon(
                                       Icons.shield_rounded,
-                                      color: Colors.amber,
+                                      color: AppColors.accent,
                                       size: 18,
                                     ),
                                     SizedBox(width: 6),
                                     Text(
                                       'Admin Portal',
                                       style: TextStyle(
-                                        color: Colors.amber,
+                                        color: AppColors.accent,
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -318,21 +319,21 @@ class _AdminOverviewScreen extends ConsumerWidget {
                                 value: '$tenantCount',
                                 label: 'Tenants',
                                 icon: Icons.home_rounded,
-                                color: Colors.teal,
+                                color: AppColors.primary,
                                 onTap: () => context.go('/admin/tenants'),
                               ),
                               _StatCard(
                                 value: '$landlordCount',
                                 label: 'Landlords',
                                 icon: Icons.business_rounded,
-                                color: Colors.indigo,
+                                color: AppColors.primary,
                                 onTap: () => context.go('/admin/landlords'),
                               ),
                               _StatCard(
                                 value: '$pendingKycCount',
                                 label: 'Pending KYC',
                                 icon: Icons.pending_actions_rounded,
-                                color: Colors.orange,
+                                color: AppColors.accent,
                                 alert: pendingKYC.isNotEmpty,
                                 onTap: () => context.go('/admin/kyc'),
                               ),
@@ -349,7 +350,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                             title: 'KYC Verification',
                             subtitle: '$pendingKycCount awaiting review',
                             icon: Icons.verified_user_rounded,
-                            color: Colors.orange,
+                            color: AppColors.accent,
                             badge: pendingKycCount,
                           ),
                           const SizedBox(height: 12),
@@ -439,7 +440,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                           const SizedBox(height: 10),
                           _ManagementTile(
                             icon: Icons.people_rounded,
-                            color: Colors.indigo,
+                            color: AppColors.primary,
                             title: 'View All Users',
                             subtitle:
                                 '${tenants.length} tenants · ${landlords.length} landlords · ${admins.length} admins',
@@ -453,7 +454,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                           const SizedBox(height: 10),
                           _ManagementTile(
                             icon: Icons.real_estate_agent_rounded,
-                            color: Colors.teal,
+                            color: AppColors.primary,
                             title: 'Manage Agents',
                             subtitle: 'Approve and monitor Agents',
                             onTap: () => context.push('/admin/agents'),
@@ -461,7 +462,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                           const SizedBox(height: 10),
                           _ManagementTile(
                             icon: Icons.business_outlined,
-                            color: Colors.blue,
+                            color: AppColors.primary,
                             title: 'Landlord KYC',
                             subtitle:
                                 'Review and approve landlord verification',
@@ -479,7 +480,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                           const SizedBox(height: 10),
                           _ManagementTile(
                             icon: Icons.subscriptions_rounded,
-                            color: Colors.deepPurple,
+                            color: AppColors.primary,
                             title: 'Subscriptions',
                             subtitle: 'Monitor plan adoption and access usage',
                             onTap: () => context.push('/admin/subscriptions'),
@@ -487,7 +488,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                           const SizedBox(height: 10),
                           _ManagementTile(
                             icon: Icons.build_circle_outlined,
-                            color: Colors.orange,
+                            color: AppColors.accent,
                             title: 'Maintenance Operations',
                             subtitle:
                                 'Acknowledge, resolve, and close requests',
@@ -514,7 +515,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                             title: 'Administrators',
                             subtitle: '${admins.length} active admins',
                             icon: Icons.shield_rounded,
-                            color: Colors.purple,
+                            color: AppColors.primary,
                           ),
                           const SizedBox(height: 12),
                           ...admins.map(
@@ -573,7 +574,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    Icon(Icons.verified_user_rounded, color: Colors.orange),
+                    Icon(Icons.verified_user_rounded, color: AppColors.accent),
                     SizedBox(width: 10),
                     Text(
                       'All KYC Submissions',
@@ -733,10 +734,10 @@ class _AdminOverviewScreen extends ConsumerWidget {
                   itemBuilder: (ctx, i) {
                     final u = users[i];
                     final roleColor = u.role == Role.admin
-                        ? Colors.purple
+                        ? AppColors.primary
                         : u.role == Role.landlord
-                        ? Colors.indigo
-                        : Colors.teal;
+                        ? AppColors.primary
+                        : AppColors.primary;
                     return ListTile(
                       leading: CircleAvatar(
                         backgroundColor: roleColor.withValues(alpha: 0.12),
@@ -798,7 +799,7 @@ class _AdminOverviewScreen extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.person_add_alt_1_rounded, color: Colors.purple),
+            Icon(Icons.person_add_alt_1_rounded, color: AppColors.primary),
             SizedBox(width: 10),
             Text('Add Administrator'),
           ],
@@ -970,7 +971,7 @@ class _KYCCard extends ConsumerWidget {
         ? Colors.green
         : submission.status == 'rejected'
         ? Colors.red
-        : Colors.orange;
+        : AppColors.accent;
     return Container(
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 10),
@@ -979,7 +980,7 @@ class _KYCCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: submission.status == 'pending'
-              ? Colors.orange.withValues(alpha: 0.3)
+              ? AppColors.accent.withValues(alpha: 0.3)
               : Colors.grey.shade100,
         ),
         boxShadow: [
@@ -997,13 +998,13 @@ class _KYCCard extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: Colors.orange.withValues(alpha: 0.1),
+                backgroundColor: AppColors.accent.withValues(alpha: 0.1),
                 child: Text(
                   submission.userName.isNotEmpty
                       ? submission.userName[0].toUpperCase()
                       : '?',
                   style: const TextStyle(
-                    color: Colors.orange,
+                    color: AppColors.accent,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1055,7 +1056,7 @@ class _KYCCard extends ConsumerWidget {
                     ? Icons.star_rounded
                     : Icons.verified_user_outlined,
                 size: 14,
-                color: submission.isPremium ? Colors.amber : Colors.blue,
+                color: submission.isPremium ? AppColors.accent : AppColors.primary,
               ),
               const SizedBox(width: 4),
               Text(
@@ -1127,8 +1128,8 @@ class _KYCCard extends ConsumerWidget {
                     onPressed: () async {
                       try {
                         await ref
-                            .read(agentRepositoryProvider)
-                            .rejectKyc(submission.id);
+                            .read(adminRepositoryProvider)
+                            .rejectLandlordKyc(submission.id);
                         ref.invalidate(kycSubmissionsProvider);
                         if (context.mounted) {
                           context.showErrorToast('KYC Rejected');
@@ -1153,8 +1154,8 @@ class _KYCCard extends ConsumerWidget {
                     onPressed: () async {
                       try {
                         await ref
-                            .read(agentRepositoryProvider)
-                            .approveKyc(submission.id);
+                            .read(adminRepositoryProvider)
+                            .approveLandlordKyc(submission.id);
                         ref.invalidate(kycSubmissionsProvider);
                         if (context.mounted) {
                           context.showSuccessToast('KYC Approved');
@@ -1243,7 +1244,7 @@ class _OperationalPulse extends StatelessWidget {
           title: 'Operational Pulse',
           subtitle: 'Live platform state',
           icon: Icons.monitor_heart_outlined,
-          color: Colors.blue,
+          color: AppColors.primary,
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -1254,25 +1255,25 @@ class _OperationalPulse extends StatelessWidget {
               'Pending payments',
               '${snapshot.pendingPayments}',
               Icons.payments,
-              Colors.orange,
+              AppColors.accent,
             ),
             _pulseTile(
               'Open maintenance',
               '${snapshot.openMaintenance}',
               Icons.build,
-              Colors.teal,
+              AppColors.primary,
             ),
             _pulseTile(
               'Subscriptions',
               '${snapshot.activeSubscriptions}',
               Icons.card_membership,
-              Colors.indigo,
+              AppColors.primary,
             ),
             _pulseTile(
               'Under review',
               '${snapshot.underReviewDisputes}',
               Icons.rate_review,
-              Colors.blue,
+              AppColors.primary,
             ),
             _pulseTile(
               'Suspended users',
@@ -1339,7 +1340,7 @@ class _DisputeCard extends StatelessWidget {
     final statusColor = dispute.status == 'resolved'
         ? Colors.green
         : dispute.status == 'under_review'
-        ? Colors.blue
+        ? AppColors.primary
         : Colors.red;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1563,7 +1564,7 @@ class _AdminCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isSelf
-              ? Colors.purple.withValues(alpha: 0.3)
+              ? AppColors.primary.withValues(alpha: 0.3)
               : Colors.grey.shade100,
         ),
         boxShadow: [
@@ -1574,11 +1575,11 @@ class _AdminCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: Colors.purple.withValues(alpha: 0.1),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
             child: Text(
               admin.name.isNotEmpty ? admin.name[0].toUpperCase() : 'A',
               style: const TextStyle(
-                color: Colors.purple,
+                color: AppColors.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -1605,13 +1606,13 @@ class _AdminCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.purple.withValues(alpha: 0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
                           'You',
                           style: TextStyle(
-                            color: Colors.purple,
+                            color: AppColors.primary,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1627,7 +1628,7 @@ class _AdminCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.shield_rounded, color: Colors.purple, size: 20),
+          const Icon(Icons.shield_rounded, color: AppColors.primary, size: 20),
         ],
       ),
     );

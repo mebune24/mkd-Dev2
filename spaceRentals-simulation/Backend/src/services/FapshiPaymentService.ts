@@ -4,6 +4,7 @@ import { redisClient } from '../config/redis';
 import { prisma } from '../lib/prisma';
 import crypto from 'crypto';
 import { rnlpService } from './RnlpService';
+import { landlordWalletService } from './LandlordWalletService';
 
 const FAPSHI_API_URL = process.env.FAPSHI_API_URL || 'https://live.fapshi.com';
 const FAPSHI_API_USER = process.env.FAPSHI_API_USER || '';
@@ -249,7 +250,16 @@ export class FapshiPaymentService {
       });
     });
     
-    console.log(`[FapshiWebhook] Lease ${leaseId} activated. Rental created. Property marked as rented.`);
+    // 4. Credit Landlord Wallet (deducting 5% success fee internally)
+    if (lease.landlordId) {
+      await landlordWalletService.creditRentPayment(
+        lease.landlordId,
+        lease.property.monthlyRent,
+        leaseId
+      );
+    }
+    
+    console.log(`[FapshiWebhook] Lease ${leaseId} activated. Rental created. Property marked as rented. Landlord Wallet credited.`);
   }
 
   async initiatePayout(params: {

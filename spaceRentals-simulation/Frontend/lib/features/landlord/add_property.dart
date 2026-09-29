@@ -9,6 +9,7 @@ import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/ui_helpers.dart';
 import '../../widgets/form_safe_modal.dart';
 import '../../core/api/storage_service.dart';
+import '../../core/constants/app_colors.dart';
 
 class AddProperty extends ConsumerStatefulWidget {
   const AddProperty({super.key});
@@ -400,7 +401,7 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
           _hasWater,
           (v) => setState(() => _hasWater = v),
           Icons.water_drop,
-          Colors.blue,
+          AppColors.primary,
           theme,
         ),
         _switchTile(
@@ -408,7 +409,7 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
           _hasElectricity,
           (v) => setState(() => _hasElectricity = v),
           Icons.bolt,
-          Colors.amber,
+          AppColors.accent,
           theme,
         ),
         _switchTile(
@@ -424,7 +425,7 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
           _closeToRoad,
           (v) => setState(() => _closeToRoad = v),
           Icons.traffic,
-          Colors.orange,
+          AppColors.accent,
           theme,
         ),
         const SizedBox(height: 16),
@@ -512,7 +513,7 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
           items: _floorPlanImages,
           icon: Icons.architecture,
           label: 'Upload Floor Plans',
-          color: Colors.indigo,
+          color: AppColors.primary,
           onPick: () async {
             final picked = await _picker.pickMultiImage(
               imageQuality: 80,
@@ -523,7 +524,6 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
           },
           onRemove: (i) => setState(() => _floorPlanImages.removeAt(i)),
           isImage: true,
-        ),
         ),
       ],
     );

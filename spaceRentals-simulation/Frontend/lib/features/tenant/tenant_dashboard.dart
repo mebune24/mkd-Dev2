@@ -14,6 +14,7 @@ import '../messages/chat_screens.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/logo_watermark.dart';
 import '../../providers/locale_provider.dart';
+import '../../core/constants/app_colors.dart';
 
 class TenantDashboard extends ConsumerStatefulWidget {
   const TenantDashboard({super.key});
@@ -34,8 +35,8 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
     _screens = [
       const DiscoverFeedScreen(),
       const FavoritesScreen(),
-      const MessagesScreen(),
       _MyRentals(tenantId: user.session?.userId),
+      const MessagesScreen(),
       const ProfileScreen(),
     ];
   }
@@ -92,7 +93,7 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
                 ),
                 _QuickActionTile(
                   icon: Icons.auto_awesome,
-                  color: Colors.purple,
+                  color: AppColors.primary,
                   label: 'SpaceBot',
                   subtitle: isFr
                       ? 'Conseils sur les biens et loyers'
@@ -104,7 +105,7 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
                 ),
                 _QuickActionTile(
                   icon: Icons.search_rounded,
-                  color: Colors.blue,
+                  color: AppColors.primary,
                   label: isFr ? 'Explorer les annonces' : 'Browse listings',
                   subtitle: isFr
                       ? 'Voir les biens par catégorie et lieu'
@@ -172,75 +173,85 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _NavItem(
-                  icon: Icons.play_circle_outline,
-                  activeIcon: Icons.play_circle_fill,
-                  label: isFr ? 'Découvrir' : 'Discover',
-                  index: 0,
-                  currentIndex: _currentIndex,
-                  onTap: (i) => setState(() => _currentIndex = i),
-                  selectedColor: navSelectedColor,
-                  unselectedColor: navUnselectedColor,
-                ),
-                _NavItem(
-                  icon: Icons.favorite_outline,
-                  activeIcon: Icons.favorite_rounded,
-                  label: isFr ? 'Favoris' : 'Saved',
-                  index: 1,
-                  currentIndex: _currentIndex,
-                  onTap: (i) => GuestGuard.check(
-                    context,
-                    ref,
-                    () => setState(() => _currentIndex = i),
-                    featureName: 'saved properties',
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.play_circle_outline,
+                    activeIcon: Icons.play_circle_fill,
+                    label: isFr ? 'Découvrir' : 'Discover',
+                    index: 0,
+                    currentIndex: _currentIndex,
+                    onTap: (i) => setState(() => _currentIndex = i),
+                    selectedColor: navSelectedColor,
+                    unselectedColor: navUnselectedColor,
                   ),
-                  selectedColor: navSelectedColor,
-                  unselectedColor: navUnselectedColor,
                 ),
-                _NavItem(
-                  icon: Icons.chat_bubble_outline,
-                  activeIcon: Icons.chat_bubble_rounded,
-                  label: isFr ? 'Messages' : 'Inbox',
-                  index: 2,
-                  currentIndex: _currentIndex,
-                  onTap: (i) => GuestGuard.check(
-                    context,
-                    ref,
-                    () => setState(() => _currentIndex = i),
-                    featureName: 'messages',
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.favorite_outline,
+                    activeIcon: Icons.favorite_rounded,
+                    label: isFr ? 'Favoris' : 'Saved',
+                    index: 1,
+                    currentIndex: _currentIndex,
+                    onTap: (i) => GuestGuard.check(
+                      context,
+                      ref,
+                      () => setState(() => _currentIndex = i),
+                      featureName: 'saved properties',
+                    ),
+                    selectedColor: navSelectedColor,
+                    unselectedColor: navUnselectedColor,
                   ),
-                  selectedColor: navSelectedColor,
-                  unselectedColor: navUnselectedColor,
                 ),
-                _NavItem(
-                  icon: Icons.grid_view,
-                  activeIcon: Icons.grid_view_rounded,
-                  label: isFr ? 'Mon espace' : 'My Space',
-                  index: 3,
-                  currentIndex: _currentIndex,
-                  onTap: (i) => GuestGuard.check(
-                    context,
-                    ref,
-                    () => setState(() => _currentIndex = i),
-                    featureName: 'your rentals',
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.grid_view,
+                    activeIcon: Icons.grid_view_rounded,
+                    label: isFr ? 'Mon espace' : 'My Space',
+                    index: 2,
+                    currentIndex: _currentIndex,
+                    onTap: (i) => GuestGuard.check(
+                      context,
+                      ref,
+                      () => setState(() => _currentIndex = i),
+                      featureName: 'your rentals',
+                    ),
+                    selectedColor: navSelectedColor,
+                    unselectedColor: navUnselectedColor,
                   ),
-                  selectedColor: navSelectedColor,
-                  unselectedColor: navUnselectedColor,
                 ),
-                _NavItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person_rounded,
-                  label: isFr ? 'Profil' : 'Profile',
-                  index: 4,
-                  currentIndex: _currentIndex,
-                  onTap: (i) => GuestGuard.check(
-                    context,
-                    ref,
-                    () => setState(() => _currentIndex = i),
-                    featureName: 'profile',
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.chat_bubble_outline,
+                    activeIcon: Icons.chat_bubble_rounded,
+                    label: isFr ? 'Messages' : 'Inbox',
+                    index: 3,
+                    currentIndex: _currentIndex,
+                    onTap: (i) => GuestGuard.check(
+                      context,
+                      ref,
+                      () => setState(() => _currentIndex = i),
+                      featureName: 'messages',
+                    ),
+                    selectedColor: navSelectedColor,
+                    unselectedColor: navUnselectedColor,
                   ),
-                  selectedColor: navSelectedColor,
-                  unselectedColor: navUnselectedColor,
+                ),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.person_outline,
+                    activeIcon: Icons.person_rounded,
+                    label: isFr ? 'Profil' : 'Profile',
+                    index: 4,
+                    currentIndex: _currentIndex,
+                    onTap: (i) => GuestGuard.check(
+                      context,
+                      ref,
+                      () => setState(() => _currentIndex = i),
+                      featureName: 'profile',
+                    ),
+                    selectedColor: navSelectedColor,
+                    unselectedColor: navUnselectedColor,
+                  ),
                 ),
               ],
             ),
@@ -394,7 +405,7 @@ class _TenantDrawer extends ConsumerWidget {
               children: [
                 _DrawerTile(
                   icon: Icons.account_balance_wallet,
-                  color: Colors.purple,
+                  color: AppColors.primary,
                   label: isFrench
                       ? 'Portefeuille & Gains'
                       : 'Wallet & Earnings',
@@ -413,7 +424,7 @@ class _TenantDrawer extends ConsumerWidget {
                 ),
                 _DrawerTile(
                   icon: Icons.handshake,
-                  color: Colors.orange,
+                  color: AppColors.accent,
                   label: isFrench ? 'Micro-Tâches' : 'Micro-tasks',
                   subtitle: isFrench
                       ? 'Gagnez en aidant votre communauté'
@@ -434,7 +445,7 @@ class _TenantDrawer extends ConsumerWidget {
                 ),
                 _DrawerTile(
                   icon: Icons.notifications_outlined,
-                  color: Colors.blue,
+                  color: AppColors.primary,
                   label: isFrench ? 'Notifications' : 'Notifications',
                   subtitle: '',
                   onTap: () {
@@ -802,7 +813,7 @@ class _MyRentals extends ConsumerWidget {
                             Icons.circle,
                             color: isApproved
                                 ? Colors.greenAccent
-                                : Colors.orange,
+                                : AppColors.accent,
                             size: 8,
                           ),
                           const SizedBox(width: 6),

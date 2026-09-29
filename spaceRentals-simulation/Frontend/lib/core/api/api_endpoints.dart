@@ -167,6 +167,8 @@ class ApiEndpoints {
   static String get tenantWalletApplyToRent =>
       '$_base/tenant-wallet/apply-to-rent';
   static String get tenantWalletWithdraw => '$_base/tenant-wallet/withdraw';
+  static String get landlordWallet => '$_base/landlord-wallet';
+  static String get landlordWalletWithdraw => '$_base/landlord-wallet/withdraw';
   static String get rnlpMe => '$_base/rnlp/me';
   static String rnlpInstalmentPayment(String id) =>
       '$_base/rnlp/instalments/$id/pay';

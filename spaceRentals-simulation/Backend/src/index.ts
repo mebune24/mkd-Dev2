@@ -59,6 +59,7 @@ import rnlpRoutes          from './routes/rnlp';
 import { globalErrorHandler } from './middleware/errorMiddleware';
 import { startBackgroundWorkers } from './workers';
 import tenantWalletRoutes from './routes/tenantWallet';
+import landlordWalletRoutes from './routes/landlordWallet';
 import landlordVerificationRoutes from './routes/landlordVerification';
 
 const BASE = '/api';
@@ -86,6 +87,7 @@ app.use(`${BASE}/reviews`,       reviewRoutes);
 app.use(`${BASE}/messages`,      messageRoutes);
 app.use(`${BASE}/rnlp`,          rnlpRoutes);
 app.use(`${BASE}/tenant-wallet`, tenantWalletRoutes);
+app.use(`${BASE}/landlord-wallet`, landlordWalletRoutes);
 app.use(`${BASE}/landlord-verification`, landlordVerificationRoutes);
 
 // ── Health ────────────────────────────────────────────────────

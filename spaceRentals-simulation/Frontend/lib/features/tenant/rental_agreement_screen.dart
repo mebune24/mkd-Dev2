@@ -9,6 +9,7 @@ import '../../shared/models/enums.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'checkout/ancillary_services_widget.dart';
+import '../../core/constants/app_colors.dart';
 
 class RentalAgreementScreen extends ConsumerStatefulWidget {
   final String tenantId;
@@ -23,17 +24,17 @@ class _RentalAgreementScreenState extends ConsumerState<RentalAgreementScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: confirmed ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+        color: confirmed ? Colors.green.withValues(alpha: 0.1) : AppColors.accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: confirmed ? Colors.green : Colors.orange),
+        border: Border.all(color: confirmed ? Colors.green : AppColors.accent),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(confirmed ? Icons.check_circle : Icons.pending, size: 14,
-              color: confirmed ? Colors.green : Colors.orange),
+              color: confirmed ? Colors.green : AppColors.accent),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(fontSize: 12, color: confirmed ? Colors.green : Colors.orange, fontWeight: FontWeight.bold)),
+          Text(label, style: TextStyle(fontSize: 12, color: confirmed ? Colors.green : AppColors.accent, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -97,17 +98,17 @@ class _LeaseBodyState extends ConsumerState<_LeaseBody> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: confirmed ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+        color: confirmed ? Colors.green.withValues(alpha: 0.1) : AppColors.accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: confirmed ? Colors.green : Colors.orange),
+        border: Border.all(color: confirmed ? Colors.green : AppColors.accent),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(confirmed ? Icons.check_circle : Icons.pending, size: 14,
-              color: confirmed ? Colors.green : Colors.orange),
+              color: confirmed ? Colors.green : AppColors.accent),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(fontSize: 12, color: confirmed ? Colors.green : Colors.orange, fontWeight: FontWeight.bold)),
+          Text(label, style: TextStyle(fontSize: 12, color: confirmed ? Colors.green : AppColors.accent, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -216,18 +217,18 @@ class _LeaseBodyState extends ConsumerState<_LeaseBody> {
               return Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.indigo.withValues(alpha: 0.06),
+                  color: AppColors.primary.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.indigo.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.verified_user, color: Colors.indigo, size: 20),
+                    Icon(Icons.verified_user, color: AppColors.primary, size: 20),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'This agreement is electronically signed and timestamped in compliance with OHADA Uniform Act and Cameroon Law No. 2010/021.',
-                        style: TextStyle(fontSize: 11, color: Colors.indigo, height: 1.5),
+                        style: TextStyle(fontSize: 11, color: AppColors.primary, height: 1.5),
                       ),
                     ),
                   ],

@@ -7,6 +7,7 @@ import '../../providers/locale_provider.dart';
 import '../../providers/di_providers.dart';
 import '../../core/utils/ui_helpers.dart';
 import '../../services/socket_service.dart';
+import '../../core/constants/app_colors.dart';
 
 class LandlordPendingScreen extends ConsumerStatefulWidget {
   const LandlordPendingScreen({super.key});
@@ -120,13 +121,13 @@ class _LandlordPendingScreenState extends ConsumerState<LandlordPendingScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: AppColors.accent,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.hourglass_top,
                   size: 64,
-                  color: Colors.orange.shade600,
+                  color: AppColors.accent,
                 ),
               ),
               const SizedBox(height: 32),

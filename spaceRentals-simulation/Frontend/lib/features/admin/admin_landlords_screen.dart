@@ -5,6 +5,7 @@ import '../../shared/models/enums.dart';
 import '../../models/user_model.dart';
 import '../../providers/admin_users_provider.dart';
 import 'admin_user_profile_screen.dart';
+import '../../core/constants/app_colors.dart';
 
 class AdminLandlordsScreen extends ConsumerWidget {
   const AdminLandlordsScreen({super.key});
@@ -217,7 +218,7 @@ class _LandlordCard extends StatelessWidget {
                           : Icons.warning,
                       color: user.status == 'active'
                           ? Colors.green
-                          : Colors.orange,
+                          : AppColors.accent,
                       size: 14,
                     ),
                     const SizedBox(width: 4),
@@ -228,7 +229,7 @@ class _LandlordCard extends StatelessWidget {
                         fontSize: 11,
                         color: user.status == 'active'
                             ? Colors.green
-                            : Colors.orange,
+                            : AppColors.accent,
                       ),
                     ),
                   ],

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/utils/ui_helpers.dart';
 import '../../providers/admin_users_provider.dart';
 import '../../providers/di_providers.dart';
+import '../../core/constants/app_colors.dart';
 
 class AdminUserProfileScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -65,10 +66,10 @@ class _AdminUserProfileScreenState
           children: [
             CircleAvatar(
               radius: 38,
-              backgroundColor: Colors.indigo.shade50,
+              backgroundColor: AppColors.primary,
               child: Text(
                 profile.name.isEmpty ? '?' : profile.name[0].toUpperCase(),
-                style: TextStyle(fontSize: 28, color: Colors.indigo.shade700),
+                style: TextStyle(fontSize: 28, color: AppColors.primary),
               ),
             ),
             const SizedBox(height: 12),
@@ -139,9 +140,9 @@ class _AdminUserProfileScreenState
       label: Text(status.toUpperCase()),
       avatar: Icon(
         status == 'active' ? Icons.check_circle : Icons.warning,
-        color: status == 'active' ? Colors.green : Colors.orange,
+        color: status == 'active' ? Colors.green : AppColors.accent,
       ),
-      backgroundColor: (status == 'active' ? Colors.green : Colors.orange)
+      backgroundColor: (status == 'active' ? Colors.green : AppColors.accent)
           .withValues(alpha: 0.1),
     ),
   );

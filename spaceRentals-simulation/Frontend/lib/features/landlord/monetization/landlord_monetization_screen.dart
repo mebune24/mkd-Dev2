@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/constants/app_colors.dart';
 
 class LandlordMonetizationScreen extends StatefulWidget {
   const LandlordMonetizationScreen({super.key});
@@ -50,7 +51,7 @@ class _LandlordMonetizationScreenState
                   child: _buildMetricCard(
                     label: 'Bonus Parrainage',
                     value: 60000,
-                    color: Colors.purple,
+                    color: AppColors.primary,
                     icon: Icons.group_add,
                   ),
                 ),
@@ -64,7 +65,7 @@ class _LandlordMonetizationScreenState
                     label: 'Tâches Publiées',
                     value: 3,
                     isCurrency: false,
-                    color: Colors.orange,
+                    color: AppColors.accent,
                     icon: Icons.task_alt,
                   ),
                 ),
@@ -74,7 +75,7 @@ class _LandlordMonetizationScreenState
                     label: 'Tâches Complétées',
                     value: 2,
                     isCurrency: false,
-                    color: Colors.teal,
+                    color: AppColors.primary,
                     icon: Icons.check_circle,
                   ),
                 ),
@@ -319,7 +320,7 @@ class _ReferralLedger extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isValidated
                             ? Colors.greenAccent.withValues(alpha: 0.2)
-                            : Colors.orange.withValues(alpha: 0.2),
+                            : AppColors.accent.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -327,7 +328,7 @@ class _ReferralLedger extends StatelessWidget {
                         style: TextStyle(
                           color: isValidated
                               ? Colors.greenAccent
-                              : Colors.orange,
+                              : AppColors.accent,
                           fontSize: 11,
                         ),
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/domain_providers.dart';
+import '../../core/constants/app_colors.dart';
 
 class TransactionsScreen extends ConsumerWidget {
   const TransactionsScreen({super.key});
@@ -12,7 +13,7 @@ class TransactionsScreen extends ConsumerWidget {
       case 'SUCCESSFUL':
         return Colors.green;
       case 'PENDING':
-        return Colors.orange;
+        return AppColors.accent;
       case 'FAILED':
         return Colors.red;
       default:
@@ -70,7 +71,7 @@ class TransactionsScreen extends ConsumerWidget {
                       Colors.white,
                     ),
                     _buildStat('Transactions', '${txns.length}', Colors.white),
-                    _buildStat('Pending', '$pending', Colors.amberAccent),
+                    _buildStat('Pending', '$pending', AppColors.accent),
                   ],
                 ),
               ),

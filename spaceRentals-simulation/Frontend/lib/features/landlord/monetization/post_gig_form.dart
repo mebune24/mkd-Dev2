@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/ui_helpers.dart';
 import '../../../providers/di_providers.dart';
+import '../../../core/constants/app_colors.dart';
 
 class PostPropertyGigForm extends ConsumerStatefulWidget {
   const PostPropertyGigForm({super.key});
@@ -124,7 +125,7 @@ class _PostPropertyGigFormState extends ConsumerState<PostPropertyGigForm> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.purple, size: 20),
+                    Icon(Icons.info_outline, color: AppColors.primary, size: 20),
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(

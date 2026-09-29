@@ -8,6 +8,7 @@ import '../../providers/locale_provider.dart';
 import '../../providers/di_providers.dart';
 import '../../core/api/storage_service.dart';
 import '../../widgets/animated_loading_button.dart';
+import '../../core/constants/app_colors.dart';
 
 class LandlordKYCScreen extends ConsumerStatefulWidget {
   const LandlordKYCScreen({super.key});
@@ -87,20 +88,20 @@ class _LandlordKYCScreenState extends ConsumerState<LandlordKYCScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.shade200),
+                border: Border.all(color: AppColors.primary),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: Colors.blue),
+                  const Icon(Icons.info_outline, color: AppColors.primary),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       isFr
                           ? 'En tant que propriétaire, vous devez vérifier votre identité et vos propriétés avant de pouvoir utiliser la plateforme.'
                           : 'As a landlord, you must verify your identity and properties before using the platform.',
-                      style: const TextStyle(fontSize: 13, color: Colors.blue),
+                      style: const TextStyle(fontSize: 13, color: AppColors.primary),
                     ),
                   ),
                 ],

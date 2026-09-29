@@ -11,6 +11,7 @@ import '../../widgets/property_card_shimmer.dart';
 import '../../features/properties/domain/property.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../widgets/empty_state.dart';
+import '../../core/constants/app_colors.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -74,7 +75,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           title: const Row(
             children: [
-              Icon(Icons.star_rounded, color: Colors.amber, size: 28),
+              Icon(Icons.star_rounded, color: AppColors.accent, size: 28),
               SizedBox(width: 10),
               Text('Rate Your Rental', style: TextStyle(fontSize: 18)),
             ],
@@ -100,7 +101,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         index < selectedRating
                             ? Icons.star_rounded
                             : Icons.star_outline_rounded,
-                        color: Colors.amber,
+                        color: AppColors.accent,
                         size: 40,
                       ),
                     ),
@@ -125,7 +126,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         color: selectedRating >= 4
                             ? Colors.green
                             : selectedRating == 3
-                            ? Colors.orange
+                            ? AppColors.accent
                             : Colors.red,
                         fontSize: 14,
                       ),
@@ -1378,7 +1379,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               i < (review['rating'] as int)
                                   ? Icons.star
                                   : Icons.star_border,
-                              color: Colors.amber,
+                              color: AppColors.accent,
                               size: 14,
                             ),
                           ),
@@ -1410,12 +1411,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildPartnershipsSection() {
     final partners = [
       {'name': 'Google', 'icon': Icons.g_mobiledata, 'color': Colors.red},
-      {'name': 'Facebook', 'icon': Icons.facebook, 'color': Colors.blue},
-      {'name': 'Instagram', 'icon': Icons.camera_alt, 'color': Colors.pink},
+      {'name': 'Facebook', 'icon': Icons.facebook, 'color': AppColors.primary},
+      {'name': 'Instagram', 'icon': Icons.camera_alt, 'color': AppColors.primary},
       {
         'name': 'Orange',
         'icon': Icons.signal_cellular_alt,
-        'color': Colors.orange,
+        'color': AppColors.accent,
       },
       {
         'name': 'Cameroon Real Estate',
@@ -2556,7 +2557,7 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
                     children: [
                       const Icon(
                         Icons.real_estate_agent,
-                        color: Colors.amberAccent,
+                        color: AppColors.accent,
                         size: 14,
                       ),
                       const SizedBox(width: 7),
@@ -2629,7 +2630,7 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
                           ),
                           child: Icon(
                             b['icon'] as IconData,
-                            color: Colors.amberAccent,
+                            color: AppColors.accent,
                             size: 18,
                           ),
                         ),
@@ -2809,7 +2810,7 @@ extension _HomeScreenAgentAndShowcase on _HomeScreenState {
                 child: Icon(
                   Icons.phone_android_rounded,
                   size: 80,
-                  color: Colors.purple.shade200,
+                  color: AppColors.primary,
                 ),
               ),
             ),

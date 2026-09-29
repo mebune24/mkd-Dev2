@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import '../../../core/constants/app_colors.dart';
 
 class CachedVideoPlayer extends StatefulWidget {
   final String url;
@@ -89,7 +89,7 @@ class _CachedVideoPlayerState extends State<CachedVideoPlayer> {
             _controller!,
             allowScrubbing: true,
             colors: const VideoProgressColors(
-              playedColor: Colors.blue,
+              playedColor: AppColors.primary,
               backgroundColor: Colors.grey,
             ),
           ),

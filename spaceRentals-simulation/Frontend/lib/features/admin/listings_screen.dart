@@ -4,6 +4,7 @@ import '../../providers/property_provider.dart';
 import '../../core/utils/ui_helpers.dart';
 import '../../providers/di_providers.dart';
 import '../../core/api/api_endpoints.dart';
+import '../../core/constants/app_colors.dart';
 
 class AdminListingsScreen extends ConsumerStatefulWidget {
   const AdminListingsScreen({super.key});
@@ -269,10 +270,10 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen> {
 
   Widget _buildStatusBadge(String status) {
     final Map<String, Color> colors = {
-      'active': Colors.blue,
-      'available': Colors.blue,
+      'active': AppColors.primary,
+      'available': AppColors.primary,
       'verified': Colors.green,
-      'flagged': Colors.orange,
+      'flagged': AppColors.accent,
       'removed': Colors.red,
       'unpublished': Colors.red,
     };

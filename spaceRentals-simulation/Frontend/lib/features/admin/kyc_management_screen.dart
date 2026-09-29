@@ -5,6 +5,7 @@ import '../../providers/di_providers.dart';
 import '../landlord/domain/kyc_submission.dart';
 import '../../core/utils/ui_helpers.dart';
 import '../../core/api/storage_service.dart';
+import '../../core/constants/app_colors.dart';
 
 class AdminKYCManagementScreen extends ConsumerWidget {
   const AdminKYCManagementScreen({super.key});
@@ -159,15 +160,15 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
     try {
       if (approve) {
         await ref
-            .read(agentRepositoryProvider)
-            .approveKyc(widget.submission.id);
+            .read(adminRepositoryProvider)
+            .approveLandlordKyc(widget.submission.id);
         if (mounted) {
           context.showSuccessToast(
             '${widget.submission.userName} has been approved!',
           );
         }
       } else {
-        await ref.read(agentRepositoryProvider).rejectKyc(widget.submission.id);
+        await ref.read(adminRepositoryProvider).rejectLandlordKyc(widget.submission.id);
         if (mounted) {
           context.showErrorToast('${widget.submission.userName} rejected.');
         }
@@ -183,7 +184,7 @@ class _KYCCardState extends ConsumerState<_KYCCard> {
     final sub = widget.submission;
     final theme = Theme.of(context);
     final statusColor = sub.status == 'pending'
-        ? Colors.orange
+        ? AppColors.accent
         : (sub.status == 'approved' || sub.status == 'verified')
         ? Colors.green
         : Colors.red;

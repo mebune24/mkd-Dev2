@@ -12,6 +12,7 @@ import '../../core/utils/ui_helpers.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:signature/signature.dart';
 import 'package:flutter/services.dart';
+import '../../core/constants/app_colors.dart';
 
 // ── Provider: load a lease by its own ID ─────────────────────────────────────
 final leaseByIdProvider = FutureProvider.family<Lease?, String>((
@@ -406,7 +407,7 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
     final signed = status == SignatureStatus.signed;
     final color = signed
         ? Colors.green
-        : (status == SignatureStatus.declined ? Colors.red : Colors.orange);
+        : (status == SignatureStatus.declined ? Colors.red : AppColors.accent);
     final icon = signed
         ? Icons.check_circle
         : (status == SignatureStatus.declined ? Icons.cancel : Icons.pending);
@@ -805,7 +806,7 @@ class _LeaseSigningScreenState extends ConsumerState<LeaseSigningScreen> {
       case LeaseStatus.signed:
         return (Colors.green.shade600, Icons.verified, 'Lease Fully Signed');
       case LeaseStatus.partiallySigned:
-        return (Colors.orange.shade600, Icons.draw, 'Partially Signed');
+        return (AppColors.accent, Icons.draw, 'Partially Signed');
       case LeaseStatus.pendingTenantSignature:
       case LeaseStatus.pendingLandlordSignature:
       case LeaseStatus.generated:

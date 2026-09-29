@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/domain_providers.dart';
+import '../../core/constants/app_colors.dart';
 
 class AdminSubscriptionsScreen extends ConsumerWidget {
   const AdminSubscriptionsScreen({super.key});
@@ -11,7 +12,7 @@ class AdminSubscriptionsScreen extends ConsumerWidget {
         return Colors.green;
       case 'grace_period':
       case 'payment_due':
-        return Colors.orange;
+        return AppColors.accent;
       case 'expired':
         return Colors.red;
       default:

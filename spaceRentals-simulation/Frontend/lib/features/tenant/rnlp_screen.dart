@@ -5,6 +5,7 @@ import '../../core/utils/currency_formatter.dart';
 import '../../providers/di_providers.dart';
 import '../../models/rnlp_model.dart';
 import '../../services/session_storage_service.dart';
+import '../../core/constants/app_colors.dart';
 
 final _rnlpProvider = FutureProvider<RnlpModel?>((ref) async {
   return ref.read(rnlpRepositoryProvider).getOrCreateContract();
@@ -303,7 +304,7 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen>
                             CurrencyFormatter.formatCFA(
                               contract.remainingBalance,
                             ),
-                            valueColor: Colors.orange,
+                            valueColor: AppColors.accent,
                           ),
                           const Divider(height: 20),
                           _buildContractRow(
@@ -386,21 +387,21 @@ class _RnlpScreenState extends ConsumerState<RnlpScreen>
                           side: BorderSide(
                             color: instalment.paid
                                 ? Colors.green.withValues(alpha: 0.3)
-                                : Colors.orange.withValues(alpha: 0.3),
+                                : AppColors.accent.withValues(alpha: 0.3),
                           ),
                         ),
                         child: ListTile(
                           leading: CircleAvatar(
                             backgroundColor: instalment.paid
                                 ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.orange.withValues(alpha: 0.1),
+                                : AppColors.accent.withValues(alpha: 0.1),
                             child: Icon(
                               instalment.paid
                                   ? Icons.check_circle
                                   : Icons.schedule,
                               color: instalment.paid
                                   ? Colors.green
-                                  : Colors.orange,
+                                  : AppColors.accent,
                             ),
                           ),
                           title: Row(

@@ -7,14 +7,14 @@ import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/url_helper.dart';
 import 'my_properties.dart';
 import 'tenant_management.dart';
-import 'landlord_payments_screen.dart';
-import 'my_agents_screen.dart';
+import 'wallet/landlord_wallet_screen.dart';
 import '../profile/profile_screen.dart';
 import '../messages/chat_screens.dart';
 import '../../providers/domain_providers.dart';
 import '../../providers/property_provider.dart';
 import '../../providers/applications_provider.dart';
 import 'domain/landlord_dashboard_snapshot.dart';
+import '../../core/constants/app_colors.dart';
 
 class LandlordDashboard extends ConsumerStatefulWidget {
   const LandlordDashboard({super.key});
@@ -32,8 +32,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
     ),
     const MyProperties(),
     const TenantManagementScreen(),
-    const LandlordPaymentsScreen(),
-    const MyAgentsScreen(),
+    const LandlordWalletScreen(),
     const MessagesScreen(),
     const ProfileScreen(),
   ];
@@ -173,9 +172,9 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                   theme: theme,
                 ),
                 _NavItem(
-                  icon: Icons.payments_outlined,
-                  activeIcon: Icons.payments_rounded,
-                  label: 'Payments',
+                  icon: Icons.account_balance_wallet_outlined,
+                  activeIcon: Icons.account_balance_wallet_rounded,
+                  label: 'Wallet',
                   index: 3,
                   currentIndex: _currentIndex,
                   onTap: (i) => setState(() => _currentIndex = i),
@@ -308,7 +307,7 @@ class _LandlordDrawer extends StatelessWidget {
                 _buildDrawerTile(
                   context,
                   icon: Icons.task_alt,
-                  color: Colors.orange,
+                  color: AppColors.accent,
                   label: 'Publier une Tâche',
                   subtitle: 'Entretien, nettoyage...',
                   onTap: () {
@@ -319,7 +318,7 @@ class _LandlordDrawer extends StatelessWidget {
                 _buildDrawerTile(
                   context,
                   icon: Icons.notifications_outlined,
-                  color: Colors.blue,
+                  color: AppColors.primary,
                   label: 'Notifications',
                   subtitle: '',
                   onTap: () {
@@ -506,7 +505,7 @@ class _DashboardOverview extends ConsumerWidget {
                           'Tenants',
                           '$activeTenantCount',
                           Icons.people_rounded,
-                          Colors.teal,
+                          AppColors.primary,
                         ),
                       ),
                     ],
@@ -530,7 +529,7 @@ class _DashboardOverview extends ConsumerWidget {
                           'Pending Apps',
                           '$pendingApplications',
                           Icons.pending_actions_rounded,
-                          Colors.orange,
+                          AppColors.accent,
                         ),
                       ),
                     ],
@@ -544,7 +543,7 @@ class _DashboardOverview extends ConsumerWidget {
                           'Followers',
                           '${dashboard.followerCount}',
                           Icons.person_add_alt_1_rounded,
-                          Colors.pinkAccent,
+                          AppColors.primary,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -554,7 +553,7 @@ class _DashboardOverview extends ConsumerWidget {
                           'Active Listings',
                           '${dashboard.activeListings}',
                           Icons.visibility_rounded,
-                          Colors.deepPurple,
+                          AppColors.primary,
                         ),
                       ),
                     ],
@@ -569,7 +568,7 @@ class _DashboardOverview extends ConsumerWidget {
                           'Occupancy',
                           '${dashboard.occupancyRate.toStringAsFixed(1)}%',
                           Icons.pie_chart_rounded,
-                          Colors.indigo,
+                          AppColors.primary,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -595,7 +594,7 @@ class _DashboardOverview extends ConsumerWidget {
                           'Maintenance',
                           '${dashboard.openMaintenance}',
                           Icons.build_circle_outlined,
-                          Colors.orange,
+                          AppColors.accent,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -605,7 +604,7 @@ class _DashboardOverview extends ConsumerWidget {
                           'Unread Messages',
                           '${dashboard.unreadMessages}',
                           Icons.mark_unread_chat_alt_outlined,
-                          Colors.blue,
+                          AppColors.primary,
                         ),
                       ),
                     ],
@@ -661,7 +660,7 @@ class _DashboardOverview extends ConsumerWidget {
                           context,
                           Icons.real_estate_agent_outlined,
                           'Agents',
-                          Colors.indigo,
+                          AppColors.primary,
                           () => onNavigateToTab?.call(4),
                         ),
                       ),
@@ -671,7 +670,7 @@ class _DashboardOverview extends ConsumerWidget {
                           context,
                           Icons.message_outlined,
                           'Messages',
-                          Colors.blue,
+                          AppColors.primary,
                           () => onNavigateToTab?.call(5),
                         ),
                       ),
@@ -685,7 +684,7 @@ class _DashboardOverview extends ConsumerWidget {
                           context,
                           Icons.notifications_outlined,
                           'Alerts',
-                          Colors.orange,
+                          AppColors.accent,
                           () => context.push('/notifications'),
                         ),
                       ),
@@ -727,7 +726,7 @@ class _DashboardOverview extends ConsumerWidget {
                             ? Icons.home_work
                             : Icons.description,
                         activity.type == 'message'
-                            ? Colors.blue
+                            ? AppColors.primary
                             : activity.type == 'rental'
                             ? Colors.green
                             : theme.colorScheme.primary,

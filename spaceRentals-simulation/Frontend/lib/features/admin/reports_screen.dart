@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../features/admin/domain/admin_transaction.dart';
 import '../../providers/domain_providers.dart';
+import '../../core/constants/app_colors.dart';
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
@@ -58,19 +59,19 @@ class ReportsScreen extends ConsumerWidget {
                     'Active Listings',
                     '${summary.activeListings}',
                     Icons.apartment,
-                    Colors.indigo,
+                    AppColors.primary,
                   ),
                   _kpiCard(
                     'Active Tenants',
                     '${summary.usersByRole['tenant'] ?? 0}',
                     Icons.people,
-                    Colors.blue,
+                    AppColors.primary,
                   ),
                   _kpiCard(
                     'Active Leases',
                     '${summary.totalLeases}',
                     Icons.description,
-                    Colors.teal,
+                    AppColors.primary,
                   ),
                 ],
               ),
@@ -97,14 +98,14 @@ class ReportsScreen extends ConsumerWidget {
                 'Successful payments',
                 '${summary.compliance.successfulPayments}',
                 Icons.payment,
-                Colors.teal,
+                AppColors.primary,
                 true,
               ),
               _complianceRow(
                 'Audit logs generated',
                 '${summary.compliance.auditLogs}',
                 Icons.history,
-                Colors.indigo,
+                AppColors.primary,
                 true,
               ),
               _complianceRow(
@@ -184,7 +185,7 @@ class ReportsScreen extends ConsumerWidget {
           const SizedBox(width: 8),
           Icon(
             passing ? Icons.check_circle : Icons.warning_rounded,
-            color: passing ? Colors.green : Colors.orange,
+            color: passing ? Colors.green : AppColors.accent,
             size: 18,
           ),
         ],
@@ -225,14 +226,14 @@ class _RevenueChart extends StatelessWidget {
                 CurrencyFormatter.formatCFA(
                   point.amount.toDouble(),
                 ).replaceAll(' CFA', ''),
-                style: const TextStyle(fontSize: 9, color: Colors.indigo),
+                style: const TextStyle(fontSize: 9, color: AppColors.primary),
               ),
               const SizedBox(height: 4),
               Container(
                 width: 30,
                 height: height,
                 decoration: const BoxDecoration(
-                  color: Colors.indigo,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
                 ),
               ),
@@ -291,7 +292,7 @@ class _CategoryChart extends StatelessWidget {
                   value: ratio,
                   minHeight: 8,
                   backgroundColor: Colors.grey.shade100,
-                  color: Colors.teal,
+                  color: AppColors.primary,
                 ),
               ],
             ),

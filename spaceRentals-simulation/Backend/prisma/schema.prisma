@@ -50,6 +50,8 @@ model User {
   propertyReshares     PropertyReshare[]
   tenantWallet         TenantWallet?
   tenantWalletEntries  TenantWalletEntry[]
+  landlordWallet       LandlordWallet?
+  landlordWalletEntries LandlordWalletEntry[]
   sentMessages         Message[]              @relation("SentMessages")
   receivedMessages     Message[]              @relation("ReceivedMessages")
   auditLogs            AuditLog[]
@@ -329,6 +331,46 @@ model TenantWithdrawal {
   providerTxId String?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+}
+
+model LandlordWallet {
+  id           String                  @id @default(uuid())
+  landlordId   String                  @unique
+  landlord     User                    @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  balance      Int                     @default(0) // Available balance
+  pendingBalance Int                   @default(0) // Pending clearance balance
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  entries      LandlordWalletEntry[]
+  withdrawals  LandlordWithdrawal[]
+}
+
+model LandlordWalletEntry {
+  id          String         @id @default(uuid())
+  walletId    String
+  wallet      LandlordWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type        String         // "rent_credit", "withdrawal", "platform_fee_deduction"
+  amount      Int            // positive credit, negative debit
+  description String
+  referenceId String?
+  createdAt   DateTime       @default(now())
+  user        User?          @relation(fields: [userId], references: [id])
+  userId      String?
+
+  @@index([walletId, createdAt])
+}
+
+model LandlordWithdrawal {
+  id           String         @id @default(uuid())
+  walletId     String
+  wallet       LandlordWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount       Int
+  method       String         // "MTN", "ORANGE", "BANK"
+  destination  String
+  status       String         @default("pending") // "pending", "processing", "completed", "failed"
+  providerTxId String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
 model Transaction {

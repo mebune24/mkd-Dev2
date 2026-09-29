@@ -4,6 +4,7 @@ import '../../core/utils/money.dart';
 import '../../providers/applications_provider.dart';
 import '../../shared/models/enums.dart';
 import '../../widgets/empty_state.dart';
+import '../../core/constants/app_colors.dart';
 
 class PaymentsScreen extends ConsumerWidget {
   final String tenantId;
@@ -100,7 +101,7 @@ class PaymentsScreen extends ConsumerWidget {
               ),
               _InfoCard(
                 icon: Icons.receipt_long_outlined,
-                iconColor: Colors.orange,
+                iconColor: AppColors.accent,
                 title: 'Application Fee → Space Rentals',
                 body:
                     '${SpaceFees.tenantApplicationFee.formatted()} per application is paid to Space Rentals for processing and verifying your rental application. This is non-refundable.',
@@ -133,7 +134,7 @@ class PaymentsScreen extends ConsumerWidget {
               const _SectionHeader(title: 'Your Active Rentals'),
               const _InfoCard(
                 icon: Icons.info_outline,
-                iconColor: Colors.blue,
+                iconColor: AppColors.primary,
                 title: 'Pay Rent via Your Lease Agreement',
                 body:
                     'Once your lease is signed, your landlord will share payment instructions. Use the messaging feature to coordinate rent collection. Space Rentals keeps a verified record but does not handle the funds.',
@@ -246,9 +247,9 @@ class _FeeHistoryTile extends StatelessWidget {
       case ApplicationStatus.rejected:
         return Colors.red;
       case ApplicationStatus.underReview:
-        return Colors.orange;
+        return AppColors.accent;
       case ApplicationStatus.submitted:
-        return Colors.blue;
+        return AppColors.primary;
       default:
         return Colors.grey;
     }

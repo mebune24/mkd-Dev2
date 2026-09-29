@@ -4,6 +4,7 @@ import '../../providers/notification_provider.dart';
 import '../../widgets/empty_state.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../providers/di_providers.dart';
+import '../../core/constants/app_colors.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -26,13 +27,13 @@ class NotificationsScreen extends ConsumerWidget {
   Color _getColorForType(String type) {
     switch (type) {
       case 'application_update':
-        return Colors.blue;
+        return AppColors.primary;
       case 'lease_signed':
         return Colors.green;
       case 'payment_due':
-        return Colors.orange;
+        return AppColors.accent;
       case 'maintenance_update':
-        return Colors.purple;
+        return AppColors.primary;
       default:
         return Colors.grey;
     }
@@ -117,7 +118,7 @@ class NotificationsScreen extends ConsumerWidget {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: n.isRead ? Colors.white : Colors.blue.shade50.withValues(alpha: 0.5),
+                      color: n.isRead ? Colors.white : AppColors.primary.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -128,7 +129,7 @@ class NotificationsScreen extends ConsumerWidget {
                       ],
                       border: Border(
                         left: BorderSide(
-                          color: n.isRead ? Colors.transparent : Colors.blue,
+                          color: n.isRead ? Colors.transparent : AppColors.primary,
                           width: 4,
                         ),
                       ),

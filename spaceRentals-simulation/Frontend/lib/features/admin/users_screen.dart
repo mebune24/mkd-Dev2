@@ -5,6 +5,7 @@ import '../../models/user_model.dart';
 import '../../providers/domain_providers.dart';
 import '../../providers/di_providers.dart';
 import '../../core/utils/ui_helpers.dart';
+import '../../core/constants/app_colors.dart';
 
 class UsersScreen extends ConsumerWidget {
   const UsersScreen({super.key});
@@ -12,11 +13,11 @@ class UsersScreen extends ConsumerWidget {
   Color _roleColor(Role role) {
     switch (role) {
       case Role.admin:
-        return Colors.deepPurple;
+        return AppColors.primary;
       case Role.landlord:
-        return Colors.blue;
+        return AppColors.primary;
       case Role.tenant:
-        return Colors.teal;
+        return AppColors.primary;
     }
   }
 

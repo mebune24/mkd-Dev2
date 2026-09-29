@@ -12,6 +12,7 @@ import '../../providers/reviews_provider.dart';
 import '../../core/utils/ui_helpers.dart';
 import '../../widgets/guest_guard.dart';
 import '../../widgets/photo_gallery.dart';
+import '../../core/constants/app_colors.dart';
 
 class PropertyDetails extends ConsumerStatefulWidget {
   final PropertyWithListing property;
@@ -340,19 +341,19 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails>
                           _buildDetailBadge(
                             Icons.chair,
                             'Furnished',
-                            Colors.teal,
+                            AppColors.primary,
                           ),
                         if (property.property.parkingSpaces > 0)
                           _buildDetailBadge(
                             Icons.local_parking,
                             '${property.property.parkingSpaces} Parking',
-                            Colors.indigo,
+                            AppColors.primary,
                           ),
                         if (false)
                           _buildDetailBadge(
                             Icons.stairs,
                             'Floor ${0}/${0}',
-                            Colors.purple,
+                            AppColors.primary,
                           ),
                         if (false)
                           _buildDetailBadge(
@@ -374,7 +375,7 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails>
                               child: _buildMediaButton(
                                 icon: Icons.architecture,
                                 label: 'Floor Plan',
-                                color: Colors.indigo,
+                                color: AppColors.primary,
                                 onTap: () => _showFloorPlanGallery(
                                   context,
                                   property.property.floorPlanUrls,
@@ -535,10 +536,10 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails>
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.teal.withValues(alpha: 0.08),
+                                  color: AppColors.primary.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: Colors.teal.withValues(alpha: 0.3),
+                                    color: AppColors.primary.withValues(alpha: 0.3),
                                   ),
                                 ),
                                 child: Row(
@@ -547,14 +548,14 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails>
                                     const Icon(
                                       Icons.place,
                                       size: 13,
-                                      color: Colors.teal,
+                                      color: AppColors.primary,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       amenity,
                                       style: const TextStyle(
                                         fontSize: 12,
-                                        color: Colors.teal,
+                                        color: AppColors.primary,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -678,11 +679,11 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails>
       mainAxisSize: MainAxisSize.min,
       children: List.generate(5, (i) {
         if (i < rating.floor()) {
-          return const Icon(Icons.star, color: Colors.amber, size: 18);
+          return const Icon(Icons.star, color: AppColors.accent, size: 18);
         } else if (i < rating) {
-          return const Icon(Icons.star_half, color: Colors.amber, size: 18);
+          return const Icon(Icons.star_half, color: AppColors.accent, size: 18);
         } else {
-          return const Icon(Icons.star_border, color: Colors.amber, size: 18);
+          return const Icon(Icons.star_border, color: AppColors.accent, size: 18);
         }
       }),
     );
@@ -797,18 +798,18 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: hasValue
-            ? Colors.blue.withValues(alpha: 0.08)
+            ? AppColors.primary.withValues(alpha: 0.08)
             : Colors.grey.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: hasValue
-              ? Colors.blue.withValues(alpha: 0.3)
+              ? AppColors.primary.withValues(alpha: 0.3)
               : Colors.grey.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: hasValue ? Colors.blue : Colors.grey),
+          Icon(icon, size: 18, color: hasValue ? AppColors.primary : Colors.grey),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -816,7 +817,7 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: hasValue ? Colors.blue[700] : Colors.grey[600],
+                color: hasValue ? AppColors.primary : Colors.grey[600],
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -845,7 +846,7 @@ class _PropertyDetailsState extends ConsumerState<PropertyDetails>
                 padding: EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(Icons.architecture, color: Colors.indigo),
+                    Icon(Icons.architecture, color: AppColors.primary),
                     SizedBox(width: 8),
                     Text(
                       'Floor Plans',
@@ -1027,7 +1028,7 @@ class _RnplSliderWidgetState extends State<_RnplSliderWidget> {
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.bolt, color: Colors.amberAccent, size: 24),
+                      Icon(Icons.bolt, color: AppColors.accent, size: 24),
                       SizedBox(width: 8),
                       Text(
                         'RNPL Activated',
@@ -1053,8 +1054,8 @@ class _RnplSliderWidgetState extends State<_RnplSliderWidget> {
                     data: SliderThemeData(
                       activeTrackColor: Colors.white,
                       inactiveTrackColor: Colors.white24,
-                      thumbColor: Colors.amberAccent,
-                      overlayColor: Colors.amberAccent.withValues(alpha: 0.2),
+                      thumbColor: AppColors.accent,
+                      overlayColor: AppColors.accent.withValues(alpha: 0.2),
                     ),
                     child: Slider(
                       value: _sliderValue,
@@ -1092,7 +1093,7 @@ class _RnplSliderWidgetState extends State<_RnplSliderWidget> {
                       Text(
                         'Slide to activate Pay Later',
                         style: TextStyle(
-                          color: Colors.amberAccent,
+                          color: AppColors.accent,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1100,7 +1101,7 @@ class _RnplSliderWidgetState extends State<_RnplSliderWidget> {
                   ),
                   SliderTheme(
                     data: SliderThemeData(
-                      activeTrackColor: Colors.amberAccent,
+                      activeTrackColor: AppColors.accent,
                       inactiveTrackColor: Colors.white12,
                       thumbColor: Colors.white,
                       overlayColor: Colors.white.withValues(alpha: 0.1),
@@ -1329,18 +1330,18 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.15),
+                      color: AppColors.accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.star, size: 13, color: Colors.amber),
+                        const Icon(Icons.star, size: 13, color: AppColors.accent),
                         const SizedBox(width: 3),
                         Text(
                           '$avgRating (${reviews.length})',
                           style: const TextStyle(
-                            color: Colors.amber,
+                            color: AppColors.accent,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -1405,7 +1406,7 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
                       onTap: () => setState(() => _selectedStars = i + 1),
                       child: Icon(
                         i < _selectedStars ? Icons.star : Icons.star_border,
-                        color: Colors.amber,
+                        color: AppColors.accent,
                         size: 32,
                       ),
                     ),
@@ -1584,7 +1585,7 @@ class _ReviewCard extends StatelessWidget {
                         : (i < review.rating
                               ? Icons.star_half
                               : Icons.star_border),
-                    color: Colors.amber,
+                    color: AppColors.accent,
                     size: 14,
                   ),
                 ),

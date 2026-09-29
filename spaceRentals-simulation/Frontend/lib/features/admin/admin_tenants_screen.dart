@@ -5,6 +5,7 @@ import '../../shared/models/enums.dart';
 import '../../models/user_model.dart';
 import '../../providers/admin_users_provider.dart';
 import 'admin_user_profile_screen.dart';
+import '../../core/constants/app_colors.dart';
 
 class AdminTenantsScreen extends ConsumerWidget {
   const AdminTenantsScreen({super.key});
@@ -166,10 +167,10 @@ class _TenantCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: Colors.blue.shade100,
+            backgroundColor: AppColors.primary,
             child: Text(
               user.name.isNotEmpty ? user.name[0].toUpperCase() : 'T',
-              style: TextStyle(color: Colors.blue.shade700),
+              style: TextStyle(color: AppColors.primary),
             ),
           ),
           const SizedBox(width: 14),
@@ -198,7 +199,7 @@ class _TenantCard extends StatelessWidget {
                           : Icons.warning,
                       color: user.status == 'active'
                           ? Colors.green
-                          : Colors.orange,
+                          : AppColors.accent,
                       size: 14,
                     ),
                     const SizedBox(width: 4),
@@ -209,7 +210,7 @@ class _TenantCard extends StatelessWidget {
                         fontSize: 11,
                         color: user.status == 'active'
                             ? Colors.green
-                            : Colors.orange,
+                            : AppColors.accent,
                       ),
                     ),
                   ],
@@ -224,7 +225,7 @@ class _TenantCard extends StatelessWidget {
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue.shade600,
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -5,6 +5,7 @@ import '../../core/utils/ui_helpers.dart';
 import 'package:space_rentals/providers/domain_providers.dart';
 import 'package:space_rentals/features/rentals/domain/dispute_record.dart';
 import '../../providers/di_providers.dart';
+import '../../core/constants/app_colors.dart';
 
 // ── Disputes Screen ───────────────────────────────────────────────────────────
 class DisputesScreen extends ConsumerWidget {
@@ -50,7 +51,7 @@ class DisputesScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildStat('Open', '$open', Colors.red),
-                    _buildStat('Under Review', '$review', Colors.orange),
+                    _buildStat('Under Review', '$review', AppColors.accent),
                     _buildStat('Resolved', '$resolved', Colors.green),
                   ],
                 ),
@@ -108,7 +109,7 @@ class _DisputeCardState extends ConsumerState<_DisputeCard> {
       case 'open':
         return Colors.red;
       case 'under_review':
-        return Colors.orange;
+        return AppColors.accent;
       case 'resolved':
         return Colors.green;
       default:

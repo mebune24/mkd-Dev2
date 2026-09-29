@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/landlord/domain/kyc_submission.dart';
 import '../features/rentals/domain/dispute_record.dart';
-import '../features/agents/domain/agent_models.dart';
+
 import '../features/admin/domain/admin_transaction.dart';
 import '../features/rentals/domain/rental.dart';
 import '../core/domain/audit_entry.dart';
@@ -26,15 +26,15 @@ final allUsersProvider = FutureProvider<List<UserModel>>((ref) async {
       .toList();
 });
 
-// --- KYC Submissions ---
-final kycSubmissionsProvider = FutureProvider<List<KYCSubmission>>((ref) async {
-  final repo = ref.watch(agentRepositoryProvider);
-  return repo.getAllKyc();
-});
 
 final landlordKycSubmissionsProvider = FutureProvider<List<KYCSubmission>>((
   ref,
 ) {
+  return ref.watch(adminRepositoryProvider).getLandlordKyc();
+});
+
+// --- KYC Submissions (via admin repository) ---
+final kycSubmissionsProvider = FutureProvider<List<KYCSubmission>>((ref) async {
   return ref.watch(adminRepositoryProvider).getLandlordKyc();
 });
 
@@ -44,64 +44,30 @@ final disputesProvider = FutureProvider<List<DisputeRecord>>((ref) async {
   return repo.getDisputes();
 });
 
-// --- Agent Profiles ---
-final agentProfilesProvider = FutureProvider<List<AgentProfile>>((ref) async {
-  final repo = ref.watch(agentRepositoryProvider);
-  return repo.getAgents();
-});
-
-final currentAgentProfileProvider = FutureProvider<AgentProfile>((ref) async {
-  return ref.watch(agentRepositoryProvider).getProfile();
-});
-
-final landlordDashboardProvider = FutureProvider<LandlordDashboardSnapshot>((
-  ref,
-) {
+// --- Landlord Dashboard ---
+final landlordDashboardProvider = FutureProvider<LandlordDashboardSnapshot>((ref) {
   return ref.watch(landlordRepositoryProvider).getDashboardSnapshot();
 });
 
 // --- Admin Transactions ---
-final adminTransactionsProvider = FutureProvider<AdminTransactionList>((
-  ref,
-) async {
-  final repo = ref.watch(adminRepositoryProvider);
-  return repo.getTransactions();
+final adminTransactionsProvider = FutureProvider<AdminTransactionList>((ref) async {
+  return ref.watch(adminRepositoryProvider).getTransactions();
 });
 
+// --- Rentals ---
 final tenantRentalsProvider = FutureProvider<List<Rental>>((ref) async {
-  final repo = ref.watch(rentalRepositoryProvider);
-  return repo.getTenantRentals();
+  return ref.watch(rentalRepositoryProvider).getTenantRentals();
 });
 
+final landlordRentalsProvider = FutureProvider<List<Rental>>((ref) async {
+  return ref.watch(rentalRepositoryProvider).getLandlordRentals();
+});
+
+// --- Tenant Wallet ---
 final tenantWalletProvider = FutureProvider<TenantWallet>((ref) {
   return ref.watch(tenantWalletRepositoryProvider).getWallet();
 });
 
-final landlordRentalsProvider = FutureProvider<List<Rental>>((ref) async {
-  final repo = ref.watch(rentalRepositoryProvider);
-  return repo.getLandlordRentals();
-});
-
-// --- Agent Transactions ---
-final agentTransactionsProvider = FutureProvider<List<AgentTransaction>>((
-  ref,
-) async {
-  final repo = ref.watch(agentRepositoryProvider);
-  return repo.getCommissions();
-});
-
-final agentWalletProvider = FutureProvider<AgentWallet>((ref) async {
-  return ref.watch(agentRepositoryProvider).getWallet();
-});
-
-// --- Agent Agreements ---
-final agentAgreementsProvider = FutureProvider<List<AgentServiceAgreement>>((
-  ref,
-) async {
-  return ref.watch(agentRepositoryProvider).getAgreements();
-});
-
-// --- Audit Log ---
 final auditLogProvider = FutureProvider<List<AuditEntry>>((ref) async {
   final repo = ref.watch(auditRepositoryProvider);
   return repo.getLogs();

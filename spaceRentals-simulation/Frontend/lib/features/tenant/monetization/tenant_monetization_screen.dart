@@ -8,6 +8,7 @@ import '../../../features/tenant/domain/tenant_wallet.dart';
 import '../../../providers/di_providers.dart';
 import '../../../providers/domain_providers.dart';
 import '../../../providers/locale_provider.dart';
+import '../../../core/constants/app_colors.dart';
 
 class TenantMonetizationScreen extends ConsumerStatefulWidget {
   const TenantMonetizationScreen({super.key});
@@ -118,19 +119,19 @@ class _TenantMonetizationScreenState
             decoration: BoxDecoration(
               color: const Color(0xFFFFF4E5),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.orange.shade200),
+              border: Border.all(color: AppColors.accent),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade100,
+                    color: AppColors.accent,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.celebration,
-                    color: Colors.orange,
+                    color: AppColors.accent,
                     size: 32,
                   ),
                 ),
@@ -146,7 +147,7 @@ class _TenantMonetizationScreenState
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
-                          color: Colors.orange,
+                          color: AppColors.accent,
                         ),
                       ),
                       Text(
@@ -201,7 +202,7 @@ class _TenantMonetizationScreenState
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.share, color: Colors.blue),
+                      icon: const Icon(Icons.share, color: AppColors.primary),
                       onPressed: () {},
                     ),
                   ],

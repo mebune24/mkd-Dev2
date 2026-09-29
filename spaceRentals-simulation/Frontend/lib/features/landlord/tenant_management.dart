@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../providers/applications_provider.dart';
 import '../../features/applications/domain/application.dart';
 import '../../shared/models/enums.dart';
+import '../../core/constants/app_colors.dart';
 
 class TenantManagementScreen extends ConsumerWidget {
   const TenantManagementScreen({super.key});
@@ -41,9 +42,9 @@ class _ApplicationCard extends ConsumerWidget {
       case ApplicationStatus.draft:
         return Colors.grey;
       case ApplicationStatus.submitted:
-        return Colors.orange;
+        return AppColors.accent;
       case ApplicationStatus.underReview:
-        return Colors.orangeAccent;
+        return AppColors.accent;
       case ApplicationStatus.approved:
         return Colors.green;
       case ApplicationStatus.rejected:
@@ -254,7 +255,7 @@ class _ApplicationCard extends ConsumerWidget {
                 icon: const Icon(Icons.draw, size: 16),
                 label: const Text('Open Lease & Sign'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 40),
                 ),
