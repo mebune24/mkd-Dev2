@@ -49,7 +49,6 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
   // Media
   final List<XFile> _photos = [];
   final List<XFile> _floorPlanImages = [];
-  final List<XFile> _videoFiles = [];
   final ImagePicker _picker = ImagePicker();
 
   // Terms
@@ -525,52 +524,6 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
           onRemove: (i) => setState(() => _floorPlanImages.removeAt(i)),
           isImage: true,
         ),
-        const SizedBox(height: 20),
-        _label('Video Tour'),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () async {
-            final video = await _picker.pickVideo(
-              source: ImageSource.gallery,
-              maxDuration: const Duration(minutes: 5),
-            );
-            if (video != null) setState(() => _videoFiles.add(video));
-          },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: Colors.red.withValues(alpha: 0.4),
-                style: BorderStyle.solid,
-              ),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.videocam,
-                  size: 36,
-                  color: Colors.red.withValues(alpha: 0.7),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _videoFiles.isEmpty
-                      ? 'Tap to Upload Video Tour'
-                      : '${_videoFiles.length} video(s) selected',
-                  style: TextStyle(
-                    color: _videoFiles.isEmpty ? Colors.grey : Colors.green,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Text(
-                  'Max 5 minutes',
-                  style: TextStyle(color: Colors.grey, fontSize: 11),
-                ),
-              ],
-            ),
-          ),
         ),
       ],
     );
@@ -603,7 +556,6 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
         _reviewRow('Furnished', _furnished ? 'Yes' : 'No'),
         _reviewRow('Photos', '${_photos.length} uploaded'),
         _reviewRow('Floor Plans', '${_floorPlanImages.length} uploaded'),
-        _reviewRow('Videos', '${_videoFiles.length} uploaded'),
         const SizedBox(height: 16),
         _label('Rental Terms'),
         const SizedBox(height: 8),
@@ -932,14 +884,6 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
         );
       }
 
-      List<String> videoUrls = [];
-      if (_videoFiles.isNotEmpty) {
-        videoUrls = await StorageService.instance.uploadMultipleFiles(
-          _videoFiles,
-          'property-images',
-        );
-      }
-
       final property = await repo.submitProperty(
         title: _titleCtrl.text,
         description: _descCtrl.text.isEmpty
@@ -951,7 +895,7 @@ class _AddPropertyState extends ConsumerState<AddProperty> {
         monthlyRentUnits: (double.tryParse(_rentCtrl.text) ?? 0).toInt(),
         depositUnits: (double.tryParse(_depositCtrl.text) ?? 0).toInt(),
         imageUrls: imageUrls,
-        videoUrls: videoUrls,
+        videoUrls: [],
         category: _category,
         amenities: {
           'hasWater': _hasWater,

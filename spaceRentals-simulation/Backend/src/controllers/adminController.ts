@@ -14,11 +14,10 @@ const handle = (res: Response, err: any) => {
 // GET /api/admin/overview
 export const getAdminOverview = async (_req: AuthRequest, res: Response) => {
   try {
-    const [usersByRole, totalUsers, suspendedUsers, pendingKyc, openDisputes, underReviewDisputes, properties, applications, leases, rentals, successfulRevenue, pendingPayments, openMaintenance, activeSubscriptions] = await Promise.all([
+    const [usersByRole, totalUsers, suspendedUsers, openDisputes, underReviewDisputes, properties, applications, leases, rentals, successfulRevenue, pendingPayments, openMaintenance, activeSubscriptions] = await Promise.all([
       prisma.user.groupBy({ by: ['role', 'status'], _count: { id: true } }),
       prisma.user.count(),
       prisma.user.count({ where: { status: 'suspended' } }),
-      prisma.agentVerification.count({ where: { status: 'pending' } }),
       prisma.dispute.count({ where: { status: 'open' } }),
       prisma.dispute.count({ where: { status: 'under_review' } }),
       prisma.property.groupBy({ by: ['status'], _count: { id: true } }),
@@ -41,11 +40,10 @@ export const getAdminOverview = async (_req: AuthRequest, res: Response) => {
         suspended: suspendedUsers,
         tenants: countRole('tenant'),
         landlords: countRole('landlord'),
-        agents: countRole('agent'),
         admins: countRole('admin'),
         active: totalUsers - suspendedUsers,
       },
-      kyc: { pending: pendingKyc },
+      kyc: { pending: 0 },
       disputes: { open: openDisputes, underReview: underReviewDisputes },
       properties: { byStatus: groupCounts(properties) },
       applications: { byStatus: groupCounts(applications) },
@@ -69,7 +67,6 @@ export const getReportsSummary = async (_req: AuthRequest, res: Response) => {
       totalRentals,
       totalRevenue,
       activeSubscriptions,
-      pendingKyc,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.property.count(),
@@ -78,7 +75,6 @@ export const getReportsSummary = async (_req: AuthRequest, res: Response) => {
       prisma.rental.count(),
       prisma.transaction.aggregate({ _sum: { amount: true }, where: { status: 'SUCCESSFUL' } }),
       prisma.subscription.count({ where: { status: 'active' } }),
-      prisma.agentVerification.count({ where: { status: 'pending' } }),
     ]);
 
     const [successfulTransactions, activeProperties, signedLeases, auditLogs, unresolvedDisputes] = await Promise.all([
@@ -121,7 +117,6 @@ export const getReportsSummary = async (_req: AuthRequest, res: Response) => {
       rentals: { total: totalRentals },
       revenue: { totalXAF: totalRevenue._sum.amount ?? 0 },
       subscriptions: { active: activeSubscriptions },
-      kyc: { pending: pendingKyc },
       monthlyRevenue: Array.from(monthlyRevenue, ([month, amount]) => ({ month, amount })),
       listingsByCategory: Array.from(listingsByCategory, ([category, count]) => ({ category, count })),
       compliance: {

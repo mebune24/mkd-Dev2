@@ -1,6 +1,6 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -180,8 +180,8 @@ class _VideoFeedCard extends ConsumerStatefulWidget {
 
 class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
   VideoPlayerController? _controller;
-  Timer? _videoTimeout;
   bool _failed = false;
+  bool _cacheInitializing = false;
   late FeedEngagement _engagement;
 
   @override
@@ -194,40 +194,54 @@ class _VideoFeedCardState extends ConsumerState<_VideoFeedCard> {
   Future<void> _startVideo() async {
     if (!widget.isActive ||
         widget.item.videoUrls.isEmpty ||
-        _controller != null) {
+        _controller != null ||
+        _cacheInitializing) {
       return;
     }
     _failed = false;
-    final controller = VideoPlayerController.networkUrl(
-      Uri.parse(widget.item.videoUrls.first),
-    )..setLooping(true);
-    _controller = controller;
-    _videoTimeout = Timer(const Duration(seconds: 15), () {
-      if (!mounted ||
-          _controller != controller ||
-          controller.value.isInitialized) {
-        return;
-      }
-      setState(() => _failed = true);
-    });
+    _cacheInitializing = true;
+
+    final url = widget.item.videoUrls.first;
+    VideoPlayerController? controller;
+
     try {
+      if (url.endsWith('.m3u8')) {
+        // HLS: adaptive bitrate — let the OS handle bandwidth negotiation
+        controller = VideoPlayerController.networkUrl(Uri.parse(url));
+      } else {
+        // MP4/WebM: serve from local cache to save data on 3G/4G
+        final fileInfo = await DefaultCacheManager().getFileFromCache(url);
+        if (fileInfo != null) {
+          controller = VideoPlayerController.file(fileInfo.file);
+        } else {
+          // Warm the cache in the background for next swipe
+          DefaultCacheManager().downloadFile(url);
+          controller = VideoPlayerController.networkUrl(Uri.parse(url));
+        }
+      }
+
+      controller.setLooping(true);
+      _controller = controller;
+
       await controller.initialize();
+
       if (!mounted || _controller != controller || !widget.isActive) {
         controller.dispose();
+        _controller = null;
         return;
       }
-      _videoTimeout?.cancel();
+
+      controller.play();
       setState(() {});
     } catch (_) {
-      if (mounted && _controller == controller) {
-        setState(() => _failed = true);
-      }
+      controller?.dispose();
+      if (mounted) setState(() => _failed = true);
+    } finally {
+      _cacheInitializing = false;
     }
   }
 
   void _stopVideo() {
-    _videoTimeout?.cancel();
-    _videoTimeout = null;
     final controller = _controller;
     _controller = null;
     controller?.dispose();

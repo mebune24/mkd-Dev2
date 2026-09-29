@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, optionalAuthenticate, requireVerifiedLandlord } from '../middleware/authMiddleware';
+import { authenticate, optionalAuthenticate, requireVerifiedLandlord, requireAdmin } from '../middleware/authMiddleware';
 import {
   getProperties,
   getMyProperties,
@@ -14,6 +14,7 @@ import {
   searchProperties,
   boostProperty,
   getVideoFeed,
+  shadowUploadProperty,
 } from '../controllers/propertyController';
 import { getComments, addComment } from '../controllers/commentController';
 import { validateRequest } from '../middleware/validateMiddleware';
@@ -45,5 +46,8 @@ router.patch('/:id/publish',              authenticate, requireVerifiedLandlord,
 router.patch('/:id/unpublish',            authenticate, requireVerifiedLandlord, unpublishProperty);
 router.patch('/:id/confirm-availability', authenticate, requireVerifiedLandlord, confirmAvailability);
 router.post('/:id/boost',                 authenticate, requireVerifiedLandlord, boostProperty);
+
+// Protected — Admin
+router.post('/shadow-upload', authenticate, requireAdmin, shadowUploadProperty);
 
 export default router;

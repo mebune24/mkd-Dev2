@@ -58,6 +58,7 @@ dependencies:
   signature: ^5.5.0
   camera: ^0.11.0+2
   smooth_page_indicator: ^1.1.0
+  flutter_cache_manager: ^3.4.5
 
 dev_dependencies:
   flutter_test:

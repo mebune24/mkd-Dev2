@@ -148,3 +148,58 @@ export const boostProperty = async (req: AuthRequest, res: Response) => {
     });
   } catch (err) { return handle(res, err); }
 };
+
+// POST /api/properties/shadow-upload
+export const shadowUploadProperty = async (req: AuthRequest, res: Response) => {
+  try {
+    const { targetPhoneNumber, title, description, location, monthlyRent, deposit, amenities, images, videoUrls, ...rest } = req.body;
+    
+    if (!targetPhoneNumber) {
+      return res.status(400).json({ message: 'targetPhoneNumber is required for shadow upload.' });
+    }
+
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+
+    // Find landlord by phone or create placeholder
+    let landlord = await prisma.user.findFirst({
+      where: { phone: targetPhoneNumber, role: 'landlord' }
+    });
+
+    if (!landlord) {
+      landlord = await prisma.user.create({
+        data: {
+          email: `placeholder_${Date.now()}@spacerentals.cm`,
+          passwordHash: 'shadow_upload_placeholder',
+          name: 'Pending Landlord',
+          phone: targetPhoneNumber,
+          role: 'landlord',
+          status: 'pending_verification'
+        }
+      });
+    }
+
+    // Create the property bound to the landlord
+    const newProperty = await propertyService.create(landlord.id, {
+      title,
+      description,
+      location,
+      monthlyRent,
+      deposit,
+      amenities: amenities || '[]',
+      images: images || '[]',
+      videoUrls: videoUrls || '[]',
+      ...rest
+    });
+
+    await prisma.$disconnect();
+
+    return res.status(201).json({
+      message: 'Shadow upload successful',
+      property: newProperty,
+      landlordId: landlord.id
+    });
+  } catch (err) {
+    return handle(res, err);
+  }
+};

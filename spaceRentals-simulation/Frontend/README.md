@@ -8,7 +8,7 @@ Space Rentals is a comprehensive **property rental platform** connecting **Tenan
 
 The platform is split into two primary components:
 
-1. **`space_rentals/` (Frontend):** A rich, cross-platform Flutter application leveraging Riverpod for state management, providing distinct dashboards for the 4 user roles.
+1. **`Frontend/`:** A rich, cross-platform Flutter application leveraging Riverpod for state management, providing distinct dashboards for the 4 user roles.
 2. **`Backend/` (API):** A Node.js and Express RESTful API utilizing Prisma ORM and PostgreSQL to handle real data persistence, JWT authentication, object-level authorization, and strict domain state machines.
 
 > **Note on Architecture Principle:**
@@ -97,7 +97,7 @@ The platform is split into two primary components:
 
 1. Navigate to the flutter app directory:
    ```bash
-   cd space_rentals
+   cd Frontend
    ```
 2. Fetch dependencies:
    ```bash

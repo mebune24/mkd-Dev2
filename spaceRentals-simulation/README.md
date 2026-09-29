@@ -39,7 +39,7 @@ The core architecture of SpaceRentals is built on a robust Node.js/Express backe
 
 While the core loop is functional, several secondary features are currently mocked or incomplete:
 
-1. **In-App Messaging/Chat**: The frontend UI exists, but there is no real-time WebSocket backend (e.g., Socket.io) to support live chat between tenants and landlords.
+1. **In-App Messaging/Chat**: The frontend UI exists and the real-time WebSocket backend (Socket.io) is fully implemented, but the frontend needs to be wired to the Socket server to support live chat between tenants and landlords.
 2. **Push Notifications**: Notifications are currently stored in the database and polled. Firebase Cloud Messaging (FCM) needs to be integrated for real-time mobile push notifications.
 3. **Automated Payouts**: While tenant payments *in* are handled via Fapshi, agent commissions and landlord withdrawals *out* require integration with Fapshi's Payout API.
 4. **Third-Party KYC Verification**: KYC document uploads exist, but they are not yet piped into an automated identity verification API (e.g., SmileID or Dojah).

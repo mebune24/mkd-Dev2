@@ -19,7 +19,7 @@ model User {
   avatarUrl                String? // Base64 or external URL
   twoFactorEnabled         Boolean   @default(false)
   pushNotificationsEnabled Boolean   @default(true)
-  role                     String // "admin", "landlord", "tenant", "agent"
+  role                     String // "admin", "landlord", "tenant"
   status                   String    @default("active") // "pending_verification", "kyc_rejected", "active", "suspended"
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @default(now()) @updatedAt
@@ -339,7 +339,7 @@ model Transaction {
   currency        String   @default("XAF")
   paymentMethod   String // "MTN", "ORANGE", etc.
   transactionType String // "PAYMENT", "PAYOUT"
-  referenceType   String // "LEASE", "PLATFORM_FEE", "AGENT_WITHDRAWAL"
+  referenceType   String // "LEASE", "PLATFORM_FEE"
   referenceId     String // The ID of the related record
   gatewayTxId     String?  @unique // Fapshi transaction ID
   status          String   @default("PENDING") // "PENDING", "SUCCESSFUL", "FAILED"

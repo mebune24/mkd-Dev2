@@ -44,7 +44,7 @@ import paymentRoutes       from './routes/payments';
 import leaseRoutes         from './routes/leases';
 import rentalRoutes        from './routes/rentals';
 import subscriptionRoutes  from './routes/subscriptions';
-import commissionRoutes    from './routes/commissions';
+
 import platformFeeRoutes   from './routes/platformFees';
 import adminRoutes         from './routes/admin';
 import dashboardRoutes     from './routes/dashboard';
@@ -73,7 +73,7 @@ app.use(`${BASE}/payments`,      paymentLimiter, paymentRoutes);
 app.use(`${BASE}/leases`,        leaseRoutes);
 app.use(`${BASE}/rentals`,       rentalRoutes);
 app.use(`${BASE}/subscriptions`, subscriptionRoutes);
-app.use(`${BASE}/commissions`,   commissionRoutes);
+
 app.use(`${BASE}/platform-fees`, platformFeeRoutes);
 app.use(`${BASE}/admin`,         adminLimiter, adminRoutes);
 app.use(`${BASE}/dashboard`,     dashboardRoutes);
@@ -98,7 +98,7 @@ app.get(`${BASE}/health`, (_req, res) => {
     paymentGateway: 'Fapshi (MTN & Orange Money)',
     routes: [
       'auth', 'users', 'properties', 'applications', 'payments',
-      'leases', 'rentals', 'subscriptions', 'commissions',
+      'leases', 'rentals', 'subscriptions',
       'platform-fees', 'admin', 'notifications', 'maintenance', 'reviews', 'rnlp', 'messages',
     ],
   });

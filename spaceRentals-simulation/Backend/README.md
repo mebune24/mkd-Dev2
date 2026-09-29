@@ -63,5 +63,5 @@ If you are moving the project to run on an external device (e.g., testing locall
 
 1. **Find your local IP address** (e.g., `192.168.x.x`).
 2. Run the backend using `npm run dev` as usual.
-3. On the **Flutter frontend**, update the `API_BASE_URL` in `lib/config/api_config.dart` or your provider to point to `http://192.168.x.x:3000/api`.
+3. On the **Flutter frontend**, update the `API_BASE_URL` in `lib/core/api/api_endpoints.dart` or your provider to point to `http://192.168.x.x:3000/api`.
 4. Ensure your phone/device is on the **same WiFi network**.

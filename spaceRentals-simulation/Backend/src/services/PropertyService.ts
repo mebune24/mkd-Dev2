@@ -70,8 +70,7 @@ export class PropertyService {
   ) {
     const { title, description, location, monthlyRent, deposit, amenities, images, videoUrls,
       bedrooms, bathrooms, areaSqM, furnished, parkingSpaces, hasWater, hasElectricity,
-      isFenced, closeToRoad, securityMeans, category, latitude, longitude,
-      acquisitionSource, acquisitionAgentId } = data as any;
+      isFenced, closeToRoad, securityMeans, category, latitude, longitude } = data as any;
     if (!title || !description || !location || !monthlyRent || !deposit) {
       throw { status: 400, message: 'title, description, location, monthlyRent, and deposit are required.' };
     }
@@ -100,8 +99,6 @@ export class PropertyService {
       latitude: latitude ? Number(latitude) : undefined,
       longitude: longitude ? Number(longitude) : undefined,
       h3Index: (latitude && longitude) ? latLngToCell(Number(latitude), Number(longitude), H3_RESOLUTION) : undefined,
-      acquisitionSource: acquisitionSource ? String(acquisitionSource) : 'LANDLORD',
-      acquisitionAgentId: acquisitionAgentId ? String(acquisitionAgentId) : undefined,
     });
     await clearCacheByPattern('properties:*');
     await clearCacheByPattern(`dashboard:landlord:${landlordId}`);
