@@ -19,10 +19,12 @@ The core architecture of SpaceRentals is built on a robust Node.js/Express backe
 - **Application Flow**: Tenants can apply for properties, and landlords can approve/reject them.
 - **Digital Leases**: End-to-end lease generation and electronic signing (SHA-256 hashed timestamps) compliant with local regulations.
 
-### **Payments & Financials**
-- **Fapshi Integration**: Real payment gateway integration for MTN and Orange Money.
-- **Webhook Handling**: Automated transaction status updates via Fapshi webhooks.
-- **Rentals Engine**: Tracks active rentals, deposits, and monthly rent schedules.
+### **Payments & Monetization (Live)**
+- **Fapshi Integration**: Real payment gateway integration for MTN and Orange Money Mobile Money via Fapshi.
+- **Application Micro-Fees**: Tenants pay a mandatory, non-refundable application fee (500 XAF) via Mobile Money to submit an application.
+- **Success Fee Deductions**: The platform automatically deducts a 5% success fee on all rent payments, seamlessly distributing the rest to the landlord wallet.
+- **Landlord SaaS Subscriptions**: Paid tiers (Starter, Growth, Pro) enforce active listing limits (e.g., Free tier strictly capped at 1 listing). Subscription upgrades trigger real Mobile Money payments and enforce capacity constraints.
+- **Webhook Handling**: Automated transaction status updates via Fapshi webhooks for all revenue streams.
 
 ### **Admin & Agent Portals**
 - **Admin Dashboard**: Real-time metrics, user management, and platform fee tracking.
