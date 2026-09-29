@@ -99,6 +99,23 @@ export class UserService {
     if (data.firstName && data.lastName) updateData.name = `${data.firstName} ${data.lastName}`;
     return userRepository.update(userId, updateData);
   }
+
+  async upgradeToLandlord(userId: string) {
+    const user = await userRepository.findById(userId);
+    if (!user) throw { status: 404, message: 'User not found.' };
+    if (user.role === 'landlord' || user.role === 'admin') {
+      return user; // Already a landlord or admin
+    }
+    const updated = await userRepository.update(userId, { role: 'landlord', status: 'pending_verification' });
+    await auditLogService.log({
+      userId,
+      action: 'user.role_upgraded',
+      resourceId: userId,
+      resourceType: 'user',
+      metadata: { newRole: 'landlord' },
+    });
+    return updated;
+  }
 }
 
 export const userService = new UserService();

@@ -47,6 +47,7 @@ class UserSession {
     bool? isKycVerified,
     String? kycStatus,
     bool? termsAccepted,
+    Role? role,
   }) {
     return UserSession(
       userId: userId,
@@ -58,7 +59,7 @@ class UserSession {
       twoFactorEnabled: twoFactorEnabled ?? this.twoFactorEnabled,
       pushNotificationsEnabled:
           pushNotificationsEnabled ?? this.pushNotificationsEnabled,
-      role: role,
+      role: role ?? this.role,
       isKycVerified: isKycVerified ?? this.isKycVerified,
       kycStatus: kycStatus ?? this.kycStatus,
       accessToken: accessToken,

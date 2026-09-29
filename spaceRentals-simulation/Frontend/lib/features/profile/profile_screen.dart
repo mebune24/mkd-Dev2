@@ -584,17 +584,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     ),
                                   ),
                                 ),
-                                const Divider(height: 1, indent: 56),
-                                _listTile(
-                                  icon: Icons.handshake,
-                                  title: 'Community Micro-Tasks',
-                                  subtitle: 'Accept missions near you',
-                                  trailing: const Icon(
-                                    Icons.chevron_right,
-                                    color: Colors.grey,
-                                  ),
-                                  onTap: () => context.push('/tenant/gigs'),
-                                ),
                               ],
                             ),
                             const SizedBox(height: 20),

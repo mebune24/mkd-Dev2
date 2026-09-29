@@ -17,8 +17,8 @@ import '../features/tenant/maintenance_screen.dart';
 import '../features/tenant/property_search.dart';
 import '../features/tenant/category_properties_screen.dart';
 import '../features/tenant/landlord_profile_screen.dart';
-import '../features/tenant/monetization/tenant_monetization_screen.dart';
-import '../features/tenant/monetization/tenant_gigs_screen.dart';
+
+import '../features/tenant/become_landlord_screen.dart';
 import '../features/messages/chat_screens.dart';
 import '../features/landlord/landlord_dashboard.dart';
 import '../features/landlord/add_property.dart';
@@ -27,7 +27,7 @@ import '../features/landlord/my_properties.dart';
 import '../features/landlord/kyc_screen.dart';
 import '../features/landlord/kyc_pending_screen.dart';
 import '../features/landlord/monetization/landlord_monetization_screen.dart';
-import '../features/landlord/monetization/post_gig_form.dart';
+
 import '../features/admin/admin_dashboard.dart';
 import '../features/admin/admin_landlords_screen.dart';
 import '../features/admin/admin_tenants_screen.dart';
@@ -353,14 +353,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 _slideRight(context, state, const MaintenanceScreen()),
           ),
           GoRoute(
-            path: 'monetization',
+            path: 'become-landlord',
             pageBuilder: (context, state) =>
-                _slideRight(context, state, const TenantMonetizationScreen()),
-          ),
-          GoRoute(
-            path: 'gigs',
-            pageBuilder: (context, state) =>
-                _slideRight(context, state, const TenantGigsScreen()),
+                _slideRight(context, state, const BecomeLandlordScreen()),
           ),
 
           GoRoute(
@@ -440,11 +435,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) =>
                 _slideRight(context, state, const LandlordMonetizationScreen()),
           ),
-          GoRoute(
-            path: 'post-gig',
-            pageBuilder: (context, state) =>
-                _slideUp(context, state, const PostPropertyGigForm()),
-          ),
+
           GoRoute(
             path: 'maintenance',
             pageBuilder: (context, state) =>

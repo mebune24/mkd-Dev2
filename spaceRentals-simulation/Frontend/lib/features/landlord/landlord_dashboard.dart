@@ -304,17 +304,7 @@ class _LandlordDrawer extends StatelessWidget {
                     context.push('/landlord/monetization');
                   },
                 ),
-                _buildDrawerTile(
-                  context,
-                  icon: Icons.task_alt,
-                  color: AppColors.accent,
-                  label: 'Publier une Tâche',
-                  subtitle: 'Entretien, nettoyage...',
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/landlord/post-gig');
-                  },
-                ),
+
                 _buildDrawerTile(
                   context,
                   icon: Icons.notifications_outlined,

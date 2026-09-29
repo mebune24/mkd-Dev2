@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/domain/user_profile.dart';
 import '../features/auth/domain/user_session.dart';
 import '../services/session_storage_service.dart';
+import '../shared/models/enums.dart';
 import 'di_providers.dart';
 
 /// State class to hold the authenticated session.
@@ -189,6 +190,19 @@ class AuthNotifier extends Notifier<AuthState> {
     final updated = current.copyWith(
       isKycVerified: isVerified,
       kycStatus: kycStatus,
+    );
+    await SessionStorageService.instance.saveSession(updated);
+    state = state.copyWith(session: updated);
+  }
+
+  /// Updates the in-memory session role (used when a tenant upgrades to landlord).
+  Future<void> updateSessionRole(Role role) async {
+    final current = state.session;
+    if (current == null) return;
+    final updated = current.copyWith(
+      role: role,
+      kycStatus: 'not_submitted',
+      isKycVerified: false,
     );
     await SessionStorageService.instance.saveSession(updated);
     state = state.copyWith(session: updated);

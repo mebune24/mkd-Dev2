@@ -88,7 +88,7 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
                       : 'Landlord onboarding and KYC',
                   onTap: () {
                     Navigator.pop(sheetContext);
-                    context.push('/landlord/kyc');
+                    context.push('/tenant/become-landlord');
                   },
                 ),
                 _QuickActionTile(
@@ -403,42 +403,8 @@ class _TenantDrawer extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 12),
               children: [
-                _DrawerTile(
-                  icon: Icons.account_balance_wallet,
-                  color: AppColors.primary,
-                  label: isFrench
-                      ? 'Portefeuille & Gains'
-                      : 'Wallet & Earnings',
-                  subtitle: isFrench
-                      ? 'Solde, parrainage & cashout'
-                      : 'Balance, referral & cashout',
-                  onTap: () {
-                    Navigator.pop(context);
-                    GuestGuard.check(
-                      context,
-                      ref,
-                      () => context.push('/tenant/monetization'),
-                      featureName: 'wallet & earnings',
-                    );
-                  },
-                ),
-                _DrawerTile(
-                  icon: Icons.handshake,
-                  color: AppColors.accent,
-                  label: isFrench ? 'Micro-Tâches' : 'Micro-tasks',
-                  subtitle: isFrench
-                      ? 'Gagnez en aidant votre communauté'
-                      : 'Earn by helping your community',
-                  onTap: () {
-                    Navigator.pop(context);
-                    GuestGuard.check(
-                      context,
-                      ref,
-                      () => context.push('/tenant/gigs'),
-                      featureName: 'micro-gigs',
-                    );
-                  },
-                ),
+
+
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Divider(),

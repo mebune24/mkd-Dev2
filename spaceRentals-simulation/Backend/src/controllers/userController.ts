@@ -43,3 +43,9 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
   try { return res.json(await userService.updateProfile(req.user!.userId, req.body)); }
   catch (err) { return handle(res, err); }
 };
+
+// POST /api/users/upgrade-to-landlord
+export const upgradeToLandlord = async (req: AuthRequest, res: Response) => {
+  try { return res.json(await userService.upgradeToLandlord(req.user!.userId)); }
+  catch (err) { return handle(res, err); }
+};

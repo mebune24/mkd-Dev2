@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/constants/app_colors.dart';
 
@@ -57,30 +56,7 @@ class _LandlordMonetizationScreenState
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMetricCard(
-                    label: 'Tâches Publiées',
-                    value: 3,
-                    isCurrency: false,
-                    color: AppColors.accent,
-                    icon: Icons.task_alt,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildMetricCard(
-                    label: 'Tâches Complétées',
-                    value: 2,
-                    isCurrency: false,
-                    color: AppColors.primary,
-                    icon: Icons.check_circle,
-                  ),
-                ),
-              ],
-            ),
+
 
             const SizedBox(height: 32),
 
@@ -145,45 +121,7 @@ class _LandlordMonetizationScreenState
               ),
             ),
 
-            const SizedBox(height: 32),
 
-            // ── Post Gig CTA ─────────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Publier une Micro-Tâche',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Faites entretenir votre propriété par la communauté',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => context.push('/landlord/post-gig'),
-                    icon: const Icon(Icons.add_circle_outline),
-                    label: const Text('Créer une tâche'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
