@@ -46,11 +46,14 @@ class ApiApplicationRepository implements ApplicationRepository {
   }
 
   @override
-  Future<Application> submitApplication(SubmitApplicationRequest request) async {
+  Future<Map<String, dynamic>> submitApplication(SubmitApplicationRequest request) async {
     final response = await _apiClient.post<Map<String, dynamic>>(
       ApiEndpoints.applications,
       data: {
         'propertyId':       request.propertyId,
+        'email':            request.email,
+        'phoneNumber':      request.phoneNumber,
+        'paymentMethod':    request.paymentMethod,
         'coverLetter':      request.coverLetter,
         'nationalIdUrl':    request.nationalIdUrl,
         'proofOfIncomeUrl': request.proofOfIncomeUrl,
@@ -59,7 +62,7 @@ class ApiApplicationRepository implements ApplicationRepository {
     if (!response.isSuccess || response.data == null) {
       throw Exception(response.error?.message ?? 'Failed to submit application');
     }
-    return _fromJson(response.data!);
+    return response.data!;
   }
 
   @override

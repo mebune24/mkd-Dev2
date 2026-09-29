@@ -9,7 +9,7 @@ class MockApplicationRepository implements ApplicationRepository {
   final List<Application> _applications = [];
 
   @override
-  Future<Application> submitApplication(SubmitApplicationRequest request) async {
+  Future<Map<String, dynamic>> submitApplication(SubmitApplicationRequest request) async {
     await Future.delayed(const Duration(milliseconds: 600));
     final app = Application(
       id: _uuid.v4(),
@@ -23,7 +23,12 @@ class MockApplicationRepository implements ApplicationRepository {
       updatedAt: DateTime.now(),
     );
     _applications.add(app);
-    return app;
+    return {
+      'applicationId': app.id,
+      'paymentLink': 'https://mock.fapshi.com/pay',
+      'gatewayTxId': 'mock_tx',
+      'fee': 500,
+    };
   }
 
   @override

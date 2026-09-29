@@ -4,6 +4,8 @@ export type AuditAction =
   | 'lease.signed'
   | 'lease.generated'
   | 'application.submitted'
+  | 'application.fee_initiated'
+  | 'user.role_upgraded'
   | 'application.approved'
   | 'application.rejected'
   | 'application.withdrawn'

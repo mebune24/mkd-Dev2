@@ -38,7 +38,7 @@ export const initiatePaymentSchema = z.object({
     email: z.string().email(),
     phoneNumber: z.string().optional(),
     message: z.string(),
-    referenceType: z.enum(['LEASE', 'PLATFORM_FEE', 'RNLP_INSTALMENT']),
+    referenceType: z.enum(['LEASE', 'PLATFORM_FEE', 'RNLP_INSTALMENT', 'APPLICATION_FEE']),
     referenceId: z.string().uuid(),
     redirectUrl: z.string().url().optional(),
     paymentMethod: z.string(),

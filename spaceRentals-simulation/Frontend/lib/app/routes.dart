@@ -27,6 +27,7 @@ import '../features/landlord/my_properties.dart';
 import '../features/landlord/kyc_screen.dart';
 import '../features/landlord/kyc_pending_screen.dart';
 import '../features/landlord/monetization/landlord_monetization_screen.dart';
+import '../features/landlord/subscription/landlord_subscription_screen.dart';
 
 import '../features/admin/admin_dashboard.dart';
 import '../features/admin/admin_landlords_screen.dart';
@@ -434,6 +435,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             path: 'monetization',
             pageBuilder: (context, state) =>
                 _slideRight(context, state, const LandlordMonetizationScreen()),
+          ),
+          GoRoute(
+            path: 'subscription',
+            pageBuilder: (context, state) =>
+                _slideRight(context, state, const LandlordSubscriptionScreen()),
           ),
 
           GoRoute(

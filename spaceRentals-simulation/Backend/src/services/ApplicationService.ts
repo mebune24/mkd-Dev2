@@ -4,6 +4,10 @@ import { leaseRepository } from '../repositories/LeaseRepository';
 import { leaseService } from './LeaseService';
 import { prisma } from '../lib/prisma';
 import { auditLogService } from './AuditLogService';
+import { fapshiPaymentService } from './FapshiPaymentService';
+
+// Non-refundable processing fee charged per application (in XAF)
+export const APPLICATION_FEE_XAF = 500;
 
 export class ApplicationService {
   async getTenantApplications(tenantId: string) {
@@ -22,34 +26,98 @@ export class ApplicationService {
     return app;
   }
 
-  async submit(propertyId: string, tenantId: string, role: string, coverLetter?: string, nationalIdUrl?: string, proofOfIncomeUrl?: string) {
+  /**
+   * Initiates an application by charging the tenant the APPLICATION_FEE first.
+   * A pending application record is created immediately.
+   * The application status is set to 'submitted' only after payment succeeds via webhook.
+   * Returns: { applicationId, paymentLink, gatewayTxId }
+   */
+  async submit(
+    propertyId: string,
+    tenantId: string,
+    role: string,
+    email: string,
+    phoneNumber: string,
+    paymentMethod: string,
+    coverLetter?: string,
+    nationalIdUrl?: string,
+    proofOfIncomeUrl?: string,
+  ) {
     if (role !== 'tenant') throw { status: 403, message: 'Only tenants can submit applications.' };
     const property = await propertyRepository.findById(propertyId);
     if (!property) throw { status: 404, message: 'Property not found.' };
     if (property.status !== 'available') throw { status: 409, message: 'Property is no longer available.' };
     if (!nationalIdUrl || !proofOfIncomeUrl) throw { status: 400, message: 'All required documents must be uploaded.' };
+    if (!email) throw { status: 400, message: 'Email is required for payment processing.' };
+    if (!phoneNumber) throw { status: 400, message: 'Phone number is required for Mobile Money payment.' };
 
     const existing = await applicationRepository.countByPropertyAndTenant(propertyId, tenantId);
     if (existing > 0) throw { status: 409, message: 'You have already applied for this property.' };
 
+    // 1. Create application in 'pending_payment' state
     const app = await applicationRepository.create({
       property: { connect: { id: propertyId } },
       tenant: { connect: { id: tenantId } },
       coverLetter,
       nationalIdUrl,
       proofOfIncomeUrl,
-      status: 'submitted',
+      status: 'pending_payment',
+    });
+
+    // 2. Charge the tenant the non-refundable application fee
+    const payment = await fapshiPaymentService.initiatePayment({
+      userId: tenantId,
+      amount: APPLICATION_FEE_XAF,
+      email,
+      phoneNumber,
+      message: `Space Rentals — Application fee for ${property.title}`,
+      referenceType: 'APPLICATION_FEE',
+      referenceId: app.id,
+      paymentMethod,
     });
 
     await auditLogService.log({
       userId: tenantId,
-      action: 'application.submitted',
+      action: 'application.fee_initiated',
       resourceId: app.id,
       resourceType: 'application',
-      metadata: { propertyId },
+      metadata: { propertyId, fee: APPLICATION_FEE_XAF, gatewayTxId: payment.gatewayTxId },
     });
 
-    return app;
+    return {
+      applicationId: app.id,
+      paymentLink: payment.paymentLink,
+      gatewayTxId: payment.gatewayTxId,
+      fee: APPLICATION_FEE_XAF,
+    };
+  }
+
+  /**
+   * Called by FapshiPaymentService.handleWebhook when an APPLICATION_FEE payment succeeds.
+   * Transitions the application from 'pending_payment' → 'submitted'.
+   */
+  async handleApplicationFeeSuccess(applicationId: string) {
+    const app = await applicationRepository.findById(applicationId);
+    if (!app) {
+      console.warn(`[ApplicationService] Application ${applicationId} not found for fee success.`);
+      return;
+    }
+    if (app.status !== 'pending_payment') {
+      console.log(`[ApplicationService] Application ${applicationId} already in state: ${app.status}. Skipping.`);
+      return;
+    }
+
+    await applicationRepository.update(applicationId, { status: 'submitted' });
+
+    await auditLogService.log({
+      userId: app.tenantId,
+      action: 'application.submitted',
+      resourceId: applicationId,
+      resourceType: 'application',
+      metadata: { propertyId: app.propertyId, feeCollected: APPLICATION_FEE_XAF },
+    });
+
+    console.log(`[ApplicationService] Application ${applicationId} activated after fee payment.`);
   }
 
   async approve(id: string, landlordId: string, note?: string) {

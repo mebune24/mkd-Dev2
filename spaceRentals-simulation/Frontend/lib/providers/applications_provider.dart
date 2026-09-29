@@ -13,17 +13,17 @@ class ApplicationSubmitNotifier extends Notifier<AsyncValue<void>> {
   @override
   AsyncValue<void> build() => const AsyncData(null);
 
-  Future<bool> submitApplication(SubmitApplicationRequest request) async {
+  Future<String?> submitApplication(SubmitApplicationRequest request) async {
     state = const AsyncLoading();
     try {
       final repo = ref.read(applicationRepositoryProvider);
-      await repo.submitApplication(request);
+      final response = await repo.submitApplication(request);
       state = const AsyncData(null);
       ref.invalidate(tenantApplicationsProvider);
-      return true;
+      return response['paymentLink'] as String?;
     } catch (e, st) {
       state = AsyncError(e, st);
-      return false;
+      return null;
     }
   }
 

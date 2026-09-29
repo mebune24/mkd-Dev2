@@ -5,6 +5,9 @@ import { prisma } from '../lib/prisma';
 import crypto from 'crypto';
 import { rnlpService } from './RnlpService';
 import { landlordWalletService } from './LandlordWalletService';
+// Lazy import via require() to avoid circular dependency (ApplicationService → FapshiPaymentService → ApplicationService)
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const getApplicationService = () => require('./ApplicationService').applicationService as import('./ApplicationService').ApplicationService;
 
 const FAPSHI_API_URL = process.env.FAPSHI_API_URL || 'https://live.fapshi.com';
 const FAPSHI_API_USER = process.env.FAPSHI_API_USER || '';
@@ -188,6 +191,8 @@ export class FapshiPaymentService {
         await this.handleLeasePaymentSuccess(existing.referenceId, existing.amount);
       } else if (existing.referenceType === 'RNLP_INSTALMENT') {
         await rnlpService.markInstalmentPaid(existing.referenceId, transId, existing.amount);
+      } else if (existing.referenceType === 'APPLICATION_FEE') {
+        await getApplicationService().handleApplicationFeeSuccess(existing.referenceId);
       }
     }
 

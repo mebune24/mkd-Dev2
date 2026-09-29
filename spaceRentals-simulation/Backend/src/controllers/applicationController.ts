@@ -36,8 +36,18 @@ export const getLandlordApplications = async (req: AuthRequest, res: Response) =
 // POST /api/applications
 export const submitApplication = async (req: AuthRequest, res: Response) => {
   try {
-    const { propertyId, coverLetter, nationalIdUrl, proofOfIncomeUrl } = req.body;
-    const result = await applicationService.submit(propertyId, req.user!.userId, req.user!.role, coverLetter, nationalIdUrl, proofOfIncomeUrl);
+    const { propertyId, coverLetter, nationalIdUrl, proofOfIncomeUrl, email, phoneNumber, paymentMethod } = req.body;
+    const result = await applicationService.submit(
+      propertyId,
+      req.user!.userId,
+      req.user!.role,
+      email,
+      phoneNumber,
+      paymentMethod ?? 'MTN',
+      coverLetter,
+      nationalIdUrl,
+      proofOfIncomeUrl,
+    );
     return res.status(201).json(result);
   } catch (err) { return handle(res, err); }
 };

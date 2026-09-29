@@ -1,5 +1,6 @@
 import { propertyRepository } from '../repositories/PropertyRepository';
 import { prisma } from '../lib/prisma';
+import { subscriptionService } from './SubscriptionService';
 import { Property } from '@prisma/client';
 import { cacheGet, cacheSet, clearCacheByPattern } from '../config/redis';
 import { latLngToCell, gridDisk } from 'h3-js';
@@ -74,6 +75,21 @@ export class PropertyService {
     if (!title || !description || !location || !monthlyRent || !deposit) {
       throw { status: 400, message: 'title, description, location, monthlyRent, and deposit are required.' };
     }
+
+    // ── Subscription listing limit enforcement ─────────────────────────────
+    const subscriptionStatus = await subscriptionService.getStatus(landlordId);
+    const listingLimit = subscriptionStatus.plan?.listingLimit ?? 1; // Free tier: 1 listing
+    const activeListingCount = await prisma.property.count({
+      where: { landlordId, status: { in: ['draft', 'available', 'reserved'] } },
+    });
+    if (activeListingCount >= listingLimit) {
+      const planName = subscriptionStatus.plan?.name ?? 'Free';
+      throw {
+        status: 403,
+        message: `Your ${planName} plan allows up to ${listingLimit} active listing${listingLimit === 1 ? '' : 's'}. Upgrade your subscription to post more properties.`,
+      };
+    }
+    // ───────────────────────────────────────────────────────────────────────
     const result = await propertyRepository.create({
       landlord: { connect: { id: landlordId } },
       title: String(title),

@@ -63,6 +63,9 @@ class Application {
 class SubmitApplicationRequest {
   final String propertyId;
   final String landlordId;
+  final String email;
+  final String phoneNumber;
+  final String paymentMethod;
   final String? coverLetter;
   final String? nationalIdUrl;
   final String? proofOfIncomeUrl;
@@ -71,6 +74,9 @@ class SubmitApplicationRequest {
   const SubmitApplicationRequest({
     required this.propertyId,
     required this.landlordId,
+    required this.email,
+    required this.phoneNumber,
+    required this.paymentMethod,
     this.coverLetter,
     this.nationalIdUrl,
     this.proofOfIncomeUrl,

@@ -24,6 +24,7 @@ class RentalApplication extends ConsumerStatefulWidget {
 
 class _RentalApplicationState extends ConsumerState<RentalApplication> {
   final _coverLetterCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
   final Map<String, bool> _uploadedDocs = {
@@ -39,6 +40,7 @@ class _RentalApplicationState extends ConsumerState<RentalApplication> {
   @override
   void dispose() {
     _coverLetterCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
 
@@ -284,6 +286,29 @@ class _RentalApplicationState extends ConsumerState<RentalApplication> {
                 );
               }),
               const SizedBox(height: 32),
+              
+              Text('Payment Information', style: theme.textTheme.titleLarge),
+              const SizedBox(height: 4),
+              Text(
+                'Enter your Mobile Money number to pay the ${SpaceFees.tenantApplicationFee.formatted()} processing fee.',
+                style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Mobile Money Number (e.g. 6XXXXXXXX)',
+                  prefixIcon: const Icon(Icons.phone),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
 
               // Error banner
               if (submitAsync is AsyncError)
@@ -306,9 +331,19 @@ class _RentalApplicationState extends ConsumerState<RentalApplication> {
               AnimatedLoadingButton(
                 onPressed: () async {
                   final user = ref.read(authProvider);
+                  if (_phoneCtrl.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please enter your Mobile Money number'), backgroundColor: Colors.red),
+                    );
+                    return;
+                  }
+                  
                   final request = SubmitApplicationRequest(
                     propertyId: p.id,
                     landlordId: p.landlordId,
+                    email: user.session?.email ?? 'tenant@spacerentals.com',
+                    phoneNumber: _phoneCtrl.text.trim(),
+                    paymentMethod: 'MTN',
                     coverLetter: _coverLetterCtrl.text.trim().isEmpty
                         ? null
                         : _coverLetterCtrl.text.trim(),
@@ -316,18 +351,18 @@ class _RentalApplicationState extends ConsumerState<RentalApplication> {
                     proofOfIncomeUrl: _proofOfIncomeUrl,
                   );
 
-                  final ok = await ref
+                  final paymentLink = await ref
                       .read(applicationSubmitProvider.notifier)
                       .submitApplication(request);
 
                   if (!mounted) return;
 
-                  if (ok) {
+                  if (paymentLink != null) {
                     context.showAppDialog(
                       builder: (context) => AlertDialog(
-                        title: const Text('Application Submitted'),
+                        title: const Text('Application Initiated'),
                         content: const Text(
-                          'The landlord will review your application. You can track the status in your dashboard.',
+                          'Your application has been initiated. Check your phone to approve the Mobile Money payment. Once paid, the landlord will review your application.',
                         ),
                         actions: [
                           TextButton(
